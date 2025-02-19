@@ -1,7 +1,5 @@
 package io.github.aughtone.types.quantitative
 
-import io.github.aughtone.types.quantitative.Coordinates
-import io.github.aughtone.types.quantitative.split
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
