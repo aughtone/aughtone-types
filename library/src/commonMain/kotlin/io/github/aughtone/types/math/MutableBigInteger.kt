@@ -24,6 +24,8 @@
  */
 package io.github.aughtone.types.math
 
+import kotlin.math.abs
+
 /**
  * A class used to represent multiprecision integers that makes efficient
  * use of allocated space by allowing a number to occupy only part of
@@ -414,7 +416,7 @@ internal class MutableBigInteger {
     /**
      * Returns a String representation of this MutableBigInteger in radix 10.
      */
-    fun toString(): String? {
+    override fun toString(): String {
         val b = toBigInteger(1)
         return b.toString()
     }
@@ -825,7 +827,7 @@ internal class MutableBigInteger {
         quotient.intLen = intLen
 
         // Normalize the divisor
-        val shift: Int = Integer.numberOfLeadingZeros(divisor)
+        val shift: Int = divisor.countLeadingZeroBits()// Integer.numberOfLeadingZeros(divisor)
 
         var rem = value[offset]
         var remLong: Long = rem and LONG_MASK
@@ -903,7 +905,7 @@ internal class MutableBigInteger {
         }
 
         // Copy divisor value to protect divisor
-        val div: IntArray = Arrays.copyOfRange(b.value, b.offset, b.offset + b.intLen)
+        val div: IntArray = b.value.copyOfRange(b.offset, b.offset + b.intLen)
         return divideMagnitude(div, quotient)
     }
 
@@ -948,7 +950,9 @@ internal class MutableBigInteger {
         // Remainder starts as dividend with space for a leading zero
 
         val rem = MutableBigInteger(IntArray(intLen + 1))
-        System.arraycopy(value, offset, rem.value, 1, intLen)
+        // System.arraycopy(value, offset, rem.value, 1, intLen)
+        value.copyInto(rem.value, 1, offset, offset + intLen)
+
         rem.intLen = intLen
         rem.offset = 1
 
@@ -965,7 +969,7 @@ internal class MutableBigInteger {
         val q = quotient.value
 
         // D1 normalize the divisor
-        val shift: Int = Integer.numberOfLeadingZeros(divisor[0])
+        val shift: Int = divisor[0].countLeadingZeroBits()// Integer.numberOfLeadingZeros(divisor[0])
         if (shift > 0) {
             // First shift will not grow array
             BigInteger.primitiveLeftShift(divisor, dlen, shift)
@@ -1106,7 +1110,7 @@ internal class MutableBigInteger {
         val q = MutableBigInteger()
 
         while (b.intLen != 0) {
-            if (Math.abs(a.intLen - b.intLen) < 2) return a.binaryGCD(b)
+            if (abs(a.intLen - b.intLen) < 2) return a.binaryGCD(b) // if (Math.abs(a.intLen - b.intLen) < 2) return a.binaryGCD(b)
 
             val r = a.divide(b, q)
             a = b
@@ -1254,12 +1258,10 @@ internal class MutableBigInteger {
         val p = MutableBigInteger(mod)
         var f = MutableBigInteger(this)
         var g = MutableBigInteger(p)
-        var c: io.github.aughtone.types.math.SignedMutableBigInteger =
-            io.github.aughtone.types.math.SignedMutableBigInteger(1)
-        var d: io.github.aughtone.types.math.SignedMutableBigInteger =
-            io.github.aughtone.types.math.SignedMutableBigInteger()
-        var temp: MutableBigInteger = null
-        var sTemp: io.github.aughtone.types.math.SignedMutableBigInteger = null
+        var c: SignedMutableBigInteger = SignedMutableBigInteger(1)
+        var d: SignedMutableBigInteger = SignedMutableBigInteger()
+//        var temp: MutableBigInteger = null
+//        var sTemp: SignedMutableBigInteger = null
 
         var k = 0
         // Right shift f k times until odd, left shift d k times
@@ -1277,10 +1279,10 @@ internal class MutableBigInteger {
 
             // If f < g exchange f, g and c, d
             if (f.compare(g) < 0) {
-                temp = f
+                val temp = f
                 f = g
                 g = temp
-                sTemp = d
+                val sTemp = d
                 d = c
                 c = sTemp
             }
@@ -1385,8 +1387,8 @@ internal class MutableBigInteger {
             if (a == 0) return b
 
             // Right shift a & b till their last bits equal to 1.
-            val aZeros: Int = Integer.numberOfTrailingZeros(a)
-            val bZeros: Int = Integer.numberOfTrailingZeros(b)
+            val aZeros: Int = a.countTrailingZeroBits() // Integer.numberOfTrailingZeros(a)
+            val bZeros: Int = b.countTrailingZeroBits() //Integer.numberOfTrailingZeros(b)
             a = a ushr aZeros
             b = b ushr bZeros
 
@@ -1395,10 +1397,10 @@ internal class MutableBigInteger {
             while (a != b) {
                 if ((a + -0x80000000) > (b + -0x80000000)) {  // a > b as unsigned
                     a -= b
-                    a = a ushr Integer.numberOfTrailingZeros(a)
+                    a = a ushr a.countTrailingZeroBits() //Integer.numberOfTrailingZeros(a)
                 } else {
                     b -= a
-                    b = b ushr Integer.numberOfTrailingZeros(b)
+                    b = b ushr b.countTrailingZeroBits() //Integer.numberOfTrailingZeros(b)
                 }
             }
             return a shl t

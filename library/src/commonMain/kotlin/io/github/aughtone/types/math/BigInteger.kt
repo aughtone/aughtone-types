@@ -1946,14 +1946,14 @@ class BigInteger : Number, Comparable<BigInteger?> {
      *
      * @see .BigInteger
      */
-    fun toString(radix: Int): String? {
+    fun toString(radix: Int): String {
         var radix = radix
         if (signum == 0) return "0"
         if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX) radix = 10
 
         // Compute upper bound on number of digit groups and allocate space
         val maxNumDigitGroups = (4 * mag.size + 6) / 7
-        val digitGroup: Array<String?>? = kotlin.arrayOfNulls<String>(maxNumDigitGroups)
+        val digitGroup: Array<String?>? = arrayOfNulls<String>(maxNumDigitGroups)
 
         // Translate number to string, a digit group at a time
         var tmp = this.abs()
@@ -1961,17 +1961,14 @@ class BigInteger : Number, Comparable<BigInteger?> {
         while (tmp.signum != 0) {
             val d = longRadix!![radix]
 
-            val q: io.github.aughtone.types.math.MutableBigInteger =
-                io.github.aughtone.types.math.MutableBigInteger()
-            val a: io.github.aughtone.types.math.MutableBigInteger =
-                io.github.aughtone.types.math.MutableBigInteger(tmp.mag)
-            val b: io.github.aughtone.types.math.MutableBigInteger =
-                io.github.aughtone.types.math.MutableBigInteger(d.mag)
-            val r: io.github.aughtone.types.math.MutableBigInteger = a.divide(b, q)
+            val q: MutableBigInteger = MutableBigInteger()
+            val a: MutableBigInteger = MutableBigInteger(tmp.mag)
+            val b: MutableBigInteger = MutableBigInteger(d.mag)
+            val r: MutableBigInteger = a.divide(b, q)
             val q2: BigInteger = q.toBigInteger(tmp.signum * d.signum)
             val r2: BigInteger = r.toBigInteger(tmp.signum * d.signum)
 
-            digitGroup!![numGroups++] = Long.toString(r2.longValue(), radix)
+            digitGroup!![numGroups++] = r2.longValue().toString(radix) //Long.toString(r2.longValue(), radix)
             tmp = q2
         }
 
@@ -2003,7 +2000,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
      *
      * @see .BigInteger
      */
-    fun toString(): String? {
+    override fun toString(): String {
         return toString(10)
     }
 
