@@ -1873,7 +1873,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
      * @return `true` if and only if the specified Object is a
      * BigInteger whose value is numerically equal to this BigInteger.
      */
-    fun equals(x: Object?): Boolean {
+    override fun equals(x: Any?): Boolean {
         // This test is just an optimization, which may or may not help
         if (x === this) return true
 

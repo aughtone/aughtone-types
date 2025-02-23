@@ -27,13 +27,12 @@
  */
 package io.github.aughtone.types.math
 
-import java.math.BigInteger.LONG_MASK
 import java.util.Arrays
 import kotlin.concurrent.Volatile
-import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.Transient
+import kotlin.math.sign
 
 /**
  * Immutable, arbitrary-precision signed decimal numbers.  A
@@ -236,7 +235,7 @@ import kotlin.jvm.Transient
  * @author  Mike Cowlishaw
  * @author  Joseph D. Darcy
  */
-class BigDecimal : Number, Comparable<BigDecimal?> {
+class BigDecimal : Number, Comparable<BigDecimal> {
     /**
      * The unscaled value of this BigDecimal, as returned by [ ][.unscaledValue].
      *
@@ -2036,8 +2035,14 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
      * is negative, zero, or positive.
      */
     fun signum(): Int {
-        return if (intCompact != INFLATED) Long.signum(intCompact) else intVal.signum()
+//        return if (intCompact != INFLATED) Long.signum(intCompact) else intVal.signum()
+        return if (intCompact != INFLATED) intCompact.compareTo(0).sign else intVal.compareTo(0).sign
     }
+
+    // XXX Kotlin doesn't have a signum, it uses a compareT() function instead, we might want to make that work for this too.
+//    override fun compareTo(other: BigDecimal): Int {
+// // TODO implements this for Comparable
+//    }
 
     /**
      * Returns the *scale* of this `BigDecimal`.  If zero
@@ -2369,41 +2374,41 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
      * `(x.compareTo(y)` &lt;*op*&gt; `0)`, where
      * &lt;*op*&gt; is one of the six comparison operators.
      *
-     * @param  val `BigDecimal` to which this `BigDecimal` is
+     * @param  `val` `BigDecimal` to which this `BigDecimal` is
      * to be compared.
      * @return -1, 0, or 1 as this `BigDecimal` is numerically
      * less than, equal to, or greater than `val`.
      */
-    fun compareTo(`val`: BigDecimal): Int {
+    override fun compareTo(value: BigDecimal): Int {
         // Quick path for equal scale and non-inflated case.
-        if (scale == `val`.scale) {
+        if (scale == value.scale) {
             val xs = intCompact
-            val ys = `val`.intCompact
+            val ys = value.intCompact
             if (xs != INFLATED && ys != INFLATED) return if (xs != ys) (if (xs > ys) 1 else -1) else 0
         }
         val xsign = this.signum()
-        val ysign = `val`.signum()
+        val ysign = value.signum()
         if (xsign != ysign) return if (xsign > ysign) 1 else -1
         if (xsign == 0) return 0
-        val cmp = compareMagnitude(`val`)
+        val cmp = compareMagnitude(value)
         return if (xsign > 0) cmp else -cmp
     }
 
     /**
      * Version of compareTo that ignores sign.
      */
-    private fun compareMagnitude(`val`: BigDecimal): Int {
+    private fun compareMagnitude(value: BigDecimal): Int {
         // Match scales, avoid unnecessary inflation
-        var ys = `val`.intCompact
+        var ys = value.intCompact
         var xs = this.intCompact
         if (xs == 0L) return if (ys == 0L) 0 else -1
         if (ys == 0L) return 1
 
-        val sdiff = this.scale - `val`.scale
+        val sdiff = this.scale - value.scale
         if (sdiff != 0) {
             // Avoid matching scales if the (adjusted) exponents differ
             val xae = this.precision() - this.scale // [-1]
-            val yae = `val`.precision() - `val`.scale // [-1]
+            val yae = value.precision() - value.scale // [-1]
             if (xae < yae) return -1
             if (xae > yae) return 1
             var rb: io.github.aughtone.types.math.BigInteger? = null
@@ -2413,21 +2418,21 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
                     ys == INFLATED
                 ) {
                     rb = bigMultiplyPowerTen(-sdiff)
-                    return rb.compareMagnitude(`val`.intVal)
+                    return rb.compareMagnitude(value.intVal)
                 }
             } else { // sdiff > 0
                 if ((ys == INFLATED ||
                             (longMultiplyPowerTen(ys, sdiff).also { ys = it }) == INFLATED) &&
                     xs == INFLATED
                 ) {
-                    rb = `val`.bigMultiplyPowerTen(sdiff)
+                    rb = value.bigMultiplyPowerTen(sdiff)
                     return this.intVal.compareMagnitude(rb)
                 }
             }
         }
         if (xs != INFLATED) return if (ys != INFLATED) longCompareMagnitude(xs, ys) else -1
         else if (ys != INFLATED) return 1
-        else return this.intVal.compareMagnitude(`val`.intVal)
+        else return this.intVal.compareMagnitude(value.intVal)
     }
 
     /**
@@ -2445,8 +2450,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
      * @see .compareTo
      * @see .hashCode
      */
-    @Override
-    fun equals(x: Object?): Boolean {
+//    @Override
+    override fun equals(x: Any?): Boolean {
         if (x !is BigDecimal) return false
         val xDec = x
         if (x === this) return true
@@ -2458,7 +2463,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
             return xs == s
         } else if (xs != INFLATED) return xs == compactValFor(this.intVal)
 
-        return this.inflate().equals(xDec.inflate())
+        return this.inflate() == xDec.inflate()
     }
 
     /**
@@ -2500,8 +2505,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
      * @return hash code for this `BigDecimal`.
      * @see .equals
      */
-    @Override
-    fun hashCode(): Int {
+//    @Override
+    override fun hashCode(): Int {
         if (intCompact != INFLATED) {
             val val2 = if (intCompact < 0) -intCompact else intCompact
             val temp = (((val2 ushr 32).toInt()) * 31 +
@@ -2617,14 +2622,16 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
      *
      * @see .BigDecimal
      */
-    @Override
-    fun toString(): String? {
+//    @Override
+    override fun toString(): String {
         var sc = stringCache
         if (sc == null) {
             sc = layoutChars(true)
             stringCache = sc
         }
-        return sc
+        // XXX nonsensical in kotlin, but what the conversion did.
+        //  We can take this apart later.
+        return sc!!
     }
 
     /**
@@ -2936,7 +2943,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
     fun doubleValue(): Double {
         if (scale == 0 && intCompact != INFLATED) return intCompact.toDouble()
         // Somewhat inefficient, but guaranteed to work.
-        return Double.parseDouble(this.toString())
+        return this.toString().toDouble()// Double.parseDouble(this.toString())
     }
 
     /**
@@ -2987,7 +2994,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
          */
         fun putIntCompact(intCompact: Long): Int {
             var intCompact = intCompact
-            assert(intCompact >= 0)
+            require(intCompact >= 0)
 
             var q: Long
             var r: Int
@@ -2996,7 +3003,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
             var charPos = compactCharArray.size
 
             // Get 2 digits/iteration using longs until quotient fits into an int
-            while (intCompact > Integer.MAX_VALUE) {
+            while (intCompact > Int.MAX_VALUE) {
                 q = intCompact / 100
                 r = (intCompact - q * 100).toInt()
                 intCompact = q
@@ -3195,19 +3202,20 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
         intCompact = compactValFor(intVal)
     }
 
-    /**
-     * Serialize this `BigDecimal` to the stream in question
-     *
-     * @param s the stream to serialize to.
-     */
-    @Throws(IOException::class)
-    private fun writeObject(s: ObjectOutputStream) {
-        // Must inflate to maintain compatible serial form.
-        this.inflate()
-
-        // Write proper fields
-        s.defaultWriteObject()
-    }
+    // XXX part of Javas serialization system, we don't need it.
+//    /**
+//     * Serialize this `BigDecimal` to the stream in question
+//     *
+//     * @param s the stream to serialize to.
+//     */
+//    @Throws(IOException::class)
+//    private fun writeObject(s: ObjectOutputStream) {
+//        // Must inflate to maintain compatible serial form.
+//        this.inflate()
+//
+//        // Write proper fields
+//        s.defaultWriteObject()
+//    }
 
 
     /**
@@ -3259,7 +3267,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
     private fun checkScale(`val`: Long): Int {
         var asInt = `val`.toInt()
         if (asInt.toLong() != `val`) {
-            asInt = if (`val` > Integer.MAX_VALUE) Integer.MAX_VALUE else Integer.MIN_VALUE
+            asInt = if (`val` > Int.MAX_VALUE) Int.MAX_VALUE else Int.MIN_VALUE
             val b: io.github.aughtone.types.math.BigInteger?
             if (intCompact != 0L &&
                 ((intVal.also { b = it }) == null || b.signum() != 0)
@@ -3359,8 +3367,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> {
          * Sentinel value for [.intCompact] indicating the
          * significand information is only available from `intVal`.
          */
-        @JvmField
-        val INFLATED: Long = Long.MIN_VALUE
+        const val INFLATED: Long = Long.MIN_VALUE
 
         // All 18-digit base ten strings fit into a long; not all 19-digit
         // strings will
