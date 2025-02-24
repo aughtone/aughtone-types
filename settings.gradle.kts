@@ -25,5 +25,6 @@ dependencyResolutionManagement {
     }
 }
 
+
 rootProject.name = "framework-types"
-include(":library")
+include(":framework-types")
