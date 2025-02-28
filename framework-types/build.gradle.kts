@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "io.github.aughtone"
-version = "1.0.0-alpha1"
+version = "1.0.0-alpha2"
 
 
 kotlin {
@@ -24,6 +24,14 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
+    }
+    // See: https://kotlinlang.org/docs/js-project-setup.html
+    js(IR) {
+        browser {
+            generateTypeScriptDefinitions()
+        }
+        useEsModules() // Enables ES2015 modules
+        // binaries.executable()
     }
     iosX64()
     iosArm64()
