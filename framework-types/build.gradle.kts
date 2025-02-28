@@ -33,11 +33,6 @@ kotlin {
         useEsModules() // Enables ES2015 modules
         // binaries.executable()
     }
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    linuxX64()
-
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser {
@@ -54,6 +49,10 @@ kotlin {
             }
         }
     }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    linuxX64()
 
     sourceSets {
         val commonMain by getting {
@@ -75,7 +74,7 @@ kotlin {
         //  https://youtrack.jetbrains.com/issue/KT-57847/Move-common-for-all-the-backends-module-name-compiler-option-to-the-KotlinCommonCompilerOptions
         // moduleName = "io.github.aughtone.types"
     }
-    // XXX Remove whent he above is resolved. This is a workaround.
+    // XXX Remove when the above is resolved. This is a workaround.
     //  https://youtrack.jetbrains.com/issue/KT-66568/w-KLIB-resolver-The-same-uniquename...-found-in-more-than-one-library
 
     metadata {
