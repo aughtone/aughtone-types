@@ -27,4 +27,4 @@ dependencyResolutionManagement {
 
 
 rootProject.name = "framework-types"
-include(":framework-types")
+include(":types")
