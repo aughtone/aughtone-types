@@ -29,5 +29,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Altitude(
     val meters: Double,
-    val accuracy: Double? = null,
+    val accuracy: Float? = null,
 )
