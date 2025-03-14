@@ -14,8 +14,10 @@
 
 This library for set up for [Kotlin Multiplatform](https://www.jetbrains.com/kotlin-multiplatform/) (KMP)
 
-While developing project for KMP I fond that all the libraries i wanted to ue were duplicating data 
-types, like LatLong. I decided that at lest for myown work, and for anyone else that was not happy 
+While developing projects in KMP I found that all the libraries I wanted to use were duplicating data 
+types. 
+
+I decided that at lest for my own work, and for anyone else that was not happy 
 with that situation, there could be a library of just types we can all share.
 
 There are also situations where we need to go down to the platform layer to properly get a type, 
