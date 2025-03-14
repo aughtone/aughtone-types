@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "io.github.aughtone"
-version = "1.0.0"
+version = "${libs.versions.versionName.get().toString()}${libs.versions.versionNameSuffix.get().toString()}"
 
 
 kotlin {
@@ -49,9 +49,28 @@ kotlin {
             }
         }
     }
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "TypesKit"
+            isStatic = true
+//            binaryOption(
+//                "bundleId",
+//                libs.versions.applicationId.get().toString()
+//            ) //"app.occurrence"
+//            binaryOption(
+//                "bundleShortVersionString",
+//                libs.versions.versionName.get().toString()
+//            ) //"1.0.0"
+//            binaryOption("bundleVersion", libs.versions.versionCode.get().toString()) //"1"
+        }
+    }
+//    iosX64()
+//    iosArm64()
+//    iosSimulatorArm64()
 //    linuxX64() // XXX need to come back to this
 
     sourceSets {
@@ -104,7 +123,7 @@ kotlin {
 }
 
 android {
-    namespace = "io.github.aughtone.types"
+    namespace = libs.versions.applicationId.get().toString()
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
