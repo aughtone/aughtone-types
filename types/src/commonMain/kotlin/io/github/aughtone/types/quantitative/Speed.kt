@@ -12,4 +12,4 @@ import kotlinx.serialization.Serializable
  * @throws IllegalArgumentException if `mps` is negative or if `accuracy` is negative when provided.
  */
 @Serializable
-data class Speed(val mps: Double, val accuracy: Double? = null)
+data class Speed(val mps: Float, val accuracy: Float? = null)

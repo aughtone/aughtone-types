@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "io.github.aughtone"
-version = "1.0.0-alpha1"
+version = "1.0.0"
 
 
 kotlin {
@@ -25,11 +25,14 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    linuxX64()
-
+    // See: https://kotlinlang.org/docs/js-project-setup.html
+    js(IR) {
+        browser {
+            generateTypeScriptDefinitions()
+        }
+        useEsModules() // Enables ES2015 modules
+        // binaries.executable()
+    }
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser {
@@ -46,8 +49,26 @@ kotlin {
             }
         }
     }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+//    linuxX64() // XXX need to come back to this
 
     sourceSets {
+        val jsMain by getting {
+            dependencies {
+                implementation(npm("currency-codes", "2.2.0"))
+                implementation(npm("currency-symbol-map", "5.1.0"))
+
+            }
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(npm("currency-codes", "2.2.0"))
+                implementation(npm("currency-symbol-map", "5.1.0"))
+
+            }
+        }
         val commonMain by getting {
             dependencies {
                 //put your multiplatform dependencies here
@@ -67,7 +88,7 @@ kotlin {
         //  https://youtrack.jetbrains.com/issue/KT-57847/Move-common-for-all-the-backends-module-name-compiler-option-to-the-KotlinCommonCompilerOptions
         // moduleName = "io.github.aughtone.types"
     }
-    // XXX Remove whent he above is resolved. This is a workaround.
+    // XXX Remove when the above is resolved. This is a workaround.
     //  https://youtrack.jetbrains.com/issue/KT-66568/w-KLIB-resolver-The-same-uniquename...-found-in-more-than-one-library
 
     metadata {
@@ -101,13 +122,13 @@ mavenPublishing {
         signAllPublications()
     }
 
-    coordinates(group.toString(), "framework-types", version.toString())
+    coordinates(group.toString(), "types", version.toString())
 
     pom {
         name = "Aught One Types"
         description = "A library of reusable types."
         inceptionYear = "2025"
-        url = "https://github.com/aughtone/framework-types"
+        url = "https://github.com/aughtone/aughtone-types"
         licenses {
             license {
                 name = "The Apache License, Version 2.0"
@@ -123,9 +144,9 @@ mavenPublishing {
             }
         }
         scm {
-            url = "https://github.com/aughtone/framework-types"
-            connection = "https://github.com/aughtone/framework-types.git"
-            developerConnection = "git@github.com:aughtone/framework-types.git"
+            url = "https://github.com/aughtone/aughtone-types"
+            connection = "https://github.com/aughtone/aughtone-types.git"
+            developerConnection = "git@github.com:aughtone/aughtone-types.git"
         }
     }
 }

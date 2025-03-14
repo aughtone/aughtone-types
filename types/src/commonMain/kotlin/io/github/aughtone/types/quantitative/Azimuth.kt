@@ -20,4 +20,4 @@ import kotlinx.serialization.Serializable
  *  - An azimuth of -90.0 degrees will be normalized to 270.0 degrees.
  */
 @Serializable
-data class Azimuth(val degrees: Double, val accuracy: Double? = null)
+data class Azimuth(val degrees: Float, val accuracy: Float? = null)

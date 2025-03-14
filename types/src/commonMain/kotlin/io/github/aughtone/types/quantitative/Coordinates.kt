@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
 data class Coordinates(
     val latitude: Double,
     val longitude: Double,
-    val accuracy: Double? = null,
+    val accuracy: Float? = null,
 ) {
     /**
      *  Applies a delta change to the current coordinates.
