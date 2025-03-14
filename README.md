@@ -35,6 +35,15 @@ Feel free to fork it and make improvements, I'll keep up as best I can.
 implementation("io.github.aughtone:types:${version}")
 ```
 
+```gradle
+[versions]
+aughtone-types = "${version}"
+
+[libraries]
+aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
+
+```
+
 # Quick Start
 
 You can use a Coordinate object, or a pair of Double values to generate a geohash from.
