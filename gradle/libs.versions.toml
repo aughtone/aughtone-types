@@ -1,0 +1,23 @@
+[versions]
+applicationId = "io.github.aughtone.types"
+versionName = "1.0.0"
+versionNameSuffix = "-alpha2"
+android-minSdk = "24"
+android-compileSdk = "35"
+
+agp = "8.9.0"
+kotlin = "2.1.10"
+kotlinx-serialization = "1.8.0"
+kotlinx-datetime = "0.6.2"
+vanniktech = "0.30.0"
+
+[libraries]
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+[plugins]
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech" }
