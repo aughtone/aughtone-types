@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "io.github.aughtone"
-version = "1.0.0-alpha2"
+version = "1.0.0"
 
 
 kotlin {
@@ -52,9 +52,23 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    linuxX64()
+//    linuxX64() // XXX need to come back to this
 
     sourceSets {
+        val jsMain by getting {
+            dependencies {
+                implementation(npm("currency-codes", "2.2.0"))
+                implementation(npm("currency-symbol-map", "5.1.0"))
+
+            }
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(npm("currency-codes", "2.2.0"))
+                implementation(npm("currency-symbol-map", "5.1.0"))
+
+            }
+        }
         val commonMain by getting {
             dependencies {
                 //put your multiplatform dependencies here
@@ -108,13 +122,13 @@ mavenPublishing {
         signAllPublications()
     }
 
-    coordinates(group.toString(), "framework-types", version.toString())
+    coordinates(group.toString(), "types", version.toString())
 
     pom {
         name = "Aught One Types"
         description = "A library of reusable types."
         inceptionYear = "2025"
-        url = "https://github.com/aughtone/framework-types"
+        url = "https://github.com/aughtone/aughtone-types"
         licenses {
             license {
                 name = "The Apache License, Version 2.0"
@@ -130,9 +144,9 @@ mavenPublishing {
             }
         }
         scm {
-            url = "https://github.com/aughtone/framework-types"
-            connection = "https://github.com/aughtone/framework-types.git"
-            developerConnection = "git@github.com:aughtone/framework-types.git"
+            url = "https://github.com/aughtone/aughtone-types"
+            connection = "https://github.com/aughtone/aughtone-types.git"
+            developerConnection = "git@github.com:aughtone/aughtone-types.git"
         }
     }
 }
