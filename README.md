@@ -1,5 +1,5 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/framework-types?style=flat)
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/types?style=flat)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.10-blue.svg?logo=kotlin&style=flat)](http://kotlinlang.org)
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-brightgreen?logo=kotlin)](https://github.com/JetBrains/compose-multiplatform)
 
@@ -30,7 +30,7 @@ Feel free to fork it and make improvements, I'll keep up as best I can.
 * Currently there are type used for Location. More will be added as needed. 
 
 # Installation
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/framework-types?style=flat)
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/types?style=flat)
 ```gradle
 implementation("io.github.aughtone:types:${version}")
 ```
