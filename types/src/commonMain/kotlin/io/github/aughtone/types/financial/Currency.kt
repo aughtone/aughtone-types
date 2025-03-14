@@ -23,4 +23,13 @@ import kotlinx.serialization.Serializable
  * ```
  */
 @Serializable
-data class Currency(val currencyCode: String, val symbol: String)
+data class Currency(
+    val currencyCode: String,
+    val symbol: String,
+    val displayName: String,
+    val fractionDigits: Int,
+    val numericCode: Int,
+)
+
+
+expect fun currencyFor(currencyCode: String): Currency?
