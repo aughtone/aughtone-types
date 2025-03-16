@@ -2,18 +2,34 @@ package io.github.aughtone.types.net
 
 import kotlinx.serialization.Serializable
 
+
 /**
- * Represents a Uniform Resource Identifier (URI) as defined by RFC 3986.
+ * Represents a Uniform Resource Identifier (URI).
  *
  * A URI is a compact sequence of characters that identifies an abstract or physical resource.
+ * This class provides a structured representation of a URI, including its scheme, authority, path, query, and fragment components.
  *
- * @property scheme The scheme component of the URI (e.g., "http", "https", "ftp").
- * @property userInfo The user information component, if present, which is typically a username and optional password.
- * @property authority The authority component, typically consisting of a host and an optional port number.
- * @property port The port number, if specified in the authority component.
- * @property path The path component, which typically identifies a resource within the scope of the authority.
- * @property query The query component, which typically contains parameters or data for the resource.
- * @property fragment The fragment component, which typically identifies a secondary resource or a specific part of a primary resource.
+ * The general format of a URI is:
+ * `scheme:[//authority]path[?query][#fragment]`
+ *
+ * Where:
+ * - **scheme**: The naming scheme of the URI (e.g., "http", "https", "ftp").
+ * - **authority**: The authority component, typically consisting of a userinfo, host, and port.
+ * - **path**: The hierarchical path to the resource.
+ * - **query**: The query string, providing additional parameters to the resource.
+ * - **fragment**: The fragment identifier, specifying a portion of the resource.
+ *
+ * This class also provides methods to convert a URI to other related resource identifiers like
+ * [Urn] and [Url].
+ *
+ * @property scheme The scheme of the URI.
+ * @property authority The authority component of the URI.
+ * @property path The path component of the URI.
+ * @property query The query string component of the URI.
+ * @property fragment The fragment identifier component of the URI.
+ *
+ * @see <a href="https://en.wikipedia.org/wiki/Uniform_Resource_Identifier">Uniform Resource Identifier</a>
+ * @see <a href="https://auth0.com/blog/url-uri-urn-differences/">URL, URI, URN Differences</a>
  */
 @Serializable
 data class Uri(

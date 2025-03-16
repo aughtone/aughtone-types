@@ -1,6 +1,15 @@
 package io.github.aughtone.types.net
 
 
+/**
+ * Utility object for URL encoding strings.
+ *
+ * This class provides a method to encode strings according to the URL encoding rules,
+ * which involves replacing unsafe characters with their percent-encoded equivalents (e.g., "%20" for a space).
+ * It supports UTF-8 encoding for characters outside the basic ASCII range.
+ *
+ * It's based in RFC 3986 rules.
+ */
 object UrlEncoder {
     /**
      * Set of characters that are considered safe (unreserved) and do not need to be encoded.
