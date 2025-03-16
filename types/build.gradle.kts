@@ -71,7 +71,7 @@ kotlin {
 //    iosX64()
 //    iosArm64()
 //    iosSimulatorArm64()
-//    linuxX64() // XXX need to come back to this
+    linuxX64() // XXX need to come back to this
 
     sourceSets {
         val jsMain by getting {
