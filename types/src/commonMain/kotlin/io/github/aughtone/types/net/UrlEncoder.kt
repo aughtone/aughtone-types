@@ -1,7 +1,7 @@
 package io.github.aughtone.types.net
 
 
-class UrlEncoder {
+object UrlEncoder {
     /**
      * Set of characters that are considered safe (unreserved) and do not need to be encoded.
      */

@@ -11,7 +11,7 @@ class UrlEncoderTest {
     val testChineseParam = "你好 你好"
     val testEncodedChineseParam = "你好+你好"
 
-    private val encoder = UrlEncoder()
+    private val encoder = UrlEncoder
 
     @Test
     fun testParamWithSpaceIsEncoded() {
