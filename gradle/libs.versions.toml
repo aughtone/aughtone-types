@@ -1,7 +1,7 @@
 [versions]
 applicationId = "io.github.aughtone.types"
-versionName = "1.0.0"
-versionNameSuffix = "-alpha2"
+versionIos = "1.0.0"
+versionName = "1.0.0-alpha3"
 android-minSdk = "24"
 android-compileSdk = "35"
 

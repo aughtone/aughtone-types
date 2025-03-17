@@ -13,9 +13,9 @@ plugins {
 }
 
 group = "io.github.aughtone"
-version = "${libs.versions.versionName.get().toString()}${libs.versions.versionNameSuffix.get().toString()}"
+version = libs.versions.versionName.get().toString()
 
-
+//noinspection WrongGradleMethod
 kotlin {
     jvm()
     androidTarget {
@@ -57,21 +57,21 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "TypesKit"
             isStatic = true
-//            binaryOption(
-//                "bundleId",
-//                libs.versions.applicationId.get().toString()
-//            ) //"app.occurrence"
-//            binaryOption(
-//                "bundleShortVersionString",
-//                libs.versions.versionName.get().toString()
-//            ) //"1.0.0"
+            binaryOption(
+                "bundleId",
+                libs.versions.applicationId.get().toString()
+            ) //"app.occurrence"
+            binaryOption(
+                "bundleShortVersionString",
+                libs.versions.versionIos.get().toString()
+            ) //"1.0.0"
 //            binaryOption("bundleVersion", libs.versions.versionCode.get().toString()) //"1"
         }
     }
 //    iosX64()
 //    iosArm64()
 //    iosSimulatorArm64()
-//    linuxX64() // XXX need to come back to this
+    linuxX64() // XXX need to come back to this
 
     sourceSets {
         val jsMain by getting {
