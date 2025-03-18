@@ -34,10 +34,13 @@ actual fun currencyFor(currencyCode: String): Currency? {
     }
     return Currency(
         currencyCode = currencyCode,
-        symbol = getSymbolFromCurrency(currencyCode) ?: "?",
-        displayName = codeDetails?.name ?: currencyCode,
+        symbol = getSymbolFromCurrency(currencyCode)
+            ?: "?", // maybe we should all this to the backup map.
+        displayName = codeDetails?.name ?: currencyDataMap[currencyCode]?.displayName
+        ?: currencyCode,
         fractionDigits = codeDetails?.digits ?: 2,
-        numericCode = codeDetails?.number?.toInt() ?: -1
+        numericCode = codeDetails?.number?.toInt() ?: currencyDataMap[currencyCode]?.numericCode
+        ?: -1
     )
 }
 
