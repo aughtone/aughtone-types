@@ -30,6 +30,3 @@ data class Currency(
     val fractionDigits: Int,
     val numericCode: Int,
 )
-
-
-expect fun currencyFor(currencyCode: String): Currency?
