@@ -3,7 +3,6 @@ package io.github.aughtone.types.financial
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
-import kotlinx.serialization.json.Json as KotlinJson
 
 //{
 //    "code": "AED",
@@ -27,28 +26,53 @@ internal data class CurrencyCodeData(
     val name: String,
 )
 
+//@JsModule("currency-codes")
+////@JsNonModule
+//external val currencyCodes: dynamic
+
+////// https://www.npmjs.com/package/currency-symbol-map
+//@JsModule("currency-symbol-map")
+////@JsNonModule
+////external val getSymbolFromCurrency: dynamic
+//external fun getSymbolFromCurrency(currencyCode: String): String?
+@JsModule("currency-symbol-map")
+external val currencySymbolMap:dynamic
+
 
 actual fun currencyFor(currencyCode: String): Currency? {
-    val codeDetails: CurrencyCodeData? = code(currencyCode)?.let {
-        KotlinJson.decodeFromString<CurrencyCodeData>(it)
-    }
+
+//    val js = "Intl.NumberFormat(\"${""}\", { style: \"currency\", currency: \"EUR\" })"
+//    js("const getSymbolFromCurrency = require(\'currency-symbol-map\')")
+//    js(currencySymbolMap)
+//    js("""
+//
+//         module.exports = function getSymbolWithCode (currencyCode) {
+//            return currencySymbolMap[currencyCode];
+//        }
+//
+//    """)
+
+//    println(getSymbolWithCode(currencyCode))
+    println(currencyCode)
+//    println(getSymbolFromCurrency)
+//    println(getSymbolFromCurrency(currencyCode))
+//    println(currencyCodes)
+//    println(currencyCodes.code)
+//    println(currencyCodes.code[currencyCode])
+//    println(currencyCodes.codes)
+//    println(currencyCodes.codes[currencyCode])
+
     return Currency(
         currencyCode = currencyCode,
-        symbol = getSymbolFromCurrency(currencyCode) ?: "?",
-        displayName = codeDetails?.name ?: currencyDataMap[currencyCode]?.displayName
-        ?: currencyCode,
-        fractionDigits = codeDetails?.digits ?: 2,
-        numericCode = codeDetails?.number?.toInt() ?: currencyDataMap[currencyCode]?.numericCode
-        ?: -1
+        symbol = getSymbolWithCode(currencyCode) ?: "?",
+        displayName = "", //codeDetails?.name ?: currencyDataMap[currencyCode]?.displayName ?: currencyCode,
+        fractionDigits = 2, //codeDetails?.digits ?: 2,
+        numericCode = -1, //codeDetails?.number?.toInt() ?: currencyDataMap[currencyCode]?.numericCode ?: -1
     )
 }
 
+//fun formatDetails(currencyCode: String): String {
+//    return js("function greet (name) { return \"Hello, \" + name + \"!\";}")
+//}
 
-@JsModule("currency-codes")
-@JsNonModule
-external fun code(code: String): String?
-
-
-@JsModule("currency-symbol-map")
-@JsNonModule
-external fun getSymbolFromCurrency(code: String): String?
+external fun getSymbolWithCode(currencyCode: String): String

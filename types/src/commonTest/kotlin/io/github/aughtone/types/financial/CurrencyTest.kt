@@ -8,11 +8,11 @@ import kotlin.test.assertNotNull
 class CurrencyTest {
     @Test
     fun `get correct currency`() {
-        val currency = currencyFor("CAN")
+        val currency = currencyFor("CAD")
         assertNotNull(currency)
-        assertEquals("CAN", currency.currencyCode)
+        assertEquals("CAD", currency.currencyCode)
         assertEquals("$", currency.symbol)
-        assertEquals("?", currency.displayName)
-        assertEquals(8, currency.numericCode)
+        assertEquals("Canadian Dollar", currency.displayName)
+        assertEquals(124, currency.numericCode)
     }
 }
