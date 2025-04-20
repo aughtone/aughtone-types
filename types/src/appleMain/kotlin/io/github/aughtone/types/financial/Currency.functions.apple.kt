@@ -2,8 +2,8 @@ package io.github.aughtone.types.financial
 
 import platform.Foundation.NSLocale
 import platform.Foundation.NSLocaleCurrencyCode
-import platform.Foundation.preferredLanguages
 import platform.Foundation.NSNumberFormatter
+import platform.Foundation.preferredLanguages
 
 
 actual fun currencyFor(currencyCode: String): Currency? {
@@ -30,10 +30,12 @@ actual fun currencyFor(currencyCode: String): Currency? {
     val currency = Currency(
         currencyCode = formatter.currencyCode,
         symbol = formatter.currencySymbol, //result2.objectForKey(NSLocaleCurrencySymbol).toString(),
-        displayName = current.displayNameForKey(NSLocaleCurrencyCode, formatter.currencyCode) ?:
-            currencyDataMap[formatter.currencyCode]?.displayName?: formatter.internationalCurrencySymbol, // international currency symbol is the same as the symbol, but we can use it as a backup.
+        displayName = current.displayNameForKey(NSLocaleCurrencyCode, formatter.currencyCode)
+            ?: currencyDataMap[formatter.currencyCode]?.displayName
+            ?: formatter.internationalCurrencySymbol, // international currency symbol is the same as the symbol, but we can use it as a backup.
         fractionDigits = formatter.maximumFractionDigits.toInt(), //2,
-        numericCode = currencyDataMap[formatter.currencyCode]?.numericCode ?: -1 // if we dont get this, apple codes doesn't seem to have ean equivelent.
+        numericCode = currencyDataMap[formatter.currencyCode]?.numericCode
+            ?: -1 // if we don't get this, apple codes doesn't seem to have ean equivalent.
     )
- return currency
+    return currency
 }
