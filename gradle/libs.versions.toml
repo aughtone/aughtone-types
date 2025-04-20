@@ -3,13 +3,13 @@ applicationId = "io.github.aughtone.types"
 versionIos = "1.0.0"
 versionName = "1.0.0-alpha3"
 android-minSdk = "24"
-android-compileSdk = "35"
+android-compileSdk = "36"
 
 agp = "8.9.1"
-kotlin = "2.1.10"
+kotlin = "2.1.20"
 kotlinx-serialization = "1.8.0"
 kotlinx-datetime = "0.6.2"
-vanniktech = "0.30.0"
+vanniktech = "0.31.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
