@@ -81,16 +81,14 @@ kotlin {
     sourceSets {
         val jsMain by getting {
             dependencies {
-                implementation(npm("currency-codes", "2.2.0"))
-                implementation(npm("currency-symbol-map", "5.1.0"))
-
+//                implementation(npm("currency-codes", "2.2.0"))
+//                implementation(npm("currency-symbol-map", "5.1.0"))
             }
         }
         val wasmJsMain by getting {
             dependencies {
-                implementation(npm("currency-codes", "2.2.0"))
-                implementation(npm("currency-symbol-map", "5.1.0"))
-
+//                implementation(npm("currency-codes", "2.2.0"))
+//                implementation(npm("currency-symbol-map", "5.1.0"))
             }
         }
         val commonMain by getting {
