@@ -29,6 +29,10 @@ kotlin {
     js(IR) {
         browser {
             generateTypeScriptDefinitions()
+//            useCommonJs()
+            webpackTask {
+                output.libraryTarget = "commonjs2"
+            }
         }
         useEsModules() // Enables ES2015 modules
         // binaries.executable()
@@ -68,24 +72,23 @@ kotlin {
 //            binaryOption("bundleVersion", libs.versions.versionCode.get().toString()) //"1"
         }
     }
-//    iosX64()
-//    iosArm64()
-//    iosSimulatorArm64()
-    linuxX64() // XXX need to come back to this
+
+    // XXX need to come back to this.
+    //  Getting it to work for linux may be complex.
+    //  We'll probably need to load external data.
+    // linuxX64()
 
     sourceSets {
         val jsMain by getting {
             dependencies {
-                implementation(npm("currency-codes", "2.2.0"))
-                implementation(npm("currency-symbol-map", "5.1.0"))
-
+//                implementation(npm("currency-codes", "2.2.0"))
+//                implementation(npm("currency-symbol-map", "5.1.0"))
             }
         }
         val wasmJsMain by getting {
             dependencies {
-                implementation(npm("currency-codes", "2.2.0"))
-                implementation(npm("currency-symbol-map", "5.1.0"))
-
+//                implementation(npm("currency-codes", "2.2.0"))
+//                implementation(npm("currency-symbol-map", "5.1.0"))
             }
         }
         val commonMain by getting {
