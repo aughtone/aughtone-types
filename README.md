@@ -90,16 +90,16 @@ on the underlying system (Android, iOS), or by an included resource if the platf
 easy access to Currency information (JS, WasmJs, Linux). Where a platform is missing information it 
 will be supplemented from the internal resource.
 
-* Example usage:
-* ```kotlin
-* val caDollar:Currency = currencyFor("CAD")
-* val euro:Currency = currencyFor("EUR")
-* 
-* println("Canadian Dollar code: ${caDollar.code}") // Output: CAD
-* println("Euro symbol: ${caDollar.symbol}") // Output: €
-* println("Euro number: ${euro.number}") // Output: 978
-* println("Euro symbol: ${euro.symbol}") // Output: €
-* ```
+**Example usage:**
+```kotlin
+val caDollar:Currency = currencyFor("CAD")
+val euro:Currency = currencyFor("EUR")
+
+println("Canadian Dollar code: ${caDollar.code}") // Output: CAD
+println("Euro symbol: ${caDollar.symbol}") // Output: €
+println("Euro number: ${euro.number}") // Output: 978
+println("Euro symbol: ${euro.symbol}") // Output: €
+```
 
 Currency is also used as part of a Money type, that represents a monetary value with an optional currency. 
 ```kotlin
