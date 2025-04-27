@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-// XXX Name tets have been excluded because the differently platforms sometimes have conflicting data.
+// XXX Name tests have been excluded because the different platforms sometimes have conflicting data.
 class CurrencyTest {
     @Test
     fun `get correct CAD currency`() {
