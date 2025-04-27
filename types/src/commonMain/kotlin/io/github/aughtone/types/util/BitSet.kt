@@ -1,7 +1,18 @@
 package io.github.aughtone.types.util
 
-import kotlin.collections.get
-
+/**
+ * Represents a mutable set of bits.
+ *
+ * This class provides a compact way to store and manipulate a sequence of boolean values.
+ * It is implemented using an array of `Long`s, where each bit in a `Long` represents a
+ * boolean value in the set.
+ *
+ * The size of the set is fixed upon creation, and bits are accessed using zero-based indices.
+ *
+ * @property size The total number of bits in the set. Defaults to 1.
+ * @constructor Creates a new `BitSet` with the specified size.
+ * @throws IllegalArgumentException if the size is negative.
+ */
 class BitSet(private val size: Int = 1) {
     private val data: LongArray
     private val vectorSize: Int

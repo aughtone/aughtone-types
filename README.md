@@ -21,11 +21,11 @@ This library also includes platform-specific types, such as `Locale` and `Curren
 
 ## Features
 
-*   **Coordinates:** Represents a geographical location with latitude and longitude.
-* **Altitude:** Represents a height above sea level.
-*   **Money:** Represents a monetary amount with a value and currency.
-*   **BankersInteger:** Represents an integer type that applies Banker's Rounding when operations produce non-integer results.
-* **Cents and Dollars**: Functions for converting between monetary values in dollars and cents.
+* **Financial types:** Currency and Money types.
+* **Geo types:** Location at the moment.
+* **Quantitative types:** Types that have a specific range of values.
+* **URI types:** Various types of URIs.
+* **Utility types**: Types taht don't really fint into other categories
 
 ## Rational
 While developing projects in KMP my peers and I found that all the libraries I wanted to use were duplicating data 
