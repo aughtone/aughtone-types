@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class GeoUriTest {
     // Spec is at: https://datatracker.ietf.org/doc/html/rfc5870
-    private val geoUri = GeoUri(
+    private val gri = Gri(
         latitude = 48.2010,
         longitude = 16.3695,
         altitude = 183.0,
@@ -14,37 +14,37 @@ class GeoUriTest {
 
     @Test
     fun `Full GeoUri to string`() {
-        assertEquals("geo:48.201,16.3695,183.0;crs=wgs84;u=15", geoUri.toString())
+        assertEquals("geo:48.201,16.3695,183.0;crs=wgs84;u=15", gri.toString())
     }
 
     @Test
     fun `GeoUri to string with no uncertainty`() {
-        assertEquals("geo:48.201,16.3695,183.0;crs=wgs84", geoUri.copy(uncertainty = null).toString())
+        assertEquals("geo:48.201,16.3695,183.0;crs=wgs84", gri.copy(uncertainty = null).toString())
     }
 
     @Test
     fun `GeoUri to string with no crs`() {
-        assertEquals("geo:48.201,16.3695,183.0;u=15", geoUri.copy(crs = null).toString())
+        assertEquals("geo:48.201,16.3695,183.0;u=15", gri.copy(crs = null).toString())
     }
 
     @Test
     fun `GeoUri to string with no crs or uncertainty`() {
         assertEquals(
             "geo:48.201,16.3695,183.0",
-            geoUri.copy(crs = null, uncertainty = null).toString()
+            gri.copy(crs = null, uncertainty = null).toString()
         )
     }
 
     @Test
     fun `GeoUri to string with no altitude`() {
-        assertEquals("geo:48.201,16.3695;crs=wgs84;u=15", geoUri.copy(altitude = null).toString())
+        assertEquals("geo:48.201,16.3695;crs=wgs84;u=15", gri.copy(altitude = null).toString())
     }
 
     @Test
     fun `GeoUri to string with no crs or uncertainty or altitude`() {
         assertEquals(
             "geo:48.201,16.3695",
-            geoUri.copy(altitude = null, crs = null, uncertainty = null).toString()
+            gri.copy(altitude = null, crs = null, uncertainty = null).toString()
         )
     }
 

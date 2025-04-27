@@ -23,18 +23,17 @@ actual fun currencyFor(currencyCode: String): Currency? {
     val result1: List<NSLocale> = NSLocale.preferredLanguages.map { NSLocale(it as String) }
     val result2: NSLocale =
         result1.first { currencyCode == it.objectForKey(NSLocaleCurrencyCode).toString() }
-
     val formatter = NSNumberFormatter()
     formatter.setLocale(result2)
 
     val currency = Currency(
-        currencyCode = formatter.currencyCode,
+        code = formatter.currencyCode,
         symbol = formatter.currencySymbol, //result2.objectForKey(NSLocaleCurrencySymbol).toString(),
-        displayName = current.displayNameForKey(NSLocaleCurrencyCode, formatter.currencyCode)
-            ?: currencyDataMap[formatter.currencyCode]?.displayName
+        name = current.displayNameForKey(NSLocaleCurrencyCode, formatter.currencyCode)
+            ?: currencyResourceMap[formatter.currencyCode]?.name
             ?: formatter.internationalCurrencySymbol, // international currency symbol is the same as the symbol, but we can use it as a backup.
-        fractionDigits = formatter.maximumFractionDigits.toInt(), //2,
-        numericCode = currencyDataMap[formatter.currencyCode]?.numericCode
+        digits = formatter.maximumFractionDigits.toInt(), //2,
+        number = currencyResourceMap[formatter.currencyCode]?.number
             ?: -1 // if we don't get this, apple codes doesn't seem to have ean equivalent.
     )
     return currency

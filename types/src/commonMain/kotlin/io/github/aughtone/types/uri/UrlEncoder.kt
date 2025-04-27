@@ -18,6 +18,19 @@ object UrlEncoder {
         '-', '_', '.', '*' // RFC 3986 unreserved characters
     )
 
+    /**
+     * Encodes a string according to URL encoding rules.
+     *
+     * This function takes a string and encodes it to a URL-safe format.
+     * It follows the following rules:
+     * - Alphanumeric characters and characters in [UNRESERVED_CHARS] are left as-is.
+     * - Spaces are encoded as '+'.
+     * - All other characters are encoded using percent-encoding (%XX),
+     *   where XX is the uppercase hexadecimal representation of the character's UTF-8 byte value.
+     *
+     * @param value The string to be encoded.
+     * @return The URL-encoded string.
+     */
     fun encode(value: String): String {
         val encoded = StringBuilder()
 

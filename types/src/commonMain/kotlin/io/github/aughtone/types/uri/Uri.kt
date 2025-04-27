@@ -43,10 +43,43 @@ data class Uri(
     // See: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
     // See: https://auth0.com/blog/url-uri-urn-differences/
 
+    /**
+     * Returns a string representation of the URI.
+     *
+     * The string is formatted according to the general URI syntax:
+     * `scheme://authority/path?query#fragment`
+     *
+     * @return A string representation of the URI.
+     */
     override fun toString(): String = "$scheme://${authority}/$path?$query#$fragment"
 
+    /**
+     * Converts this URI to a Uniform Resource Name (URN).
+     *
+     * A URN is a specific type of URI that identifies a resource by a name in a particular namespace.
+     * This conversion assumes that the authority component of the URI corresponds to the URN namespace,
+     * and the path component corresponds to the URN-specific identifier.
+     *
+     * @return A new [Urn] instance representing this URI as a URN.
+     */
     fun toUrn(): Urn = Urn(namespace = authority, identity = path)
 
+    /**
+     * Converts this [Uri] to a [Url].
+     *
+     * This function constructs a [Url] from the components of this [Uri]. It parses the authority
+     * component to extract the user info, host, and port.
+     *
+     * The authority component is expected to follow the format: `[userinfo@]host[:port]`.
+     *
+     * - **userinfo**: Extracted from the part of the authority before the first "@" character. If "@" is not present, it defaults to an empty string.
+     * - **host**: Extracted from the part of the authority after "@" and before ":".
+     * - **port**: Extracted from the part of the authority after the last ":", if present, otherwise it defaults to 0.
+     *
+     * @return A [Url] object representing the converted URI.
+     *
+     * @throws NumberFormatException if the port part of the authority is present but not a valid integer.
+     */
     fun toUrl(): Url = Url(
         scheme = scheme,
         // authority = [userinfo "@"] host [":" port]

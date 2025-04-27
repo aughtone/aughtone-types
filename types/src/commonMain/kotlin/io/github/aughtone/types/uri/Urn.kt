@@ -21,8 +21,29 @@ data class Urn(
     val namespace: String,
     val identity: String,
 ) {
+    /**
+     * The scheme of the URN, which is always "urn".
+     */
     val scheme: String = "urn"
+    /**
+     * Converts this URN to a [Uri] object.
+     *
+     * The resulting URI will have:
+     * - a scheme of "urn"
+     * - an authority equal to the URN's namespace
+     * - a path equal to the URN's identity
+     * - an empty query and fragment.
+     *
+     * @return A [Uri] representing this URN.
+     */
     fun toUri(): Uri = Uri(scheme = scheme, authority = namespace, path = identity, query = "", fragment = "")
 
+    /**
+     * Returns a string representation of this URN.
+     *
+     * The string representation is in the format "urn:namespace:identity".
+     *
+     * @return The string representation of this URN.
+     */
     override fun toString(): String = "$scheme:$namespace:$identity"
 }
