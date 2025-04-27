@@ -5,10 +5,11 @@ import java.util.Currency as JvmCurrency
 actual fun currencyFor(currencyCode: String): Currency? =
     JvmCurrency.getInstance(currencyCode)?.let { jvmc ->
         Currency(
-            currencyCode = jvmc.currencyCode,
+            code = jvmc.currencyCode,
             symbol = jvmc.symbol,
-            displayName = jvmc.displayName,
-            fractionDigits = jvmc.defaultFractionDigits,
-            numericCode = jvmc.numericCode
+            name = jvmc.displayName,
+            digits = jvmc.defaultFractionDigits,
+            number = jvmc.numericCode,
+            countries = emptyList()
         )
     }

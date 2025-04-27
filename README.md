@@ -77,6 +77,7 @@ implementation(libs.aughtone.types)
 
 #### Location
 The `Location` type consists of a number of quantitative types such as:
+
 ```kotlin
 val coordinates = Coordinates(latitude = 20.05, longitude = -15.5)
 ```
@@ -87,10 +88,39 @@ val altitude = Altitude(meters = 150.5)
 val distance = Distance(meters = 150.5)
 ```
 
+#### Financial
 
+An instance if Currency is included in this library, that attempts to determine the currency based 
+on the underlying system (Android, iOS), or by an included resource if the platform doesn't have 
+easy access to Currency information (JS, WasmJs, Linux). Where a platform is missing information it 
+will be supplemented from the internal resource.
+
+* Example usage:
+* ```kotlin
+* val caDollar:Currency = currencyFor("CAD")
+* val euro:Currency = currencyFor("EUR")
+* 
+* println("Canadian Dollar code: ${caDollar.code}") // Output: CAD
+* println("Euro symbol: ${caDollar.symbol}") // Output: €
+* println("Euro number: ${euro.number}") // Output: 978
+* println("Euro symbol: ${euro.symbol}") // Output: €
+* ```
+
+Currency is also used as part of a Money type, that represents a monetary value with an optional currency. 
 ```kotlin
-val amount = Money(value = 0.0, currency = Currency(currencyCode = "CAN", symbol = "$"))
+val amountInEuro = Money(value = 0.0, currency = currencyFor("EUR"))
 ```
+
+#### URI & URL
+
+There are several types that represent common URIs and URLs, including:
+
+* Uniform Resource Name (URN)
+* Geo Reference Identifier (GRI)
+* Uniform Resource Identifier (URI)
+* Uniform Resource Locator (URL)
+* Resource Identifier (RI)
+
 
 # Contributing & Feedback
 
