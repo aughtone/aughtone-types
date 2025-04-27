@@ -41,11 +41,6 @@ There are other things I envision for this library, such as [Duration] style sho
 
 Feel free to fork it and make improvements, I'll keep up as best I can.
 
-
-# Features
-
-* Currently there are type used for Location. More will be added as needed. 
-
 # Installation
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/types?style=flat)
 
@@ -73,7 +68,7 @@ with
 implementation(libs.aughtone.types)
 ```
 
-# Quick Start
+# Features
 
 #### Location
 The `Location` type consists of a number of quantitative types such as:
