@@ -2,7 +2,7 @@ package io.github.aughtone.types.financial
 
 actual fun currencyFor(currencyCode: String): Currency? {
     val symbol = jsCurrencySymbolMap[currencyCode] ?: ""
-    val codeData = jsCurrencyDataMap[currencyCode] ?: JsCurrencyResource("", "", 0, "", emptyList())
+    val codeData = jsCurrencyDataMap[currencyCode] ?: CurrencyResource("", "", 0, "", emptyList())
 
     return Currency(
         currencyCode = currencyCode,

@@ -1,5 +1,5 @@
 package io.github.aughtone.types.financial
-internal data class JsCurrencyResource(
+internal data class CurrencyResource(
     val code: String,
     val number: String,
     val digits: Int,
@@ -9,7 +9,7 @@ internal data class JsCurrencyResource(
 
 // XXX Since this is duplicated in WasmJs, we might want to simply include it in Common and skip
 //  using native calls. This also means that the data will always be consistent.
-internal val jsCurrencySymbolMap: Map<String, String> = mapOf(
+internal val currencySymbolMap: Map<String, String> = mapOf(
     "AED" to "د.إ",
     "AFN" to "؋",
     "ALL" to "L",
@@ -381,4 +381,4 @@ internal val jsCurrencyData = listOf(
     CurrencyResource("ZWG", "924", 2, "Zimbabwe Gold", listOf("Zimbabwe"))
 )
 
-internal val jsCurrencyDataMap: Map<String, CurrencyResource> = jsCurrencyData.associateBy { it.code }
+internal val currencyResourceMap: Map<String, CurrencyResource> = jsCurrencyData.associateBy { it.code }

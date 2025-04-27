@@ -76,7 +76,7 @@ kotlin {
     // XXX need to come back to this.
     //  Getting it to work for linux may be complex.
     //  We'll probably need to load external data.
-    // linuxX64()
+     linuxX64()
 
     sourceSets {
         val jsMain by getting {

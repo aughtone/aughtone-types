@@ -9,12 +9,26 @@
 ![badge-desktop](http://img.shields.io/badge/platform-desktop-DB413D.svg?style=flat)
 ![badge-js](http://img.shields.io/badge/platform-js%2Fwasm-FDD835.svg?style=flat)
 
+# Multiplatform Types Library
 
-# Multiplatform Types
+This library provides a collection of common data types for use in [Kotlin Multiplatform](https://www.jetbrains.com/kotlin-multiplatform/) (KMP) projects.
 
-This library for set up for [Kotlin Multiplatform](https://www.jetbrains.com/kotlin-multiplatform/) (KMP)
+## Overview
 
-While developing projects in KMP I found that all the libraries I wanted to use were duplicating data 
+The goal of this library is to reduce the duplication of data types across multiple Kotlin Multiplatform libraries and projects. By centralizing these types, we can improve consistency and reduce redundant code.
+
+This library also includes platform-specific types, such as `Locale` and `Currency`, that can be accessed through a common interface.
+
+## Features
+
+*   **Coordinates:** Represents a geographical location with latitude and longitude.
+* **Altitude:** Represents a height above sea level.
+*   **Money:** Represents a monetary amount with a value and currency.
+*   **BankersInteger:** Represents an integer type that applies Banker's Rounding when operations produce non-integer results.
+* **Cents and Dollars**: Functions for converting between monetary values in dollars and cents.
+
+## Rational
+While developing projects in KMP my peers and I found that all the libraries I wanted to use were duplicating data 
 types. 
 
 I decided that at lest for my own work, and for anyone else that was not happy 
@@ -27,16 +41,23 @@ There are other things I envision for this library, such as [Duration] style sho
 
 Feel free to fork it and make improvements, I'll keep up as best I can.
 
+
 # Features
 
 * Currently there are type used for Location. More will be added as needed. 
 
 # Installation
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/types?style=flat)
+
+This library is published to Maven Central. You can include it in your project by adding the following to your `build.gradle.kts` (Kotlin) or `build.gradle` (Groovy) file:
+
+#### Groovy (build.gradle)
 ```gradle
 implementation("io.github.aughtone:types:${version}")
 ```
+or 
 
+#### Kotlin Library (libs.cersions.toml)
 ```gradle
 [versions]
 aughtone-types = "${version}"
@@ -45,10 +66,17 @@ aughtone-types = "${version}"
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
 
 ```
+with 
+
+#### Kotlin Gradle (build.gradle.kts)
+```gradle
+implementation(libs.aughtone.types)
+```
 
 # Quick Start
 
-You can use a Coordinate object, or a pair of Double values to generate a geohash from.
+#### Location
+The `Location` type consists of a number of quantitative types such as:
 ```kotlin
 val coordinates = Coordinates(latitude = 20.05, longitude = -15.5)
 ```
@@ -56,9 +84,20 @@ val coordinates = Coordinates(latitude = 20.05, longitude = -15.5)
 val altitude = Altitude(meters = 150.5)
 ```
 ```kotlin
+val distance = Distance(meters = 150.5)
+```
+
+
+```kotlin
 val amount = Money(value = 0.0, currency = Currency(currencyCode = "CAN", symbol = "$"))
 ```
 
-# Feedback
+# Contributing & Feedback
 
-Bugs can go into the issue tracker, but you are probably going to get faster support by creating a PR.   
+Contributions to this library are welcome!
+
+Bugs or new features can go into the issue tracker, but you are probably going to get faster support by creating a PR.   
+
+## License
+
+This library is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
