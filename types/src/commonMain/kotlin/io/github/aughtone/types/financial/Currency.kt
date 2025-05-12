@@ -12,9 +12,11 @@ import kotlinx.serialization.Serializable
  * - **code:** The three-letter ISO 4217 currency code (e.g., "USD", "EUR", "JPY").
  * - **number:** The three-digit numeric ISO 4217 currency code.
  * - **digits:** The number of decimal digits typically used with this currency.
- * - **currency:** The full name of the currency (e.g., "US Dollar", "Euro").
+ * - **name:** The full name of the currency (e.g., "US Dollar", "Euro").
  * - **countries:** A list of countries where this currency is used.
  * - **symbol:** The symbol used to represent the currency (e.g., "$", "€", "¥").
+ * - **obsolete:** A flag indicating if the currency is obsolete.
+ * - **replacedBy:** The currency code of the currency that replaced this one, if obsolete.
  *
  * @property code The three-letter ISO 4217 currency code.
  * @property number The three-digit numeric ISO 4217 currency code.
@@ -22,6 +24,8 @@ import kotlinx.serialization.Serializable
  * @property name The full name of the currency.
  * @property countries A list of countries where this currency is used. Defaults to an empty list.
  * @property symbol The symbol used to represent the currency.
+ * @property obsolete A flag indicating if the currency is obsolete. Defaults to false.
+ * @property replacedBy The currency code of the currency that replaced this one, if obsolete. Defaults to null.
  *
  * Example usage:
  * ```kotlin
@@ -31,7 +35,6 @@ import kotlinx.serialization.Serializable
  * println("US Dollar code: ${usDollar.code}") // Output: USD
  * println("Euro number: ${euro.number}") // Output: 978
  * println("Countries using US Dollar: ${usDollar.countries}") // Output: [United States]
- * ```
  */
 @Serializable
 data class Currency(
@@ -43,8 +46,10 @@ data class Currency(
     val digits: Int,
     @SerialName("name")
     val name: String,
-    @SerialName("countries")
-    val countries: List<String> = emptyList(),
     @SerialName("symbol")
-    val symbol: String
+    val symbol: String,
+    @SerialName("obsolete")
+    val obsolete: Boolean = false,
+    @SerialName("replacedBy")
+    val replacedBy: String? = null,
 )

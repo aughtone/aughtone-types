@@ -2,7 +2,7 @@ package io.github.aughtone.types.financial
 
 import java.util.Currency as JvmCurrency
 
-actual fun currencyFor(currencyCode: String): Currency? =
+actual fun currencyForNative(currencyCode: String): Currency? =
     JvmCurrency.getInstance(currencyCode)?.let { jvmc ->
         Currency(
             code = jvmc.currencyCode,
@@ -10,6 +10,5 @@ actual fun currencyFor(currencyCode: String): Currency? =
             name = jvmc.displayName,
             digits = jvmc.defaultFractionDigits,
             number = jvmc.numericCode,
-            countries = emptyList()
         )
     }
