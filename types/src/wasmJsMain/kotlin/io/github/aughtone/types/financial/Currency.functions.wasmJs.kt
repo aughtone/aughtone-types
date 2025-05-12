@@ -1,3 +1,3 @@
 package io.github.aughtone.types.financial
 
-actual fun currencyFor(currencyCode: String): Currency? = currencyResourceMap[currencyCode]
+actual fun currencyForNative(currencyCode: String): Currency? = currencyResourceMap[currencyCode]

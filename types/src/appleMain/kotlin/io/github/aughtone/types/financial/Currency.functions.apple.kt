@@ -6,7 +6,7 @@ import platform.Foundation.NSNumberFormatter
 import platform.Foundation.preferredLanguages
 
 
-actual fun currencyFor(currencyCode: String): Currency? {
+actual fun currencyForNative(currencyCode: String): Currency? {
     // Took hints from Gemini and these links:
     //  https://gist.github.com/mattt/6d022b66f08ea8c1b99ebe7e48b95c4b
     // https://stackoverflow.com/questions/73412857/how-to-get-the-currency-symbol-from-locale-swift

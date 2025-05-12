@@ -2,7 +2,7 @@ package io.github.aughtone.types.financial
 
 import java.util.Currency as AndroidCurrency
 
-actual fun currencyFor(currencyCode: String): Currency? =
+actual fun currencyForNative(currencyCode: String): Currency? =
     AndroidCurrency.getInstance(currencyCode)?.let { ac ->
         Currency(
             code = ac.currencyCode,
@@ -11,6 +11,5 @@ actual fun currencyFor(currencyCode: String): Currency? =
             name = ac.displayName,
             digits = ac.defaultFractionDigits,
             number = ac.numericCode,
-            countries = currencyResourceMap[currencyCode]?.countries ?: emptyList()
         )
     }
