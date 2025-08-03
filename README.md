@@ -13,6 +13,12 @@
 
 This library provides a collection of common data types for use in [Kotlin Multiplatform](https://www.jetbrains.com/kotlin-multiplatform/) (KMP) projects.
 
+**WARNING:** versions of this library in the _1.0.2+_ range are using the `kotlinx-datetime:0.7.1-0.6.x-compat` dependency,
+because the switch over to using `kotlin.time.Instant` has not gone very smoothly.
+
+When this library switches over to using `kotlin.time.Instant` in `kotlinx-datetime:0.7.*`, the major
+version of this library will change, signaling a breaking change as per standard [semantic versioning](https://semver.org/) practices.
+
 ## Overview
 
 The goal of this library is to reduce the duplication of data types across multiple Kotlin Multiplatform libraries and projects. By centralizing these types, we can improve consistency and reduce redundant code.
