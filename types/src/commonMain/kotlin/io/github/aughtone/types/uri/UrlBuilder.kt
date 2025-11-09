@@ -1,4 +1,4 @@
-package io.github.aughtone.types.net
+package io.github.aughtone.types.uri
 
 
 

@@ -1,4 +1,4 @@
-package io.github.aughtone.types.net
+package io.github.aughtone.types.uri
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -43,9 +43,16 @@ data class Urn(
      *
      * @return A [Uri] representing this URN.
      */
-    fun toUri(): Uri =
-        Uri(scheme = scheme, authority = namespace, path = identity, query = "", fragment = "")
+    fun toUri(): Uri = Uri(scheme = scheme, authority = namespace, path = identity, query = "", fragment = "")
 
+
+    /**
+     * Returns a string representation of this URN.
+     *
+     * The string representation is in the format "urn:namespace:identity".
+     *
+     * @return The string representation of this URN.
+     */
     override fun toString(): String = "$scheme:$namespace:$identity"
 
 }

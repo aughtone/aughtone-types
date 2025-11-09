@@ -1,15 +1,15 @@
 [versions]
 applicationId = "io.github.aughtone.types"
-versionIos = "1.0.0"
-versionName = "1.0.0-alpha3"
+versionIos = "1.0.2"
+versionName = "1.0.2"
 android-minSdk = "24"
-android-compileSdk = "35"
+android-compileSdk = "36"
 
-agp = "8.9.0"
-kotlin = "2.1.10"
-kotlinx-serialization = "1.8.0"
-kotlinx-datetime = "0.6.2"
-vanniktech = "0.30.0"
+agp = "8.12.3"
+kotlin = "2.2.20"
+kotlinx-serialization = "1.9.0"
+kotlinx-datetime = "0.7.1-0.6.x-compat" # "0.7.1"
+vanniktech = "0.34.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
