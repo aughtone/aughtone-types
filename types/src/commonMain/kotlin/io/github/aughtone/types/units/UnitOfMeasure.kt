@@ -26,11 +26,11 @@ package io.github.aughtone.types.units
  * - `TERABYTE` uses primary symbol `TiB` (tebibyte) and alt symbol `TB`.
  *
  */
-enum class UnitOfMeasure(val symbol: String, vararg val altSymbol: String) {
+enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     ACRE("ac", "acre"),
     ACRE_FOOT("ac⋅ft", "ac ft", "ac⋅ft", "acft"),
     AMPERE("A"),
-    ARC_MINUTE("′", "\'", "arc⋅min"), // minute of arc, same as symbol for feet (')
+    ARC_MINUTE("′", "'", "arc⋅min"), // minute of arc, same as symbol for feet (')
     ARC_SECOND("″", "\"", "arc⋅sec", "asec"), // same as symbol for inches (")
     ASTRONOMICAL_UNIT("au"),
     BIT("bit", "b"),
@@ -152,4 +152,36 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbol: String) {
     WEEK("wk", "week"), // english only, i18n should be reviewed
     YEAR("a", "y", "yr", "year"), // english only, i18n should be reviewed
     YEAR_JULIAN("aj", "a"); // english only, i18n should be reviewed
+
+    companion object {
+        /**
+         * Finds the first `UnitOfMeasure` enum constant that matches the given symbol.
+         *
+         * This method prioritizes an exact match on the primary `symbol` before searching
+         * through the `altSymbols`. The search is case-sensitive.
+         *
+         * @param symbol The string symbol to search for (e.g., "kg", "m", "ft").
+         * @return The matching `UnitOfMeasure` constant, or `null` if no match is found.
+         */
+        fun findFirst(symbol: String?): UnitOfMeasure? {
+            if (symbol == null) return null
+            return entries.find { it.symbol == symbol } ?: entries.find { symbol in it.altSymbols }
+        }
+
+        /**
+         * Finds all `UnitOfMeasure` enum constants that match the given symbol.
+         *
+         * This method builds a list of all matches. It prioritizes entries where the
+         * primary `symbol` matches, placing them at the beginning of the list, followed
+         * by entries that match in their `altSymbols`. Duplicates are removed.
+         *
+         * @param symbol The string symbol to search for (e.g., "kg", "m", "ft").
+         * @return A list of matching `UnitOfMeasure` constants, which may be empty.
+         */
+        fun findAll(symbol: String): List<UnitOfMeasure> {
+            val primaryMatches = entries.filter { it.symbol == symbol }
+            val altMatches = entries.filter { symbol in it.altSymbols }
+            return (primaryMatches + altMatches).distinct()
+        }
+    }
 }

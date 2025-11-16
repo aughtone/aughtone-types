@@ -1,9 +1,8 @@
-package io.github.aughtone.types.net
+package io.github.aughtone.types.uri
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.toString
 
 class UrnTest {
     // Spec is at: https://datatracker.ietf.org/doc/html/rfc5870
