@@ -14,7 +14,7 @@ package io.github.aughtone.types.uri
  * @property crs The coordinate reference system (CRS) used for the location (optional, defaults to "wgs84").
  * @property uncertainty The uncertainty of the location in meters (optional).
  */
-data class Gri(
+data class GeoUri(
     val latitude: Double,
     val longitude:Double,
     val altitude:Double?=null,
