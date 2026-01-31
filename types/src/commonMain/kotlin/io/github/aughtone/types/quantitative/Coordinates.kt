@@ -1,79 +1,126 @@
 package io.github.aughtone.types.quantitative
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.math.asin
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
- * Represents a set of geographical coordinates (WGS84).
+ * Earth radius in meters.
+ */
+private const val EARTH_RADIUS = 6371e3
+
+/**
+ * Represents a geographical coordinate, defined by latitude and longitude.
  *
- * This data class encapsulates latitude, longitude, and an optional accuracy value.
+ * This data class is used to specify a precise location on the Earth's surface.
  *
- * @property latitude The latitude coordinate, representing the north-south position.
- *                   Must be within the range of -90.0 to +90.0.
- * @property longitude The longitude coordinate, representing the east-west position.
- *                    Must be within the range of -180.0 to +180.0.
- * @property accuracy An optional value representing the estimated accuracy of the
- *                   coordinates, typically in meters. A smaller value indicates
- *                   higher accuracy. If null, accuracy is unknown or not applicable.
+ * @property latitude The latitude of the coordinate, in decimal degrees.
+ *                    Positive values represent latitudes north of the equator, while
+ *                    negative values represent latitudes south of the equator.
+ *                    The value must be within the range of -90.0 to 90.0 degrees.
+ * @property longitude The longitude of the coordinate, in decimal degrees.
+ *                     Positive values represent longitudes east of the Prime Meridian,
+ *                     while negative values represent longitudes west of the Prime Meridian.
+ *                     The value must be within the range of -180.0 to 180.0 degrees.
+ * @property accuracy The horizontal accuracy of the coordinate in meters.
+ *
+ * @constructor Creates a new Coordinates instance.
+ * @throws IllegalArgumentException if the provided latitude or longitude values are outside
+ *         their valid ranges.
  */
 @Serializable
 data class Coordinates(
+    @SerialName("latitude")
     val latitude: Double,
+    @SerialName("longitude")
     val longitude: Double,
+    @SerialName("accuracy")
     val accuracy: Float? = null,
 ) {
-    /**
-     *  Applies a delta change to the current coordinates.
-     *
-     *  This function allows you to shift the current latitude and longitude by the specified amounts.
-     *  It creates and returns a new `Coordinates` object representing the adjusted position.
-     *
-     *  @param deltaLatitude The change in latitude to apply. Positive values move north, negative values move south.
-     *  @param deltaLongitude The change in longitude to apply. Positive values move east, negative values move west.
-     *  @return A new `Coordinates` object representing the position after applying the delta changes.
-     *
-     *  Example:
-     *  ```kotlin
-     *  val originalCoordinates = Coordinates(40.7128, -74.0060) // New York City
-     *  val movedCoordinates = originalCoordinates(0.1, 0.2) // Move slightly north-east
-     *  println(movedCoordinates) // Output: Coordinates(latitude=40.8128, longitude=-73.806)
-     *  ```
-     */
-    operator fun invoke(deltaLatitude: Double, deltaLongitude: Double): Coordinates {
-        return Coordinates(latitude + deltaLatitude, longitude + deltaLongitude)
-    }
-
-
-    /**
-     * Adds the latitude and longitude of another [Coordinates] object to this [Coordinates] object,
-     * returning a new [Coordinates] object with the combined values.
-     *
-     * @param other The [Coordinates] object to add to this one.
-     * @return A new [Coordinates] object representing the sum of this and the other [Coordinates].
-     */
-    operator fun plus(other: Coordinates): Coordinates {
-        return Coordinates(latitude + other.latitude, longitude + other.longitude)
+    init {
+        require(latitude in -90.0..90.0) { "Latitude must be between -90 and 90." }
+        require(longitude in -180.0..180.0) { "Longitude must be between -180 and 180." }
+        accuracy?.let { require(it >= 0.0f) { "Accuracy cannot be negative." } }
     }
 
     /**
-     * Subtracts another [Coordinates] object from this one.
+     * Calculates the distance between this and another `Coordinates` using the Haversine formula.
      *
-     * This function performs vector subtraction on the latitude and longitude components
-     * of the two [Coordinates] objects. The result is a new [Coordinates] object where
-     * the latitude and longitude are the differences between the corresponding components
-     * of the original and the other [Coordinates] object.
-     *
-     * @param other The [Coordinates] object to subtract from this one.
-     * @return A new [Coordinates] object representing the difference between the two.
-     *
-     * @sample
-     * ```kotlin
-     * val coord1 = Coordinates(40.7128, -74.0060) // New York City
-     * val coord2 = Coordinates(34.0522, -118.2437) // Los Angeles
-     * val difference = coord1 - coord2
-     * println(difference) // Output will be Coordinates(latitude=6.6606, longitude=44.2377)
-     * ```
+     * @param other The other `Coordinates`.
+     * @return The distance between the two coordinates as a `Distance` object.
      */
-    operator fun minus(other: Coordinates): Coordinates {
-        return Coordinates(latitude - other.latitude, longitude - other.longitude)
+    operator fun minus(other: Coordinates): Distance {
+        val lat1Rad = toRadians(this.latitude)
+        val lon1Rad = toRadians(this.longitude)
+        val lat2Rad = toRadians(other.latitude)
+        val lon2Rad = toRadians(other.longitude)
+
+        val dLat = lat2Rad - lat1Rad
+        val dLon = lon2Rad - lon1Rad
+
+        val a = sin(dLat / 2).pow(2) + (cos(lat1Rad) * cos(lat2Rad) * sin(dLon / 2).pow(2))
+        val c = 2 * asin(sqrt(a))
+
+        val distanceInMeters = EARTH_RADIUS * c
+
+        val newAccuracy = if (this.accuracy != null && other.accuracy != null) {
+            val absoluteAccuracySum = this.accuracy + other.accuracy
+            if (distanceInMeters > 0) {
+                (absoluteAccuracySum / distanceInMeters).toFloat()
+            } else {
+                null
+            }
+        } else {
+            null
+        }
+
+        return Distance(distanceInMeters, accuracy = newAccuracy)
+    }
+
+    /**
+     * Calculates a new `Coordinates` by moving a certain distance from a starting point in a given direction.
+     *
+     * @param distance The distance to move.
+     * @param bearing The direction to move in.
+     * @return The new `Coordinates`.
+     */
+    fun plus(distance: Distance, bearing: Azimuth): Coordinates {
+        val lat1Rad = toRadians(this.latitude)
+        val lon1Rad = toRadians(this.longitude)
+        val bearingRad = toRadians(bearing.degrees)
+
+        val lat2Rad = asin(sin(lat1Rad) * cos(distance.meters / EARTH_RADIUS) + cos(lat1Rad) * sin(distance.meters / EARTH_RADIUS) * cos(bearingRad))
+        val lon2Rad = lon1Rad + atan2(sin(bearingRad) * sin(distance.meters / EARTH_RADIUS) * cos(lat1Rad), cos(distance.meters / EARTH_RADIUS) - sin(lat1Rad) * sin(lat2Rad))
+
+        val newAccuracy = if (this.accuracy != null && distance.accuracy != null) {
+            val distanceAbsoluteAccuracy = distance.meters * distance.accuracy
+            (this.accuracy + distanceAbsoluteAccuracy).toFloat()
+        } else {
+            null
+        }
+
+        return Coordinates(
+            latitude = toDegrees(lat2Rad),
+            longitude = toDegrees(lon2Rad),
+            accuracy = newAccuracy
+        )
+    }
+
+    /**
+     * Returns the antipodal point on the globe.
+     *
+     * @return The new `Coordinates`.
+     */
+    operator fun unaryMinus(): Coordinates {
+        return Coordinates(
+            latitude = -latitude,
+            longitude = if (longitude <= 0) longitude + 180 else longitude - 180,
+            accuracy = this.accuracy
+        )
     }
 }

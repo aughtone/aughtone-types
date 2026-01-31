@@ -2,54 +2,68 @@ package io.github.aughtone.types.quantitative
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 class CoordinatesTest {
-    private val testLatitude = 20.05
-    private val testLongitude = -15.5
-    private val testCoordinate = Coordinates(testLatitude, testLongitude)
 
     @Test
-    fun testToString() {
-        assertEquals(
-            "Coordinates(latitude=20.05, longitude=-15.5, accuracy=null)",
-            testCoordinate.toString()
-        )
+    fun `Coordinates must have valid latitude and longitude`() {
+        assertFailsWith<IllegalArgumentException> {
+            Coordinates(91.0, 0.0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Coordinates(-91.0, 0.0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Coordinates(0.0, 181.0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Coordinates(0.0, -181.0)
+        }
     }
 
     @Test
-    fun testHashCode() {
-        val a: Coordinates = testCoordinate
-        val b: Coordinates = Coordinates(testLatitude, testLongitude)
-
-        assertEquals(a.hashCode(), b.hashCode())
-        assertEquals(a, b)
-        assertTrue(a == b)
+    fun `minus operator`() {
+        val c1 = Coordinates(0.0, 0.0, accuracy = 1.0f)
+        val c2 = Coordinates(0.0, 1.0, accuracy = 2.0f)
+        val distance = c1 - c2
+        assertEquals(111195.0, distance.meters, 1.0)
+        assertEquals(3.0f, distance.accuracy?.let { it * distance.meters.toFloat() }, 0.1f)
     }
 
     @Test
-    fun testInfixEquals() {
-        val a: Coordinates = testCoordinate
-        val b: Coordinates = Coordinates(testLatitude, testLongitude)
-
-        assertTrue(a == b)
+    fun `plus operator`() {
+        val c1 = Coordinates(0.0, 0.0, accuracy = 1.0f)
+        val distance = Distance(111195.0, 0.1f)
+        val bearing = Azimuth(90.0)
+        val c2 = c1.plus(distance, bearing)
+        assertEquals(0.0, c2.latitude, 1e-6)
+        assertEquals(1.0, c2.longitude, 1e-6)
+        assertEquals(1.0f + 11119.5f, c2.accuracy, 0.1f)
     }
 
     @Test
-    fun testInfixAdd() {
-        val a: Coordinates = testCoordinate
-        val b = a(1.0, 1.0)
-        assertNotEquals(a, b)
-        assertEquals(21.05, b.latitude)
-        assertEquals(-14.5, b.longitude)
+    fun `unaryMinus operator`() {
+        val c1 = Coordinates(45.0, 90.0, accuracy = 1.0f)
+        val c2 = -c1
+        assertEquals(-45.0, c2.latitude)
+        assertEquals(-90.0, c2.longitude)
+        assertEquals(c1.accuracy, c2.accuracy)
     }
 
     @Test
-    fun testSplitCoordinateIntoPair() {
-        val actual = testCoordinate.split()
-        assertEquals(testCoordinate.latitude, actual.first)
-        assertEquals(testCoordinate.longitude, actual.second)
+    fun `add extension`() {
+        val c1 = Coordinates(45.0, 90.0)
+        val c2 = c1.add(1.0, 1.0)
+        assertEquals(46.0, c2.latitude)
+        assertEquals(91.0, c2.longitude)
     }
 
+    @Test
+    fun `split extension`() {
+        val c1 = Coordinates(45.0, 90.0)
+        val (lat, lon) = c1.split()
+        assertEquals(45.0, lat)
+        assertEquals(90.0, lon)
+    }
 }
