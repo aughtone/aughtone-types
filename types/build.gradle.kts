@@ -1,4 +1,3 @@
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -76,7 +75,7 @@ kotlin {
     // XXX need to come back to this.
     //  Getting it to work for linux may be complex.
     //  We'll probably need to load external data.
-    // linuxX64()
+     linuxX64()
 
     sourceSets {
         val jsMain by getting {
@@ -138,7 +137,8 @@ android {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+//    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     if (!project.hasProperty("skip-signing")) {
         signAllPublications()

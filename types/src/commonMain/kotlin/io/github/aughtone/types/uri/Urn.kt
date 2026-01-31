@@ -1,5 +1,8 @@
 package io.github.aughtone.types.uri
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Represents a Uniform Resource Name (URN).
  *
@@ -17,12 +20,55 @@ package io.github.aughtone.types.uri
  * @see [RFC 8141](https://www.rfc-editor.org/rfc/rfc8141.html)
  * @see Uri
  */
+
+@Serializable
 data class Urn(
-    val namespace: String,
-    val identity: String,
+    @SerialName("namespace") val namespace: String,
+    @SerialName("identity") val identity: String,
 ) {
+    /**
+     * The scheme of the URN, which is always "urn".
+     */
+    @SerialName("scheme")
     val scheme: String = "urn"
+
+    /**
+     * Converts this URN to a [Uri] object.
+     *
+     * The resulting URI will have:
+     * - a scheme of "urn"
+     * - an authority equal to the URN's namespace
+     * - a path equal to the URN's identity
+     * - an empty query and fragment.
+     *
+     * @return A [Uri] representing this URN.
+     */
     fun toUri(): Uri = Uri(scheme = scheme, authority = namespace, path = identity, query = "", fragment = "")
 
+
+    /**
+     * Returns a string representation of this URN.
+     *
+     * The string representation is in the format "urn:namespace:identity".
+     *
+     * @return The string representation of this URN.
+     */
     override fun toString(): String = "$scheme:$namespace:$identity"
+
+}
+
+/**
+ * Parses a string to create a [Urn] object.
+ *
+ * The string must be in the format "urn:namespace:identity".
+ *
+ * @param urnString The string to parse.
+ * @return A new [Urn] instance.
+ * @throws IllegalArgumentException if the string is not a valid URN.
+ */
+fun urn(urnString: String): Urn {
+    require(urnString.startsWith("urn:")) { "URN must start with 'urn:'" }
+    val parts = urnString.substring(4).split(":", limit = 2)
+    require(parts.size == 2) { "URN must have namespace and identity" }
+    return Urn(namespace = parts[0], identity = parts[1])
 }

@@ -24,11 +24,36 @@ data class Url(
     val query: String,
     val fragment: String,
 ) {
+    /**
+     * The authority part of the URL, combining [host] and [port] (e.g., "example.com:8080").
+     * If the [port] is null it will not be included, except if the [host] is empty.
+     * If the [host] is empty, it will return the port with a leading ":".
+     */
     val authority: String = "$host:$port"
+    /**
+     * A string representing the resource identity constructed from the [path], [query], and [fragment].
+     *
+     * It combines these components in the format: `path?query#fragment`.
+     *
+     * For example, if `path` is "/example", `query` is "key=value", and `fragment` is "section1",
+     * then `identity` will be "/example?key=value#section1".
+     */
     val identity: String = "$path?$query#$fragment"
 
+    /**
+     * Returns a string representation of the URL.
+     *
+     * The string is formatted as: `scheme://authority/path?query#fragment`.
+     *
+     * @return A string representation of the URL.
+     */
     override fun toString(): String = "$scheme://${authority}/$path?$query#$fragment"
 
+    /**
+     * Converts this [Url] instance to a [Uri] instance.
+     *
+     * @return A [Uri] object representing the same URL components as this [Url].
+     */
     fun toUri(): Uri =
         Uri(scheme = scheme, authority = authority, path = path, query = query, fragment = fragment)
 }
