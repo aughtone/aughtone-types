@@ -11,35 +11,18 @@
 
 # Multiplatform Types Library
 
-This library provides a collection of common data types for use in [Kotlin Multiplatform](https://www.jetbrains.com/kotlin-multiplatform/) (KMP) projects.
+AOTypes is a Kotlin Multiplatform library that provides a collection of strongly-typed data types for common quantitative and financial domains. By using these types, you can improve the clarity, safety, and correctness of your code when dealing with values like money, distance, speed, and more.
 
-## Overview
+**WARNING:** versions of this library in the _1.0.2+_ range are using the `kotlinx-datetime:0.7.1-0.6.x-compat` dependency,
+because the switch over to using `kotlin.time.Instant` has not gone very smoothly.
 
-The goal of this library is to reduce the duplication of data types across multiple Kotlin Multiplatform libraries and projects. By centralizing these types, we can improve consistency and reduce redundant code.
+When this library switches over to using `kotlin.time.Instant` in `kotlinx-datetime:0.7.*`, the major
+version of this library will change, signaling a breaking change as per standard [semantic versioning](https://semver.org/) practices.
 
-This library also includes platform-specific types, such as `Locale` and `Currency`, that can be accessed through a common interface.
+## Rationale
+While developing projects in KMP my peers and I found that many libraries were duplicating common data types. I decided that for my own work, and for anyone else who was not happy with that situation, there could be a library of just types we can all share.
 
-## Features
-
-* **Financial types:** Currency and Money types.
-* **Geo types:** Location at the moment.
-* **Quantitative types:** Types that have a specific range of values.
-* **URI types:** Various types of URIs.
-* **Utility types**: Types taht don't really fint into other categories
-
-## Rational
-While developing projects in KMP my peers and I found that all the libraries I wanted to use were duplicating data 
-types. 
-
-I decided that at lest for my own work, and for anyone else that was not happy 
-with that situation, there could be a library of just types we can all share.
-
-There are also situations where we need to go down to the platform layer to properly get a type, 
-and the [Locale] and [Currency] types are examples of that.
-
-There are other things I envision for this library, such as [Duration] style shortcuts for types like [Distance].
-
-Feel free to fork it and make improvements, I'll keep up as best I can.
+This library also abstracts away platform-specific implementations for types like `Locale` and `Currency`, providing them through a common interface.
 
 # Installation
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.aughtone/types?style=flat)
@@ -50,64 +33,95 @@ This library is published to Maven Central. You can include it in your project b
 ```gradle
 implementation("io.github.aughtone:types:${version}")
 ```
-or 
+or
 
-#### Kotlin Library (libs.cersions.toml)
-```gradle
+#### Kotlin Library (libs.versions.toml)
+```toml
 [versions]
 aughtone-types = "${version}"
 
 [libraries]
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
-
 ```
-with 
+with
 
 #### Kotlin Gradle (build.gradle.kts)
-```gradle
+```kotlin
 implementation(libs.aughtone.types)
 ```
 
-# Features
+# Core Components & Usage
 
-#### Location
-The `Location` type consists of a number of quantitative types such as:
+### Financial
+This library provides robust types for handling financial data, avoiding common pitfalls of using floating-point numbers for money.
 
+- **`Currency`**: A comprehensive data class representing world currencies, populated from platform-specific data where possible and supplemented with an internal resource.
+- **`BankersValue`**: A fixed-point decimal type using Banker's Rounding, ensuring precision in financial calculations.
+- **`Money`**: A type that holds a monetary value in cents as a `Long` and uses `BankersValue` for precise calculations.
+
+**Example Usage:**
 ```kotlin
-val coordinates = Coordinates(latitude = 20.05, longitude = -15.5)
-```
-```kotlin
-val altitude = Altitude(meters = 150.5)
-```
-```kotlin
-val distance = Distance(meters = 150.5)
-```
+// Create Money objects
+val price = Money(1999L, currencyFor("USD")) // $19.99 from Long (cents)
+val shipping = 5.99.toMoney(currencyFor("USD"))  // $5.99 from Double
 
-#### Financial
+// Add two Money objects (requires the same currency)
+val subtotal = price + shipping
+println("Subtotal: ${subtotal.toDouble()}") // Output: Subtotal: 25.98
 
-An instance if Currency is included in this library, that attempts to determine the currency based 
-on the underlying system (Android, iOS), or by an included resource if the platform doesn't have 
-easy access to Currency information (JS, WasmJs, Linux). Where a platform is missing information it 
-will be supplemented from the internal resource.
+// Use operators with scalar values
+val withTax = subtotal * 1.07 // Apply 7% tax
+println("With Tax: ${withTax.toDouble()}") // Output: With Tax: 27.80
 
-**Example usage:**
-```kotlin
-val caDollar:Currency = currencyFor("CAD")
-val euro:Currency = currencyFor("EUR")
-
-println("Canadian Dollar code: ${caDollar.code}") // Output: CAD
-println("Euro symbol: ${caDollar.symbol}") // Output: €
-println("Euro number: ${euro.number}") // Output: 978
-println("Euro symbol: ${euro.symbol}") // Output: €
+// You can also work directly with cents
+val discount = withTax - 200L // Subtract 200 cents ($2.00)
+println("Final Price: ${discount.toDouble()}") // Output: Final Price: 25.80
 ```
 
-Currency is also used as part of a Money type, that represents a monetary value with an optional currency. 
+### Quantitative & Geospatial
+These types provide a safe and expressive way to work with physical measurements and geographical locations.
+
+- **`Coordinates`**: Represents a point on Earth (latitude and longitude).
+- **`Location`**: A richer representation that combines `Coordinates` with optional `Altitude` and `Distance` (for accuracy).
+- **`Distance`**, **`Speed`**, **`Altitude`**, **`Azimuth`**: Types for handling measurements with their own operators.
+
+**Example Usage:**
 ```kotlin
-val amountInEuro = Money(value = 0.0, currency = currencyFor("EUR"))
+// Define coordinates for two cities
+val sanFrancisco = Coordinates(37.7749, -122.4194)
+val losAngeles = Coordinates(34.0522, -118.2437)
+
+// The '-' operator on Coordinates calculates the distance using the Haversine formula
+val distanceBetweenCities = sanFrancisco - losAngeles
+println("Distance: %.2f km".format(distanceBetweenCities.meters / 1000))
+
+// The 'plus' operator calculates a new coordinate by moving a set distance and bearing
+val startPoint = Coordinates(0.0, 0.0)
+val distanceToMove = Distance(111_195.0) // Roughly 1 degree longitude at the equator
+val bearing = Azimuth(90.0) // 90 degrees = East
+val newPoint = startPoint.plus(distanceToMove, bearing)
+
+println("New coordinates: lat=%.4f, lon=%.4f".format(newPoint.latitude, newPoint.longitude))
 ```
 
-#### URI & URL
+### Units of Measure
+Provides a standardized way to work with different units of measure, preventing errors from mismatched units.
 
+- **`UnitOfMeasure`**: A comprehensive enum of measurement units, from meters and kilograms to bytes and fluid ounces.
+- **`MetricPrefix`**: An enum for SI prefixes (kilo, mega, giga, etc.).
+
+**Example Usage:**
+```kotlin
+// Find a unit by its primary symbol
+val kgUnit = UnitOfMeasure.findFirst("kg")
+println(kgUnit) // Output: KILOGRAM
+
+// Find all units that share an alternative symbol
+val footAndArcMinute = UnitOfMeasure.findAll("'")
+println(footAndArcMinute) // Output: [ARC_MINUTE, FOOT]
+```
+
+### URI & URL
 There are several types that represent common URIs and URLs, including:
 
 * Uniform Resource Name (URN)
@@ -116,13 +130,10 @@ There are several types that represent common URIs and URLs, including:
 * Uniform Resource Locator (URL)
 * Resource Identifier (RI)
 
-
 # Contributing & Feedback
-
 Contributions to this library are welcome!
 
-Bugs or new features can go into the issue tracker, but you are probably going to get faster support by creating a PR.   
+Bugs or new features can go into the issue tracker, but you are probably going to get faster support by creating a PR.
 
 ## License
-
 This library is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).

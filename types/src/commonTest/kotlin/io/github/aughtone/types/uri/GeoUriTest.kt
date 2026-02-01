@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class GeoUriTest {
     // Spec is at: https://datatracker.ietf.org/doc/html/rfc5870
-    private val gri = Gri(
+    private val gri = GeoUri(
         latitude = 48.2010,
         longitude = 16.3695,
         altitude = 183.0,

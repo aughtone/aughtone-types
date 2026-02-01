@@ -26,5 +26,5 @@ dependencyResolutionManagement {
 }
 
 
-rootProject.name = "aughtone-types"
+rootProject.name = "AOTypes"
 include(":types")
