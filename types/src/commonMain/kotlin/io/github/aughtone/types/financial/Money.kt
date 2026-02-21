@@ -4,8 +4,6 @@ import io.github.aughtone.types.number.BankersValue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-private const val DIVISION_BY_ZERO = "Division by zero"
-
 /**
  * Represents a monetary value, storing the total value in cents as a [Long] to avoid floating-point errors.
  *
@@ -31,9 +29,10 @@ data class Money(
      * @param value The monetary value as a [Double].
      * @param currency The optional currency.
      */
-    constructor(value: Double, currency: Currency? = null) : this(BankersValue.fromDouble(value).toLong(), currency)
+    constructor(value: Double, currency: Currency? = null) : this(
+        BankersValue.fromDouble(value).toLong(), currency
+    )
 
-    // region Money operators
     /**
      * Adds another `Money` object to this one.
      * @throws IllegalArgumentException if the currencies do not match.
@@ -71,12 +70,10 @@ data class Money(
      */
     operator fun div(other: Money): Double {
         require(this.currency == other.currency) { "Cannot divide money with different currencies." }
-        if (other.cents == 0L) throw ArithmeticException(DIVISION_BY_ZERO)
+        if (other.cents == 0L) throw ArithmeticException("Division by zero")
         return this.cents.toDouble() / other.cents.toDouble()
     }
-    // endregion
 
-    // region Double operators
     /**
      * Adds a scalar [Double] value to this `Money` object.
      * The scalar is treated as a dollar amount and converted to cents before addition.
@@ -109,13 +106,11 @@ data class Money(
      * The currency of the result is preserved.
      */
     operator fun div(scalar: Double): Money {
-        if (scalar == 0.0) throw ArithmeticException(DIVISION_BY_ZERO)
+        if (scalar == 0.0) throw ArithmeticException("Division by zero")
         val resultValue = BankersValue.fromLong(this.cents) / BankersValue.fromDouble(scalar)
         return Money(resultValue.toLong(), this.currency)
     }
-    // endregion
 
-    // region Long operators
     /**
      * Adds a scalar [Long] value (in cents) to this `Money` object.
      */
@@ -142,11 +137,10 @@ data class Money(
      * Uses banker's rounding for the result.
      */
     operator fun div(scalar: Long): Money {
-        if (scalar == 0L) throw ArithmeticException(DIVISION_BY_ZERO)
+        if (scalar == 0L) throw ArithmeticException("Division by zero")
         val resultValue = BankersValue.fromDouble(this.cents.toDouble() / scalar)
         return Money(resultValue.toLong(), this.currency)
     }
-    // endregion
 
     companion object {
         /**

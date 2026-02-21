@@ -137,8 +137,7 @@ android {
 }
 
 mavenPublishing {
-//    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-    publishToMavenCentral()
+    publishToMavenCentral(automaticRelease = true)
 
     if (!project.hasProperty("skip-signing")) {
         signAllPublications()

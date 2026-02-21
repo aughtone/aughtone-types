@@ -23,8 +23,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Urn(
-    @SerialName("namespace") val namespace: String,
-    @SerialName("identity") val identity: String,
+    @SerialName("namespace")
+    val namespace: String,
+    @SerialName("identity")
+    val identity: String,
 ) {
     /**
      * The scheme of the URN, which is always "urn".

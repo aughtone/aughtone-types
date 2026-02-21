@@ -4,6 +4,7 @@ import io.github.aughtone.types.quantitative.Altitude
 import io.github.aughtone.types.quantitative.Azimuth
 import io.github.aughtone.types.quantitative.Coordinates
 import io.github.aughtone.types.quantitative.Speed
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -25,9 +26,14 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Location(
+    @SerialName("coordinates")
     val coordinates: Coordinates,
+    @SerialName("azimuth")
     val azimuth: Azimuth? = null,
+    @SerialName("speed")
     val speed: Speed? = null,
+    @SerialName("altitude")
     val altitude: Altitude? = null,
+    @SerialName("timestamp")
     val timestamp: Long = 0,
 )

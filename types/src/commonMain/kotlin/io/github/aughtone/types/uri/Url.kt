@@ -1,5 +1,8 @@
 package io.github.aughtone.types.uri
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Represents a parsed URL.
  *
@@ -15,13 +18,21 @@ package io.github.aughtone.types.uri
  * @constructor Creates a [Url] instance with the specified components.
  * @see Uri
  */
+@Serializable
 data class Url(
+    @SerialName("scheme")
     val scheme: String,
+    @SerialName("userInfo")
     val userInfo: String,
+    @SerialName("host")
     val host: String,
+    @SerialName("port")
     val port: Int? = null,
+    @SerialName("path")
     val path: String,
+    @SerialName("query")
     val query: String,
+    @SerialName("fragment")
     val fragment: String,
 ) {
     /**

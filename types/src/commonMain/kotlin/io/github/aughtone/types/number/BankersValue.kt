@@ -4,8 +4,6 @@ import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 import kotlin.math.floor
 
-private const val DIVISION_BY_ZERO = "Division by zero"
-
 @Serializable
 data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
 
@@ -15,12 +13,12 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
     operator fun rem(other: BankersValue) = BankersValue(cents % other.cents)
 
     operator fun div(other: BankersValue): BankersValue {
-        if (other.cents == 0L) throw ArithmeticException(DIVISION_BY_ZERO)
+        if (other.cents == 0L) throw ArithmeticException("Division by zero")
         return BankersValue(bankersRound(cents.toDouble() / other.cents.toDouble()))
     }
 
     operator fun div(other: Int): BankersValue {
-        if (other == 0) throw ArithmeticException(DIVISION_BY_ZERO)
+        if (other == 0) throw ArithmeticException("Division by zero")
         return BankersValue(bankersRound(cents.toDouble() / other))
     }
 
