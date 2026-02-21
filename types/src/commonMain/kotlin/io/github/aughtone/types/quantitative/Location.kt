@@ -1,5 +1,6 @@
 package io.github.aughtone.types.quantitative
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,7 +19,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Location(
+    @SerialName("coordinates")
     val coordinates: Coordinates,
+    @SerialName("accuracy")
     val accuracy: Distance? = null,
+    @SerialName("altitude")
     val altitude: Altitude? = null,
 )

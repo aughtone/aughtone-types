@@ -1,5 +1,6 @@
 package io.github.aughtone.types.uri
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
@@ -33,10 +34,15 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Uri(
+    @SerialName("scheme")
     val scheme: String,
+    @SerialName("authority")
     val authority: String,
+    @SerialName("path")
     val path: String,
+    @SerialName("query")
     val query: String,
+    @SerialName("fragment")
     val fragment: String,
 ) {
     // URI = scheme ":" ["//" authority] path ["?" query] ["#" fragment]

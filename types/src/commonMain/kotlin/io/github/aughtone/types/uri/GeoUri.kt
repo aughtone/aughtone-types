@@ -1,5 +1,7 @@
 package io.github.aughtone.types.uri
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 
 /**
@@ -14,12 +16,18 @@ package io.github.aughtone.types.uri
  * @property crs The coordinate reference system (CRS) used for the location (optional, defaults to "wgs84").
  * @property uncertainty The uncertainty of the location in meters (optional).
  */
+@Serializable
 data class GeoUri(
+    @SerialName("latitude")
     val latitude: Double,
-    val longitude:Double,
-    val altitude:Double?=null,
-    val crs: String?="wgs84",
-    val uncertainty:Int?=null,
+    @SerialName("longitude")
+    val longitude: Double,
+    @SerialName("altitude")
+    val altitude: Double? = null,
+    @SerialName("crs")
+    val crs: String? = "wgs84",
+    @SerialName("uncertainty")
+    val uncertainty: Int? = null,
 ) {
     /**
      * The URI scheme for Geographic Reference Identifiers (GRI).
@@ -45,7 +53,13 @@ data class GeoUri(
      *
      * @return A [Uri] object representing this GRI.
      */
-    fun toUri(): Uri = Uri(scheme = scheme, authority = "$latitude,$longitude${if(altitude!=null)",$altitude" else ""}", path = "", query = "${if(crs!=null)";crs=$crs" else ""}${if(uncertainty!=null)";u=$uncertainty" else ""}", fragment = "")
+    fun toUri(): Uri = Uri(
+        scheme = scheme,
+        authority = "$latitude,$longitude${if (altitude != null) ",$altitude" else ""}",
+        path = "",
+        query = "${if (crs != null) ";crs=$crs" else ""}${if (uncertainty != null) ";u=$uncertainty" else ""}",
+        fragment = ""
+    )
 
     /**
      * Returns a string representation of the GRI in the format "geo:latitude,longitude;crs=crs;u=uncertainty".
@@ -60,5 +74,6 @@ data class GeoUri(
      *
      * @return A string representation of the GRI.
      */
-    override fun toString(): String = "$scheme:$latitude,$longitude${if(altitude!=null)",$altitude" else ""}${if(crs!=null)";crs=$crs" else ""}${if(uncertainty!=null)";u=$uncertainty" else ""}"
+    override fun toString(): String =
+        "$scheme:$latitude,$longitude${if (altitude != null) ",$altitude" else ""}${if (crs != null) ";crs=$crs" else ""}${if (uncertainty != null) ";u=$uncertainty" else ""}"
 }
