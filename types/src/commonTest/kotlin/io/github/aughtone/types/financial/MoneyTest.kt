@@ -5,8 +5,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class MoneyTest {
-
-    private val usd = Currency("USD", "$", 840, 2)
+    private val usd = Currency(
+        code = "USD",
+        number = 840,
+        digits = 2,
+        name = "Dollar",
+        symbol = "$"
+    )
 
     @Test
     fun `zero factory creates money with zero value`() {
@@ -40,7 +45,15 @@ class MoneyTest {
     @Test
     fun `plus and minus for Money throws on currency mismatch`() {
         val m1 = Money(10.0, usd)
-        val m2 = Money(5.50, Currency("EUR", "€", 978, 2))
+        val m2 = Money(
+            5.50, Currency(
+                code = "EUR",
+                number = 978,
+                digits = 2,
+                name = "Euro",
+                symbol = "€"
+            )
+        )
         assertFailsWith<IllegalArgumentException> { m1 + m2 }
         assertFailsWith<IllegalArgumentException> { m1 - m2 }
     }

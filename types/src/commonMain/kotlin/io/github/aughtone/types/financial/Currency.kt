@@ -52,4 +52,6 @@ data class Currency(
     val obsolete: Boolean = false,
     @SerialName("replacedBy")
     val replacedBy: String? = null,
-)
+) {
+    companion object
+}

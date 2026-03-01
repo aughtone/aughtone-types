@@ -1,5 +1,6 @@
 package io.github.aughtone.types.number
 
+import io.github.aughtone.types.financial.Money
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -119,5 +120,11 @@ class BankersValueTest {
 
         val fromDouble = BankersValue.fromDouble(123.45)
         assertEquals(12345, fromDouble.toLong())
+    }
+
+    @Test
+    fun `times and div operators for Long`() {
+        val resultValue = BankersValue.fromLong(1000L ) / 2L
+        assertEquals(500L, resultValue.toLong())
     }
 }
