@@ -94,7 +94,7 @@ Provides a platform-independent way to work with IETF BCP 47 locales. The librar
 **Example Usage:**
 ```kotlin
 // Get the current locale for the platform
-val currentLocale = Locale.current
+val currentLocale = Locale.getCurrent()
 println("Current Locale: ${currentLocale.displayName}")
 
 // Look up a specific locale by its language tag
