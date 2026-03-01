@@ -107,7 +107,7 @@ data class Money(
      */
     operator fun div(scalar: Double): Money {
         if (scalar == 0.0) throw ArithmeticException("Division by zero")
-        val resultValue = BankersValue.fromLong(this.cents) / BankersValue.fromDouble(scalar)
+        val resultValue = BankersValue.fromLong(this.cents) / scalar
         return Money(resultValue.toLong(), this.currency)
     }
 
@@ -138,7 +138,7 @@ data class Money(
      */
     operator fun div(scalar: Long): Money {
         if (scalar == 0L) throw ArithmeticException("Division by zero")
-        val resultValue = BankersValue.fromDouble(this.cents.toDouble() / scalar)
+        val resultValue = BankersValue.fromLong(this.cents) / scalar
         return Money(resultValue.toLong(), this.currency)
     }
 

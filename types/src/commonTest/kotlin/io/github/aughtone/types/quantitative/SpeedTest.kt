@@ -27,7 +27,7 @@ class SpeedTest {
         val s2 = Speed(5.0, 0.2f)
         val result = s1 + s2
         assertEquals(15.0, result.mps)
-        assertEquals((0.1f * 10.0f + 0.2f * 5.0f) / 15.0f, result.accuracy, 1e-6f)
+        assertEquals((0.1f * 10.0f + 0.2f * 5.0f) / 15.0f, requireNotNull(result.accuracy), 1e-6f)
     }
 
     @Test
@@ -45,7 +45,7 @@ class SpeedTest {
         val s2 = Speed(5.0, 0.2f)
         val result = s1 - s2
         assertEquals(5.0, result.mps)
-        assertEquals((0.1f * 10.0f + 0.2f * 5.0f) / 5.0f, result.accuracy, 1e-6f)
+        assertEquals((0.1f * 10.0f + 0.2f * 5.0f) / 5.0f, requireNotNull(result.accuracy), 1e-6f)
     }
 
     @Test

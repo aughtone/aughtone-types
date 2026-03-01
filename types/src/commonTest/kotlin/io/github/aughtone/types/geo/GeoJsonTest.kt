@@ -231,7 +231,7 @@ class GeoJsonTest {
         val firstFeature = decodedCollection.features[0]
         assertNotNull(firstFeature.geometry)
         assertIs<Point>(firstFeature.geometry)
-        assertEquals(listOf(102.0, 0.5), (firstFeature.geometry as Point).coordinates)
+        assertEquals(listOf(102.0, 0.5), (firstFeature.geometry).coordinates)
 
         val secondFeature = decodedCollection.features[1]
         assertNotNull(secondFeature.geometry)
