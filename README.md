@@ -76,6 +76,34 @@ println("With Tax: ${withTax.toDouble()}") // Output: With Tax: 27.80
 // You can also work directly with cents
 val discount = withTax - 200L // Subtract 200 cents ($2.00)
 println("Final Price: ${discount.toDouble()}") // Output: Final Price: 25.80
+
+// Get the currency for the default locale
+val localCurrency = Currency.forLocale()
+println("Local currency is: ${localCurrency?.code}")
+
+// Get the currency for a specific locale
+val swissCurrency = Currency.forLocale(localeFor("fr-CH"))
+println("Currency for Switzerland (French) is: ${swissCurrency?.code}") // Output: Currency for Switzerland (French) is: CHF
+```
+
+### Locale
+Provides a platform-independent way to work with IETF BCP 47 locales. The library includes a comprehensive resource map of locales and provides functions to access the current native locale of the platform.
+
+- **`Locale`**: A data class representing a locale, including language, region, script, and variant codes.
+
+**Example Usage:**
+```kotlin
+// Get the current locale for the platform
+val currentLocale = Locale.current
+println("Current Locale: ${currentLocale.displayName}")
+
+// Look up a specific locale by its language tag
+val canadianFrench = localeFor("fr-CA")
+println(canadianFrench?.displayName) // Output: French (Canada)
+
+// Look up a language-only locale
+val german = localeFor("de")
+println(german?.displayName) // Output: German
 ```
 
 ### Quantitative & Geospatial
