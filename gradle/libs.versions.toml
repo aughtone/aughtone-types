@@ -1,17 +1,19 @@
 [versions]
 applicationId = "io.github.aughtone.types"
-versionIos = "1.0.4"
-versionName = "1.0.4"
+versionIos = "1.0.5"
+versionName = "1.0.5"
 android-minSdk = "24"
 android-compileSdk = "36"
 
 agp = "8.13.2"
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 kotlinx-serialization = "1.10.0"
 kotlinx-datetime = "0.7.1-0.6.x-compat" # "0.7.1"
 vanniktech = "0.36.0"
+kotlinBrowser = "2026.2.24"
 
 [libraries]
+kotlin-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlinBrowser" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }

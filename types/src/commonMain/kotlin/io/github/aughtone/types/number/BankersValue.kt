@@ -22,6 +22,16 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
         return BankersValue(bankersRound(cents.toDouble() / other))
     }
 
+    operator fun div(other: Long): BankersValue {
+        if (other == 0L) throw ArithmeticException("Division by zero")
+        return BankersValue(bankersRound(cents.toDouble() / other))
+    }
+
+    operator fun div(other: Double): BankersValue {
+        if (other == 0.0) throw ArithmeticException("Division by zero")
+        return BankersValue(bankersRound(cents.toDouble() / other))
+    }
+
     fun toLong() = cents
     fun toDouble() = cents / 100.0
 
