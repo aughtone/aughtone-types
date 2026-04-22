@@ -28,7 +28,7 @@ class MoneyTest {
     }
 
     @Test
-    fun `creating money with Long (cents) works`() {
+    fun `creating money with Long cents works`() {
         val money = Money(12345L, usd)
         assertEquals(12345L, money.cents)
         assertEquals(usd, money.currency)

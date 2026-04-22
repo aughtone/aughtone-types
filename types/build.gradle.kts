@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.multiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
 }
@@ -16,14 +16,28 @@ version = libs.versions.versionName.get().toString()
 
 //noinspection WrongGradleMethod
 kotlin {
+    jvmToolchain(17)
+
     jvm()
-    androidTarget {
-        publishLibraryVariants("release")
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
+//    androidTarget {
+//        publishLibraryVariants("release")
+//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+//        compilerOptions {
+//            jvmTarget.set(JvmTarget.JVM_17)
+//        }
+//    }
+    android {
+        namespace = libs.versions.applicationId.get().toString()
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+//        defaultConfig {
+//            minSdk = libs.versions.android.minSdk.get().toInt()
+//        }
+//        compileOptions {
+//            sourceCompatibility = JavaVersion.VERSION_17
+//            targetCompatibility = JavaVersion.VERSION_17
+//        }
     }
+
     // See: https://kotlinlang.org/docs/js-project-setup.html
     js(IR) {
         browser {
@@ -66,7 +80,7 @@ kotlin {
             ) //"app.occurrence"
             binaryOption(
                 "bundleShortVersionString",
-                libs.versions.versionIos.get().toString()
+                libs.versions.versionName.get().toString()
             ) //"1.0.0"
 //            binaryOption("bundleVersion", libs.versions.versionCode.get().toString()) //"1"
         }
@@ -114,18 +128,6 @@ kotlin {
                 }
             }
         }
-    }
-}
-
-android {
-    namespace = libs.versions.applicationId.get().toString()
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
