@@ -1,4 +1,4 @@
-# Standard: AI Skill Publishing
+# Standard: AughtOne AI-Skill Publishing
 
 This document outlines a standardized pattern for embedding machine-readable "skills" or documentation within a published library. This allows AI development assistants to discover and utilize a library's features more effectively, improving the developer experience.
 
@@ -44,8 +44,11 @@ Every `.ai-skill.md` file MUST begin with a YAML frontmatter block. This allows 
 ```markdown
 ---
 skill-id: [library_maven_group].[library_maven_artifact]
+name: "[Human Friendly Name](Source Repository URL)"
+type: "AughtOne AI-Skill"
 scope: [core|api|guides|...]
 compatibility: "[version_range]"
+author: "[Name](URL)" (Optional)
 ---
 ```
 
@@ -54,8 +57,11 @@ compatibility: "[version_range]"
 ```markdown
 ---
 skill-id: io.github.aughtone.types
+name: "[AughtOne Types Foundation](https://github.com/aughtone/aughtone-types)"
+type: "AughtOne AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
+author: "[Brill Pappin](https://github.com/bpappin)"
 ---
 ```
 

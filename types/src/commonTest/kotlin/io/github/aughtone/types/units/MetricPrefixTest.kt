@@ -6,30 +6,30 @@ import kotlin.test.assertTrue
 
 class MetricPrefixTest {
     val historicValues = listOf(
-        "QUETTA",
-        "RONNA",
-        "YOTTA",
-        "ZETTA",
-        "EXA",
-        "PETA",
-        "TERA",
-        "GIGA",
-        "MEGA",
-        "KILO",
-        "HECTO",
-        "DECA",
-        "DECI",
-        "CENTI",
-        "MILLI",
-        "MICRO",
-        "NANO",
-        "PICO",
-        "FEMTO",
-        "ATTO",
-        "ZEPTO",
-        "YOCTO",
-        "RONTO",
-        "QUECTO"
+        "Quetta",
+        "Ronna",
+        "Yotta",
+        "Zetta",
+        "Exa",
+        "Peta",
+        "Tera",
+        "Giga",
+        "Mega",
+        "Kilo",
+        "Hecto",
+        "Deca",
+        "Deci",
+        "Centi",
+        "Milli",
+        "Micro",
+        "Nano",
+        "Pico",
+        "Femto",
+        "Atto",
+        "Zepto",
+        "Yocto",
+        "Ronto",
+        "Quecto"
     )
 
     @Test
@@ -55,29 +55,57 @@ class MetricPrefixTest {
 
     @Test
     fun `verify symbols are correct`() {
-        assertEquals("Q", MetricPrefix.QUETTA.symbol)
-        assertEquals("R", MetricPrefix.RONNA.symbol)
-        assertEquals("Y", MetricPrefix.YOTTA.symbol)
-        assertEquals("Z", MetricPrefix.ZETTA.symbol)
-        assertEquals("E", MetricPrefix.EXA.symbol)
-        assertEquals("P", MetricPrefix.PETA.symbol)
-        assertEquals("T", MetricPrefix.TERA.symbol)
-        assertEquals("G", MetricPrefix.GIGA.symbol)
-        assertEquals("M", MetricPrefix.MEGA.symbol)
-        assertEquals("k", MetricPrefix.KILO.symbol)
-        assertEquals("h", MetricPrefix.HECTO.symbol)
-        assertEquals("da", MetricPrefix.DECA.symbol)
-        assertEquals("d", MetricPrefix.DECI.symbol)
-        assertEquals("c", MetricPrefix.CENTI.symbol)
-        assertEquals("m", MetricPrefix.MILLI.symbol)
-        assertEquals("μ", MetricPrefix.MICRO.symbol)
-        assertEquals("n", MetricPrefix.NANO.symbol)
-        assertEquals("p", MetricPrefix.PICO.symbol)
-        assertEquals("f", MetricPrefix.FEMTO.symbol)
-        assertEquals("a", MetricPrefix.ATTO.symbol)
-        assertEquals("z", MetricPrefix.ZEPTO.symbol)
-        assertEquals("y", MetricPrefix.YOCTO.symbol)
-        assertEquals("r", MetricPrefix.RONTO.symbol)
-        assertEquals("q", MetricPrefix.QUECTO.symbol)
+        assertEquals("Q", MetricPrefix.Quetta.symbol)
+        assertEquals("R", MetricPrefix.Ronna.symbol)
+        assertEquals("Y", MetricPrefix.Yotta.symbol)
+        assertEquals("Z", MetricPrefix.Zetta.symbol)
+        assertEquals("E", MetricPrefix.Exa.symbol)
+        assertEquals("P", MetricPrefix.Peta.symbol)
+        assertEquals("T", MetricPrefix.Tera.symbol)
+        assertEquals("G", MetricPrefix.Giga.symbol)
+        assertEquals("M", MetricPrefix.Mega.symbol)
+        assertEquals("k", MetricPrefix.Kilo.symbol)
+        assertEquals("h", MetricPrefix.Hecto.symbol)
+        assertEquals("da", MetricPrefix.Deca.symbol)
+        assertEquals("d", MetricPrefix.Deci.symbol)
+        assertEquals("c", MetricPrefix.Centi.symbol)
+        assertEquals("m", MetricPrefix.Milli.symbol)
+        assertEquals("μ", MetricPrefix.Micro.symbol)
+        assertEquals("n", MetricPrefix.Nano.symbol)
+        assertEquals("p", MetricPrefix.Pico.symbol)
+        assertEquals("f", MetricPrefix.Femto.symbol)
+        assertEquals("a", MetricPrefix.Atto.symbol)
+        assertEquals("z", MetricPrefix.Zepto.symbol)
+        assertEquals("y", MetricPrefix.Yocto.symbol)
+        assertEquals("r", MetricPrefix.Ronto.symbol)
+        assertEquals("q", MetricPrefix.Quecto.symbol)
+    }
+
+    @Test
+    fun `verify exponents are correct`() {
+        assertEquals(30, MetricPrefix.Quetta.exponent)
+        assertEquals(27, MetricPrefix.Ronna.exponent)
+        assertEquals(24, MetricPrefix.Yotta.exponent)
+        assertEquals(21, MetricPrefix.Zetta.exponent)
+        assertEquals(18, MetricPrefix.Exa.exponent)
+        assertEquals(15, MetricPrefix.Peta.exponent)
+        assertEquals(12, MetricPrefix.Tera.exponent)
+        assertEquals(9, MetricPrefix.Giga.exponent)
+        assertEquals(6, MetricPrefix.Mega.exponent)
+        assertEquals(3, MetricPrefix.Kilo.exponent)
+        assertEquals(2, MetricPrefix.Hecto.exponent)
+        assertEquals(1, MetricPrefix.Deca.exponent)
+        assertEquals(-1, MetricPrefix.Deci.exponent)
+        assertEquals(-2, MetricPrefix.Centi.exponent)
+        assertEquals(-3, MetricPrefix.Milli.exponent)
+        assertEquals(-6, MetricPrefix.Micro.exponent)
+        assertEquals(-9, MetricPrefix.Nano.exponent)
+        assertEquals(-12, MetricPrefix.Pico.exponent)
+        assertEquals(-15, MetricPrefix.Femto.exponent)
+        assertEquals(-18, MetricPrefix.Atto.exponent)
+        assertEquals(-21, MetricPrefix.Zepto.exponent)
+        assertEquals(-24, MetricPrefix.Yocto.exponent)
+        assertEquals(-27, MetricPrefix.Ronto.exponent)
+        assertEquals(-30, MetricPrefix.Quecto.exponent)
     }
 }
