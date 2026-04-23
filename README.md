@@ -1,5 +1,8 @@
 # Aughtone Types
 
+> [!IMPORTANT]
+> **v2.0.0 Breaking Change**: All enum constants in `MetricPrefix` and `UnitOfMeasure` have been renamed from `UPPER_SNAKE_CASE` to `PascalCase` (CamelCase) to improve readability and consistency across the ecosystem.
+
 This project follows a specialized 5-sector documentation hierarchy.
 
 ## 📚 Documentation Sectors

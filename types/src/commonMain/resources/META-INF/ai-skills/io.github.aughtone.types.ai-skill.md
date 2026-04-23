@@ -1,7 +1,10 @@
 ---
 skill-id: io.github.aughtone.types
+name: "[AughtOne Types Foundation](https://github.com/aughtone/aughtone-types)"
+type: "AughtOne AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
+author: "[Brill Pappin](https://github.com/bpappin)"
 ---
 
 # AI Skill: Aughtone Types
@@ -56,6 +59,13 @@ All types store values in SI base units and support an optional `accuracy: Float
 - **Speed**: Meters per second (mps).
 - **Azimuth**: Compass bearing in degrees.
 - **Altitude**: Vertical distance in meters.
+
+### **Units & Prefixes**
+- `UnitOfMeasure`: Comprehensive collection of SI, imperial, and digital units (e.g., `Meter`, `Kilobyte`, `Celsius`).
+    - Use `symbol` for primary display and `altSymbols` for parsing.
+    - `UnitOfMeasure.findFirst(symbol: String)` to resolve from string.
+- `MetricPrefix`: Standard SI prefixes from `Quetta` (10^30) to `Quecto` (10^-30).
+    - Use `symbol` for SI-compliant prefixes (e.g., `MetricPrefix.Kilo.symbol` -> `"k"`).
 
 ## 📦 Serialization & Immutability
 
