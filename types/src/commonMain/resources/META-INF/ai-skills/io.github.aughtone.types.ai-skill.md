@@ -20,6 +20,7 @@ This library provides a standardized, type-safe foundation for multiplatform app
 
 ### **Quantitative & Math**
 - `Money(value: Double, currency: Currency?): Money` (Banker's rounding)
+    - **Contract**: `Money.cents` stores the raw integer value. The `Currency.digits` property MUST be used as the scale factor (`10^digits`) to convert `cents` to its true decimal representation (e.g. 100 cents with 2 digits = 1.00).
 - `BankersValue.fromDouble(value: Double): BankersValue`
 - `Coordinates.split(): Pair<Double, Double>`
 
