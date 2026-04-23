@@ -7,5 +7,8 @@ data class Locale(
     val variantCode: String? = null,
     val displayName: String
 ) {
-    companion object
+    companion object {
+        val current: Locale
+            get() = currentNativeLocale()
+    }
 }
