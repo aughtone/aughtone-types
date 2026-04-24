@@ -4,14 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.1] - 2026-04-23
+## [2.0.2] - 2026-04-23
 
 ### Added
 - **New Locales**: Expanded `Locale` resource map to include **Inuktitut** (`iu`, `iu-CA`) and **Norwegian** (`no`), supporting broader language coverage in the formatting ecosystem.
 - **`Locale.current`**: Added a convenience static property to the `Locale` companion object to retrieve the current system locale via `currentNativeLocale()`.
 
 ### Changed
-- **Build System**: Incremented patch version to `2.0.1`.
+- **Build System**: Incremented patch version to `2.0.2`.
+
+## [2.0.1] - 2026-04-23
+
+### Changed
+- **Build System**: Stabilized build for patch release.
 
 ## [2.0.0] - 2026-04-22
 

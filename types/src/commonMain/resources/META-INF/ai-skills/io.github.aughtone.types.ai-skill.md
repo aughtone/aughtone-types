@@ -16,7 +16,8 @@ This library provides a standardized, type-safe foundation for multiplatform app
 ### **Financial & Locale**
 - `currencyFor(currencyCode: String): Currency?` (ISO 4217 lookup)
 - `localeFor(languageTag: String): Locale?` (BCP 47 lookup with fallback)
-- `currentNativeLocale(): Locale`
+- `Locale.current`: **(Recommended)** Static property on the `Locale` companion object. The primary API for retrieving the current platform-native system locale.
+- `currentNativeLocale(): Locale`: **(Internal Bridge)** Direct access to platform-specific locale retrieval; used by the library core. Consumers should always use `Locale.current` for consistency.
 
 ### **Quantitative & Math**
 - `Money(value: Double, currency: Currency?): Money` (Banker's rounding)
