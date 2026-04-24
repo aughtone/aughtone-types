@@ -2,7 +2,7 @@
 
 ## 📦 Distribution & Publishing
 
-AOTypes is a Kotlin Multiplatform library published to **Maven Central** using the `com.vanniktech.maven-publish` plugin.
+Aughtone Types is a Kotlin Multiplatform library published to **Maven Central** using the `com.vanniktech.maven-publish` plugin.
 
 ### Coordinates
 - **Group**: `io.github.aughtone`

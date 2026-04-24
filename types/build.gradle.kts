@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "io.github.aughtone"
+group = libs.versions.namespace.get().toString()
 version = libs.versions.versionName.get().toString()
 
 //noinspection WrongGradleMethod
@@ -27,7 +27,7 @@ kotlin {
 //        }
 //    }
     android {
-        namespace = libs.versions.applicationId.get().toString()
+        namespace = libs.versions.namespace.get().toString()
         compileSdk = libs.versions.android.compileSdk.get().toInt()
 //        defaultConfig {
 //            minSdk = libs.versions.android.minSdk.get().toInt()
@@ -72,11 +72,11 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "TypesKit"
+            baseName = "AughtoneTypesKit"
             isStatic = true
             binaryOption(
                 "bundleId",
-                libs.versions.applicationId.get().toString()
+                libs.versions.namespace.get().toString()
             ) //"app.occurrence"
             binaryOption(
                 "bundleShortVersionString",
@@ -141,7 +141,7 @@ mavenPublishing {
     coordinates(group.toString(), "types", version.toString())
 
     pom {
-        name = "Aught One Types"
+        name = "Aughtone Types"
         description = "A library of reusable types."
         inceptionYear = "2025"
         url = "https://github.com/aughtone/aughtone-types"

@@ -1,4 +1,4 @@
-# Standard: AughtOne AI-Skill Publishing
+# Standard: Aughtone AI-Skill Publishing
 
 This document outlines a standardized pattern for embedding machine-readable "skills" or documentation within a published library. This allows AI development assistants to discover and utilize a library's features more effectively, improving the developer experience.
 
@@ -45,7 +45,8 @@ Every `.ai-skill.md` file MUST begin with a YAML frontmatter block. This allows 
 ---
 skill-id: [library_maven_group].[library_maven_artifact]
 name: "[Human Friendly Name](Source Repository URL)"
-type: "AughtOne AI-Skill"
+spec-version: "[version]"
+type: "Aughtone AI-Skill"
 scope: [core|api|guides|...]
 compatibility: "[version_range]"
 author: "[Name](URL)" (Optional)
@@ -57,8 +58,9 @@ author: "[Name](URL)" (Optional)
 ```markdown
 ---
 skill-id: io.github.aughtone.types
-name: "[AughtOne Types Foundation](https://github.com/aughtone/aughtone-types)"
-type: "AughtOne AI-Skill"
+name: "[Aughtone Types Foundation](https://github.com/aughtone/aughtone-types)"
+spec-version: 1.0
+type: "Aughtone AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
 author: "[Brill Pappin](https://github.com/bpappin)"
@@ -122,7 +124,7 @@ If you are using an AI agent (like Antigravity), you can use the following "Magi
 
 1.  **Identify Namespace**: Read `build.gradle.kts` or `gradle.properties` to confirm the library's identity.
 2.  **Create Skill File**: Create the file `src/commonMain/resources/META-INF/ai-skills/[group].[artifact].ai-skill.md`.
-3.  **Inject Metadata**: Add the YAML frontmatter with `skill-id`, `scope: core`, and `compatibility`.
+3.  **Inject Metadata**: Add the YAML frontmatter with `skill-id`, `spec-version`, `scope: core`, and `compatibility`.
 4.  **Scaffold Content**: Add placeholders for API descriptions and the mandatory `## 🤖 Agent Onboarding` section.
 5.  **Update README**: Append the `## 🤖 AI-Assisted Development` section to the root `README.md`.
 6.  **Update AGENTS.md**: Add a reference to the new skill file in the project's `AGENTS.md` to ensure immediate governance.

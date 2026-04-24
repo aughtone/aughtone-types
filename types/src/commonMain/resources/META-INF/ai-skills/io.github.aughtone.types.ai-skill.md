@@ -1,5 +1,6 @@
 ---
 skill-id: io.github.aughtone.types
+spec-version: 1.0
 name: "[Aughtone Types Foundation](https://github.com/aughtone/aughtone-types)"
 type: "Aughtone AI-Skill"
 scope: core

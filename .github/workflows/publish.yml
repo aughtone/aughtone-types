@@ -2,11 +2,46 @@
 
 name: Publish
 on:
+  push:
+    branches: [ "main" ]
   release:
-    types: [released, prereleased]
+    types: [published]
+
 jobs:
+  create-release:
+    name: Create GitHub Release
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.release.outputs.id }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(grep "versionName =" gradle/libs.versions.toml | cut -d'"' -f2)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      - name: Create Release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish:
     name: Release build and publish
+    needs: create-release
+    if: |
+      github.event_name == 'release' || 
+      (github.event_name == 'push' && needs.create-release.outputs.release_id != '')
     runs-on: macOS-latest
     steps:
       - name: Check out code
