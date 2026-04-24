@@ -9,6 +9,7 @@ This repository follows the **5-sector hierarchy**. All knowledge must be disper
 - 🎨 Design & UI (docs/DESIGN.md)
 - 📋 Acceptance Criteria (docs/ACs/README.md)
 - 📖 Developer Guide (docs/DEVELOPER.md)
+- 📜 Changelog (docs/CHANGELOG.md)
 
 ## 2. Governance Standards
 All AI agents MUST adhere to these skills from `docs/standards/`:

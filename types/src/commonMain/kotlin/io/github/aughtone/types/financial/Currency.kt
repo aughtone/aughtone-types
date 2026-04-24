@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  * beyond just the code and symbol. It includes:
  * - **code:** The three-letter ISO 4217 currency code (e.g., "USD", "EUR", "JPY").
  * - **number:** The three-digit numeric ISO 4217 currency code.
- * - **digits:** The number of decimal digits typically used with this currency.
+ * - **digits:** The number of decimal digits used to represent the fractional part of the currency. This defines the scale factor (`10^digits`) used to convert the raw integer `cents` of a [Money] instance into its true decimal value.
  * - **name:** The full name of the currency (e.g., "US Dollar", "Euro").
  * - **countries:** A list of countries where this currency is used.
  * - **symbol:** The symbol used to represent the currency (e.g., "$", "€", "¥").
@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
  *
  * @property code The three-letter ISO 4217 currency code.
  * @property number The three-digit numeric ISO 4217 currency code.
- * @property digits The number of decimal digits typically used with this currency.
+ * @property digits The number of decimal digits used to represent the fractional part of the currency.
  * @property name The full name of the currency.
  * @property countries A list of countries where this currency is used. Defaults to an empty list.
  * @property symbol The symbol used to represent the currency.

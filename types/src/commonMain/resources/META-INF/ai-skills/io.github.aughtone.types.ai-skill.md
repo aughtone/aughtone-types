@@ -1,7 +1,7 @@
 ---
 skill-id: io.github.aughtone.types
-name: "[AughtOne Types Foundation](https://github.com/aughtone/aughtone-types)"
-type: "AughtOne AI-Skill"
+name: "[Aughtone Types Foundation](https://github.com/aughtone/aughtone-types)"
+type: "Aughtone AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
 author: "[Brill Pappin](https://github.com/bpappin)"
@@ -16,10 +16,12 @@ This library provides a standardized, type-safe foundation for multiplatform app
 ### **Financial & Locale**
 - `currencyFor(currencyCode: String): Currency?` (ISO 4217 lookup)
 - `localeFor(languageTag: String): Locale?` (BCP 47 lookup with fallback)
-- `currentNativeLocale(): Locale`
+- `Locale.current`: **(Recommended)** Static property on the `Locale` companion object. The primary API for retrieving the current platform-native system locale.
+- `currentNativeLocale(): Locale`: **(Internal Bridge)** Direct access to platform-specific locale retrieval; used by the library core. Consumers should always use `Locale.current` for consistency.
 
 ### **Quantitative & Math**
 - `Money(value: Double, currency: Currency?): Money` (Banker's rounding)
+    - **Contract**: `Money.cents` stores the raw integer value. The `Currency.digits` property MUST be used as the scale factor (`10^digits`) to convert `cents` to its true decimal representation (e.g. 100 cents with 2 digits = 1.00).
 - `BankersValue.fromDouble(value: Double): BankersValue`
 - `Coordinates.split(): Pair<Double, Double>`
 
