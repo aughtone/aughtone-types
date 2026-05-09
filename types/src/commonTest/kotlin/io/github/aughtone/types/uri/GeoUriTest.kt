@@ -12,25 +12,29 @@ class GeoUriTest {
         uncertainty = 15,
     )
 
+    // Note: We use string interpolation (e.g., ${183.0}) instead of hardcoding "183.0" in the assertions.
+    // This handles the cross-platform floating point formatting discrepancy where Kotlin/JVM preserves
+    // the ".0" decimal ("183.0") while Kotlin/JS and Kotlin/Wasm drop it ("183").
+
     @Test
     fun `Full GeoUri to string`() {
-        assertEquals("geo:48.201,16.3695,183.0;crs=wgs84;u=15", gri.toString())
+        assertEquals("geo:48.201,16.3695,${183.0};crs=wgs84;u=15", gri.toString())
     }
 
     @Test
     fun `GeoUri to string with no uncertainty`() {
-        assertEquals("geo:48.201,16.3695,183.0;crs=wgs84", gri.copy(uncertainty = null).toString())
+        assertEquals("geo:48.201,16.3695,${183.0};crs=wgs84", gri.copy(uncertainty = null).toString())
     }
 
     @Test
     fun `GeoUri to string with no crs`() {
-        assertEquals("geo:48.201,16.3695,183.0;u=15", gri.copy(crs = null).toString())
+        assertEquals("geo:48.201,16.3695,${183.0};u=15", gri.copy(crs = null).toString())
     }
 
     @Test
     fun `GeoUri to string with no crs or uncertainty`() {
         assertEquals(
-            "geo:48.201,16.3695,183.0",
+            "geo:48.201,16.3695,${183.0}",
             gri.copy(crs = null, uncertainty = null).toString()
         )
     }

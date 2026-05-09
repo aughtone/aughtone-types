@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class LocaleTest {
 
@@ -72,5 +73,24 @@ class LocaleTest {
         assertEquals("zh-Hans-CN", Locale("zh", "CN", "Hans", displayName = "").toLanguageTag())
         assertEquals("de", Locale("de", displayName = "").toLanguageTag())
         assertEquals("es-419", Locale("es", variantCode = "419", displayName = "").toLanguageTag())
+    }
+
+    @Test
+    fun `test availableLocales returns a non-empty list`() {
+        val locales = availableLocales()
+        assertTrue(locales.isNotEmpty(), "availableLocales() should not return an empty list")
+    }
+
+    @Test
+    fun `test localesByName filters correctly`() {
+        val englishLocales = localesByName("English")
+        assertTrue(englishLocales.isNotEmpty(), "Should find locales with 'English' in the name")
+        assertTrue(englishLocales.all { it.displayName?.contains("English", ignoreCase = true) == true })
+
+        val caseInsensitiveLocales = localesByName("english", ignoreCase = true)
+        assertEquals(englishLocales.size, caseInsensitiveLocales.size)
+
+        val none = localesByName("NonExistentLocaleName123")
+        assertTrue(none.isEmpty(), "Should return empty list for non-existent names")
     }
 }

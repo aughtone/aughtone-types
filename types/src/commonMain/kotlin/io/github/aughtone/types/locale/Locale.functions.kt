@@ -70,3 +70,20 @@ internal fun getCurrentNativeLocaleImpl(nativeTag: String?, fallbackTag: String)
  * @see Locale.Companion.getCurrent
  */
 expect fun currentNativeLocale(fallbackTag: String = "en"): Locale
+
+/**
+ * Returns a list of all [Locale]s supported by the internal resource map.
+ * 
+ * @return A list of supported [Locale]s.
+ */
+fun availableLocales(): List<Locale> = localeResourceMap.values.toList()
+
+/**
+ * Returns a list of [Locale]s whose display name contains the specified [name].
+ *
+ * @param name The name to search for within the locale's display name.
+ * @param ignoreCase `true` to ignore character case when matching. Defaults to `true`.
+ * @return A list of matching [Locale]s.
+ */
+fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
+    availableLocales().filter { it.displayName?.contains(name, ignoreCase) == true }
