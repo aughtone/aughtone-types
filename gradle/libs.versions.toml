@@ -1,15 +1,15 @@
 [versions]
 namespace = "io.github.aughtone"
-versionName = "2.0.3"
+versionName = "2.1.0"
 android-minSdk = "24"
 android-compileSdk = "37"
 
-agp = "9.2.0"
+agp = "9.2.1"
 kotlin = "2.3.21"
 kotlinx-serialization = "1.11.0"
 kotlinx-datetime = "0.7.1"
 vanniktech = "0.36.0"
-kotlinBrowser = "2026.4.12"
+kotlinBrowser = "2026.5.2"
 
 [libraries]
 kotlin-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlinBrowser" }

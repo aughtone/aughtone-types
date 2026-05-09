@@ -12,23 +12,52 @@ author: "[Brill Pappin](https://github.com/bpappin)"
 
 This library provides a standardized, type-safe foundation for multiplatform applications. Use the following "Toolbox" and "Standards Compliance" guide to handle data consistently across all platforms.
 
-## 🧰 The AI Toolbox (Key Functions)
+## 🧰 The AI Toolbox (API Index & Usage Guide)
+
+**Core Philosophy**: Standard Kotlin library primitives are always preferred. This library exists strictly to fill multiplatform gaps (e.g., cross-platform `Locale`, `Currency`, or specific SI units). It is perfectly acceptable to mix library-provided types with standard primitives where it makes logical sense for the architecture. 
 
 ### **Financial & Locale**
-- `currencyFor(currencyCode: String): Currency?` (ISO 4217 lookup)
-- `localeFor(languageTag: String): Locale?` (BCP 47 lookup with fallback)
-- `Locale.current`: **(Recommended)** Static property on the `Locale` companion object. The primary API for retrieving the current platform-native system locale.
-- `currentNativeLocale(): Locale`: **(Internal Bridge)** Direct access to platform-specific locale retrieval; used by the library core. Consumers should always use `Locale.current` for consistency.
+*   **`Locale`**: Use this instead of `java.util.Locale` or string tags.
+    *   `Locale.current`: Primary API to get the platform's native system locale.
+    *   `localeFor(languageTag: String)`: Parse a BCP 47 language tag into a `Locale`.
+    *   `availableLocales()`: Get a list of all supported locales.
+    *   `localesByName(name: String)`: Filter supported locales by their display name.
+    *   `Locale.toLanguageTag()`: Format a `Locale` back to a string.
+*   **`Currency`**: Represents ISO 4217 currencies.
+    *   `currencyFor(currencyCode: String)`: Lookup a currency by its 3-letter ISO code.
+    *   `currencyFor(locale: Locale)`: Resolve the default currency for a given locale (also accessible via `Currency.Companion.forLocale(locale)`).
+    *   `availableCurrencies()`: Get a list of all supported currencies.
+    *   `currenciesByName(name: String)`: Filter supported currencies by their display name.
+*   **`Money`**: Stores monetary values.
+    *   **Contract**: `Money.cents` stores the raw integer value. The `Currency.digits` property MUST be used as the scale factor (`10^digits`) to convert `cents` to its true decimal representation (e.g. 100 cents with 2 digits = 1.00).
+    *   `Double.toMoney(Currency?)`: Safely convert a double to `Money`.
+    *   `Money.toDouble()`: Convert `Money` back to a Double.
+*   **`BankersValue`**: Use this for all manual rounding of financial `Double` values. It implements Banker's Rounding (half-to-even) to prevent bias.
 
-### **Quantitative & Math**
-- `Money(value: Double, currency: Currency?): Money` (Banker's rounding)
-    - **Contract**: `Money.cents` stores the raw integer value. The `Currency.digits` property MUST be used as the scale factor (`10^digits`) to convert `cents` to its true decimal representation (e.g. 100 cents with 2 digits = 1.00).
-- `BankersValue.fromDouble(value: Double): BankersValue`
-- `Coordinates.split(): Pair<Double, Double>`
+### **Geospatial & GeoJSON**
+*   **`Location`**: Stores geographic coordinates (`latitude`, `longitude`) along with optional `altitude`, `speed`, `azimuth`, and `accuracy` using the library's SI data types.
+*   **`Coordinates`**: A basic Lat/Lon pair. Use `Coordinates.add(lat, lon)` or `Coordinates.split()`.
+*   **`GeoJson`**: Use this sealed class for polymorphic parsing and serialization of spatial data (**RFC 7946**). Subtypes include: `Geometry`, `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`, `Feature`, `FeatureCollection`.
 
-### **Networking & URIs**
-- `UrlBuilder`: For structured URL construction (RFC 3986 compliant).
-- `urn(urnString: String): Urn`: Parses a URN string (RFC 8141 compliant).
+### **Networking & Identifiers (RFC Compliant)**
+*   **`Uri` & `Url`**: Use these data classes for type-safe URI manipulation instead of plain strings.
+*   **`UrlBuilder`**: Use for structured, RFC 3986 compliant URL construction.
+*   **`UrlEncoder`**: Use for safe URL encoding.
+*   **`Urn`**: Represents a Uniform Resource Name (RFC 8141). Use the `urn(urnString: String)` function to parse strings into persistent resource names.
+*   **`GeoUri`**: Represents a `geo:` URI (RFC 5870). ALWAYS use this class when handling geographic URIs to ensure compliance.
+
+### **Quantitative (SI Units)**
+All types store values in SI base units and support an optional `accuracy: Float?` (fractional error).
+*   **`Distance`**: Represents distance in meters.
+*   **`Speed`**: Represents speed in meters per second (mps).
+*   **`Azimuth`**: Represents compass bearing in degrees.
+*   **`Altitude`**: Represents vertical distance in meters.
+
+### **Units & Utilities**
+*   **`UnitOfMeasure`**: Comprehensive collection of SI, imperial, and digital units (e.g., `Meter`, `Kilobyte`, `Celsius`). Use `UnitOfMeasure.findFirst(symbol: String)` to parse from strings.
+*   **`MetricPrefix`**: Standard SI prefixes from `Quetta` (10^30) to `Quecto` (10^-30).
+*   **`BitSet`**: Use `bitSet()` or `emptyBitSet()` for memory-efficient boolean arrays.
+*   **`LazyMap`**: A map that lazily evaluates and caches its values.
 
 ## 📜 Compliance & Standards
 
@@ -52,23 +81,6 @@ This library strictly adheres to global standards to ensure data interoperabilit
 - **GeoJSON**: Complies with **RFC 7946**. Includes polymorphic serialization for `Point`, `Feature`, and `FeatureCollection`.
 - **CRS**: Default Coordinate Reference System is **WGS84**.
 - **Distance**: Uses the **Haversine Formula** for great-circle distance between two points.
-
-## 📐 Core Data Types
-
-### **Quantitative (SI Units)**
-All types store values in SI base units and support an optional `accuracy: Float?` (fractional error).
-- **Coordinates**: Latitude/Longitude degrees.
-- **Distance**: Meters.
-- **Speed**: Meters per second (mps).
-- **Azimuth**: Compass bearing in degrees.
-- **Altitude**: Vertical distance in meters.
-
-### **Units & Prefixes**
-- `UnitOfMeasure`: Comprehensive collection of SI, imperial, and digital units (e.g., `Meter`, `Kilobyte`, `Celsius`).
-    - Use `symbol` for primary display and `altSymbols` for parsing.
-    - `UnitOfMeasure.findFirst(symbol: String)` to resolve from string.
-- `MetricPrefix`: Standard SI prefixes from `Quetta` (10^30) to `Quecto` (10^-30).
-    - Use `symbol` for SI-compliant prefixes (e.g., `MetricPrefix.Kilo.symbol` -> `"k"`).
 
 ## 📦 Serialization & Immutability
 

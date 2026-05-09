@@ -138,5 +138,6 @@ internal val currencyResourceMap: Map<String, Currency> = mapOf(
     "PLN" to lazy { Currency("PLN", 985, 2, "Zloty",  "zł") },
     "PYG" to lazy { Currency("PYG", 600, 0, "Guarani",  "Gs") },
     "QAR" to lazy { Currency("QAR", 634, 2, "Qatari Riyal",  "﷼") },
+    "USD" to lazy { Currency("USD", 840, 2, "US Dollar", "$") },
     "XCG" to lazy { Currency("XCG", 532, 2, "Caribbean Guilder",  "Cg") },
 ) .mapValues { it.value.value }

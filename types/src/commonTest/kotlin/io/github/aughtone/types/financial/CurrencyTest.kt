@@ -1,5 +1,6 @@
 package io.github.aughtone.types.financial
 
+import io.github.aughtone.types.locale.localeFor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -1079,4 +1080,32 @@ class CurrencyTest {
         assertEquals(532, currency.number)
     }
 
+    @Test
+    fun `test availableCurrencies returns a non-empty list`() {
+        val currencies = availableCurrencies()
+        assertTrue(currencies.isNotEmpty(), "availableCurrencies() should not return an empty list")
+    }
+
+    @Test
+    fun `test currenciesByName filters correctly`() {
+        val dollarCurrencies = currenciesByName("Dollar")
+        assertTrue(dollarCurrencies.isNotEmpty(), "Should find currencies with 'Dollar' in the name")
+        assertTrue(dollarCurrencies.all { it.name.contains("Dollar", ignoreCase = true) })
+
+        val caseInsensitiveCurrencies = currenciesByName("dollar", ignoreCase = true)
+        assertEquals(dollarCurrencies.size, caseInsensitiveCurrencies.size)
+
+        val none = currenciesByName("NonExistentCurrencyName123")
+        assertTrue(none.isEmpty(), "Should return empty list for non-existent names")
+    }
+
+    @Test
+    fun `test currencyFor locale returns correct currency`() {
+        val usLocale = localeFor("en-US")
+        assertNotNull(usLocale)
+        
+        val currency = currencyFor(usLocale)
+        assertNotNull(currency)
+        assertEquals("USD", currency.code)
+    }
 }

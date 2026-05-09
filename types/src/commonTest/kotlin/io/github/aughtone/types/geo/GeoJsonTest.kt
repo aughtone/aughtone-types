@@ -67,30 +67,32 @@ class GeoJsonTest {
             )
         )
         // Note: bbox is null by default and should not be present in the JSON output
+        // We use string interpolation (e.g., ${100.0}) for floating-point values to ensure cross-platform compatibility. 
+        // Kotlin/JVM prints doubles with ".0" (e.g., "100.0"), whereas Kotlin/JS drops the ".0" (e.g., "100").
         val polygonJsonString = """
             {
                 "type": "Polygon",
                 "coordinates": [
                     [
                         [
-                            100.0,
-                            0.0
+                            ${100.0},
+                            ${0.0}
                         ],
                         [
-                            101.0,
-                            0.0
+                            ${101.0},
+                            ${0.0}
                         ],
                         [
-                            101.0,
-                            1.0
+                            ${101.0},
+                            ${1.0}
                         ],
                         [
-                            100.0,
-                            1.0
+                            ${100.0},
+                            ${1.0}
                         ],
                         [
-                            100.0,
-                            0.0
+                            ${100.0},
+                            ${0.0}
                         ]
                     ]
                 ]
@@ -116,14 +118,15 @@ class GeoJsonTest {
         )
 
         // With explicitNulls = false, the inner Point's null bbox is omitted.
+        // String interpolation handles the JVM vs JS ".0" string representation difference.
         val featureJsonString = """
             {
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
                     "coordinates": [
-                        1.0,
-                        2.0
+                        ${1.0},
+                        ${2.0}
                     ]
                 },
                 "properties": {
@@ -131,10 +134,10 @@ class GeoJsonTest {
                 },
                 "id": "feature1",
                 "bbox": [
-                    1.0,
-                    2.0,
-                    1.0,
-                    2.0
+                    ${1.0},
+                    ${2.0},
+                    ${1.0},
+                    ${2.0}
                 ]
             }
         """.trimIndent()
@@ -183,6 +186,7 @@ class GeoJsonTest {
     fun `FeatureCollection with multiple feature types deserializes correctly`() {
         // Deserialization is unaffected by explicitNulls, so this test remains the same.
         // It can correctly handle JSON that has `null` values present.
+        // Interpolation handles the JVM (".0") vs JS/Wasm (no ".0") formatting discrepancy.
         val featureCollectionJson = """
             {
               "type": "FeatureCollection",
@@ -191,7 +195,7 @@ class GeoJsonTest {
                   "type": "Feature",
                   "geometry": {
                     "type": "Point",
-                    "coordinates": [102.0, 0.5]
+                    "coordinates": [${102.0}, 0.5]
                   },
                   "properties": {
                     "prop0": "value0"
@@ -202,10 +206,10 @@ class GeoJsonTest {
                   "geometry": {
                     "type": "LineString",
                     "coordinates": [
-                      [102.0, 0.0],
-                      [103.0, 1.0],
-                      [104.0, 0.0],
-                      [105.0, 1.0]
+                      [${102.0}, ${0.0}],
+                      [${103.0}, ${1.0}],
+                      [${104.0}, ${0.0}],
+                      [${105.0}, ${1.0}]
                     ]
                   },
                   "properties": {
