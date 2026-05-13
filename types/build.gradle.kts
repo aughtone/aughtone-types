@@ -19,36 +19,21 @@ kotlin {
     jvmToolchain(17)
 
     jvm()
-//    androidTarget {
-//        publishLibraryVariants("release")
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_17)
-//        }
-//    }
+
     android {
         namespace = libs.versions.namespace.get().toString()
         compileSdk = libs.versions.android.compileSdk.get().toInt()
-//        defaultConfig {
-//            minSdk = libs.versions.android.minSdk.get().toInt()
-//        }
-//        compileOptions {
-//            sourceCompatibility = JavaVersion.VERSION_17
-//            targetCompatibility = JavaVersion.VERSION_17
-//        }
     }
 
     // See: https://kotlinlang.org/docs/js-project-setup.html
     js(IR) {
         browser {
             generateTypeScriptDefinitions()
-//            useCommonJs()
             webpackTask {
                 output.libraryTarget = "commonjs2"
             }
         }
         useEsModules() // Enables ES2015 modules
-        // binaries.executable()
     }
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -76,20 +61,19 @@ kotlin {
             isStatic = true
             binaryOption(
                 "bundleId",
-                libs.versions.namespace.get().toString()
-            ) //"app.occurrence"
+                libs.versions.namespace.get()
+            )
             binaryOption(
                 "bundleShortVersionString",
-                libs.versions.versionName.get().toString()
-            ) //"1.0.0"
-//            binaryOption("bundleVersion", libs.versions.versionCode.get().toString()) //"1"
+                libs.versions.versionName.get()
+            )
         }
     }
 
     // XXX need to come back to this.
     //  Getting it to work for linux may be complex.
     //  We'll probably need to load external data.
-     linuxX64()
+    linuxX64()
 
     sourceSets {
         val wasmJsMain by getting {
@@ -99,7 +83,6 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-                //put your multiplatform dependencies here
                 api(libs.kotlinx.datetime)
                 api(libs.kotlinx.serialization.json)
             }

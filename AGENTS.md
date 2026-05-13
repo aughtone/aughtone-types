@@ -23,6 +23,9 @@ All AI agents MUST adhere to these skills from `docs/standards/`:
 - **Kotlin Multiplatform**: All code must be multiplatform-first. Be mindful of source set placement (`commonMain`, `androidMain`, etc.).
 - **Immutability & Safety**: Maintain data structure immutability and handle serialization (`kotlinx.serialization`) correctly.
 - **Consistency**: Adhere to existing patterns; consistency outweighs personal preference.
+- **Type Preference (Avoid Shadowing)**: 
+    - **`Locale`**: Prefer `io.github.aughtone.types.locale.Locale` when working in `commonMain` where cross-platform consistency is required. Be aware of potential shadowing by `java.util.Locale` or Compose-specific locales and use the fully qualified name if necessary to resolve ambiguity.
+    - **`Currency`**: Prefer `io.github.aughtone.types.financial.Currency`.
 
 ## 4. AI Interaction Guidelines
 - **Verification First**: Check the corresponding AcceptanceCriteria.md before implementation.

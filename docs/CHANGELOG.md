@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-05-15
+
+### ⚠️ BREAKING CHANGES
+- **`localeFor` Behavior**: Changed from a BCP 47 lookup (with fallback) to a **strict lookup**. It now only returns a `Locale` if there is an exact match in the internal resource map. Use `resolveLocale` for the previous fallback behavior.
+
+### Added
+- **`Locale.languageTag`**: Added a dedicated property to the `Locale` class to provide the standard BCP 47 string representation.
+- **`resolveLocale(tag)`**: New function implementing the BCP 47 lookup algorithm with fallback (e.g., "en-US" -> "en").
+- **`parseLocale(tag)`**: New function that decomposes any IETF BCP 47 string into its components, creating a new `Locale` instance if no match is found in the resource map.
+- **Intelligent Native Resolution**: `Locale.current` now dynamically parses native platform tags (e.g., `fr-MC`) if they aren't explicitly in the library's resource map, preventing unnecessary fallbacks to English.
+- **Azerbaijani Locale**: Added `Azerbaijani` (`az-AZ`) as a top-level constant and resource map entry.
+
+### Changed
+- **AI Governance**: Updated `AGENTS.md` and `ai-skill.md` to provide clearer guidance on preferring the library's `Locale` type in `commonMain` while remaining compatible with platform-specific types.
+
+### Deprecated
+- **`Locale.toLanguageTag()`**: Deprecated in favor of the new `Locale.languageTag` property.
+
+## [2.1.0] - 2026-05-09
+
+### Added
+- **Financial Utility**: Added `currencyFor(locale)` to retrieve the default currency for a given `Locale`.
+- **Resource Maps**: Updated `localeToCurrencyMap` to support broader automated currency resolution.
+
 ## [2.0.3] - 2026-04-24
 
 ### Changed

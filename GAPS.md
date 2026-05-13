@@ -10,3 +10,10 @@ This document tracks identified technical debt, missing features, and cross-plat
 - **Context**: `GeoJsonTest` and `GeoUriTest` fail in JS/Wasm environments because `Double` serialization differs (e.g., `100.0` on JVM becomes `100` in JS).
 - **Resolution**: Refactor tests to use platform-agnostic comparison logic (e.g., `JsonElement` comparison or normalized string matching).
 - **Target Release**: 2.0.3
+
+### gap: Deprecated `toLanguageTag` Removal
+- **Status**: OPEN
+- **Priority**: LOW
+- **Context**: `Locale.toLanguageTag()` was deprecated in 2.2.0 in favor of the `Locale.languageTag` property.
+- **Resolution**: Remove the extension function in a future major release (v3.0.0).
+- **Target Release**: 3.0.0
