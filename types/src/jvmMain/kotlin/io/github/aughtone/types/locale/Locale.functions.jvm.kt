@@ -20,7 +20,7 @@ actual fun localeForNative(languageTag: String): Locale? {
     }
 }
 
-actual fun currentNativeLocale(fallbackTag: String): Locale {
+actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val languageTag = JavaLocale.getDefault().toLanguageTag()
     return getCurrentNativeLocaleImpl(languageTag, fallbackTag)
 }

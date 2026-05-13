@@ -29,7 +29,7 @@ actual fun localeForNative(languageTag: String): Locale? {
     )
 }
 
-actual fun currentNativeLocale(fallbackTag: String): Locale {
+actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val languageTag = NSLocale.currentLocale.localeIdentifier
     return getCurrentNativeLocaleImpl(languageTag, fallbackTag)
 }

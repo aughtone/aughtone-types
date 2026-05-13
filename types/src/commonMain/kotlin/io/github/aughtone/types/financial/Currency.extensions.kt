@@ -2,7 +2,6 @@ package io.github.aughtone.types.financial
 
 import io.github.aughtone.types.locale.Locale
 import io.github.aughtone.types.locale.getCurrent
-import io.github.aughtone.types.locale.toLanguageTag
 
 /**
  * Retrieves the [Currency] for a given [Locale].
@@ -16,11 +15,11 @@ import io.github.aughtone.types.locale.toLanguageTag
  * @return The corresponding [Currency] if a mapping is found, otherwise `null`.
  */
 fun Currency.Companion.forLocale(locale: Locale = Locale.getCurrent()): Currency? {
-    val languageTag = locale.toLanguageTag()
+    val languageTag = locale.languageTag
 
     // Try to find a currency for the full language tag (e.g., "en-US")
     val currencyCode = localeToCurrencyMap[languageTag]
 
-    // The final currency lookup; fallback to USD if even the fallbackTag fails.
+    // The final currency lookup
     return currencyCode?.let { currencyFor(it) }
 }

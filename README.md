@@ -11,6 +11,7 @@ This project follows a specialized 5-sector documentation hierarchy.
 - 🎨 [Design & UI](docs/DESIGN.md): Presentation layer and user stories.
 - 📋 [Acceptance Criteria](docs/ACs/README.md): Success outcomes and verification.
 - 📖 [Developer Guide](docs/DEVELOPER.md): Environment setup and onboarding.
+- 📜 [Changelog](CHANGELOG.md): History of changes and release notes.
 
 ## 📦 Core Data Types
 

@@ -17,15 +17,19 @@ This library provides a standardized, type-safe foundation for multiplatform app
 **Core Philosophy**: Standard Kotlin library primitives are always preferred. This library exists strictly to fill multiplatform gaps (e.g., cross-platform `Locale`, `Currency`, or specific SI units). It is perfectly acceptable to mix library-provided types with standard primitives where it makes logical sense for the architecture. 
 
 ### **Financial & Locale**
-*   **`Locale`**: Use this instead of `java.util.Locale` or string tags.
+*   **`Locale`**: A platform-independent locale representation.
+    *   **Preference**: When working in `commonMain` with this library directly imported, prefer `io.github.aughtone.types.locale.Locale` over platform-specific or framework-specific (e.g. Compose) types to ensure cross-platform consistency.
     *   `Locale.current`: Primary API to get the platform's native system locale.
-    *   `localeFor(languageTag: String)`: Parse a BCP 47 language tag into a `Locale`.
+    *   `localeFor(languageTag: String)`: Strict lookup of a BCP 47 tag in the internal resource map.
+    *   `resolveLocale(languageTag: String)`: Lookup with fallback (e.g., "en-US" -> "en").
+    *   `parseLocale(languageTag: String)`: Parses a tag into a `Locale`, creating a new instance if not found in the map.
     *   `availableLocales()`: Get a list of all supported locales.
     *   `localesByName(name: String)`: Filter supported locales by their display name.
-    *   `Locale.toLanguageTag()`: Format a `Locale` back to a string.
+    *   `Locale.languageTag`: Property that provides the BCP 47 tag for a `Locale`.
+    *   `Locale.toLanguageTag()`: (Deprecated) Use `Locale.languageTag` property instead.
 *   **`Currency`**: Represents ISO 4217 currencies.
     *   `currencyFor(currencyCode: String)`: Lookup a currency by its 3-letter ISO code.
-    *   `currencyFor(locale: Locale)`: Resolve the default currency for a given locale (also accessible via `Currency.Companion.forLocale(locale)`).
+    *   `currencyFor(locale: Locale)`: Resolve the default currency for a given locale.
     *   `availableCurrencies()`: Get a list of all supported currencies.
     *   `currenciesByName(name: String)`: Filter supported currencies by their display name.
 *   **`Money`**: Stores monetary values.

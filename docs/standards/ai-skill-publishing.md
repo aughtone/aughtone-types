@@ -1,4 +1,4 @@
-# Standard: Aughtone AI-Skill Publishing
+# Standard: AI Skill Publishing
 
 This document outlines a standardized pattern for embedding machine-readable "skills" or documentation within a published library. This allows AI development assistants to discover and utilize a library's features more effectively, improving the developer experience.
 
@@ -11,7 +11,7 @@ As AI assistants become more integrated into IDEs, they need a reliable way to u
 -   Scaffold new implementations using the library's best practices.
 -   Avoid common pitfalls and anti-patterns.
 
-By embedding this information directly within the library's resources, we ensure that the skills are versioned and distributed alongside the code they describe.
+By embedding this information directly within the library's resources, we ensure that the skills are versioned and distributed alongside the code they describe, even when the source code is not directly available to the AI agent.
 
 ## The "How"
 
@@ -44,12 +44,9 @@ Every `.ai-skill.md` file MUST begin with a YAML frontmatter block. This allows 
 ```markdown
 ---
 skill-id: [library_maven_group].[library_maven_artifact]
-name: "[Human Friendly Name](Source Repository URL)"
 spec-version: "[version]"
-type: "Aughtone AI-Skill"
 scope: [core|api|guides|...]
 compatibility: "[version_range]"
-author: "[Name](URL)" (Optional)
 ---
 ```
 
@@ -58,12 +55,9 @@ author: "[Name](URL)" (Optional)
 ```markdown
 ---
 skill-id: io.github.aughtone.types
-name: "[Aughtone Types Foundation](https://github.com/aughtone/aughtone-types)"
 spec-version: 1.0
-type: "Aughtone AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
-author: "[Brill Pappin](https://github.com/bpappin)"
 ---
 ```
 
@@ -90,7 +84,7 @@ Include a specific `## 🤖 Agent Onboarding` section. This section provides exp
 
 ### 4. Update the `README.md`
 
-To make this feature discoverable by both humans and AIs, add a section to your root `README.md` file.
+To make this feature discoverable by both humans and AIs, add a section to your root `README.md` file. It must include a "Magic Prompt" that directs the AI to scan the compiled dependencies.
 
 ```markdown
 ## 🤖 AI-Assisted Development
@@ -98,6 +92,11 @@ To make this feature discoverable by both humans and AIs, add a section to your 
 This library includes embedded, machine-readable "skills" to enhance the experience of developers using AI code assistants. These skills help the AI understand our library's APIs and best practices, leading to more accurate and idiomatic code suggestions.
 
 -   **AI Skill Discovery**: Look for `META-INF/ai-skills/*.ai-skill.md`
+
+### 🪄 Magic Prompt for AI Assistants
+Use this prompt to inform your AI assistant about the standards and patterns embedded in this library:
+
+> "Scan all project dependencies for AI Skill files located in `META-INF/ai-skills/` with the prefix `[library_maven_group]`. Use these files to understand the coding standards, API patterns, and governance rules for the library. If you cannot find them in the dependencies, refer to the [Public Repository URL] for the source definitions."
 
 To learn how to add this capability to your own library, see our [AI Skill Publishing Standard](docs/standards/ai-skill-publishing.md).
 ```
@@ -111,7 +110,7 @@ To add AI skills to your library, follow these steps:
 3.  **Add Metadata**: Paste the YAML frontmatter at the top of the file.
 4.  **Write Content**: Describe your core APIs and patterns.
 5.  **Add Agent Onboarding**: Copy/paste the `## 🤖 Agent Onboarding` section and customize it.
-6.  **Update README**: Add the `## 🤖 AI-Assisted Development` section to your root `README.md`.
+6.  **Update README**: Add the `## 🤖 AI-Assisted Development` section with the Magic Prompt to your root `README.md`.
 7.  **Publish**: Build and publish your library. The skill will be bundled automatically as a resource.
 
 ### 6. Automated Bootstrapping
@@ -126,8 +125,7 @@ If you are using an AI agent (like Antigravity), you can use the following "Magi
 2.  **Create Skill File**: Create the file `src/commonMain/resources/META-INF/ai-skills/[group].[artifact].ai-skill.md`.
 3.  **Inject Metadata**: Add the YAML frontmatter with `skill-id`, `spec-version`, `scope: core`, and `compatibility`.
 4.  **Scaffold Content**: Add placeholders for API descriptions and the mandatory `## 🤖 Agent Onboarding` section.
-5.  **Update README**: Append the `## 🤖 AI-Assisted Development` section to the root `README.md`.
+5.  **Update README**: Append the `## 🤖 AI-Assisted Development` section (including the Dependency Scan Magic Prompt) to the root `README.md`.
 6.  **Update AGENTS.md**: Add a reference to the new skill file in the project's `AGENTS.md` to ensure immediate governance.
 
 This protocol allows for instantaneous, zero-config onboarding of libraries into an AI-assisted development workflow.
-

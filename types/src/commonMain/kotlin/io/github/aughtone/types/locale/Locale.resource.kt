@@ -27,7 +27,7 @@ internal val localeResourceMap: Map<String, Locale> = mapOf(
     "ar-TN" to lazy { Locale(languageCode = "ar", regionCode = "TN", displayName = "Arabic (Tunisia)") },
     "ar-YE" to lazy { Locale(languageCode = "ar", regionCode = "YE", displayName = "Arabic (Yemen)") },
     "az" to lazy { Locale(languageCode = "az", scriptCode = "Latn", displayName = "Azeri (Latin)") },
-    "az-AZ" to lazy { Locale(languageCode = "az", regionCode = "AZ", scriptCode = "Latn", displayName = "Azeri (Latin, Azerbaijan)") },
+    "az-AZ" to lazy { Locale(languageCode = "az", regionCode = "AZ", displayName = "Azerbaijani") },
     "be" to lazy { Locale(languageCode = "be", displayName = "Belarusian") },
     "be-BY" to lazy { Locale(languageCode = "be", regionCode = "BY", displayName = "Belarusian (Belarus)") },
     "bg" to lazy { Locale(languageCode = "bg", displayName = "Bulgarian") },

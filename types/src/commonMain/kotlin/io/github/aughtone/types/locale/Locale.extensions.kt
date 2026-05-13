@@ -12,35 +12,19 @@ package io.github.aughtone.types.locale
  * @see currentNativeLocale
  * @see Locale.Companion.current
  */
-fun Locale.Companion.getCurrent(fallbackTag: String = "en") = currentNativeLocale(fallbackTag = fallbackTag)
+fun Locale.Companion.getCurrent(fallbackTag: String = "en"): Locale = currentNativeLocale(fallbackTag = fallbackTag)!!
 
 /**
  * Constructs an IETF BCP 47 language tag from the [Locale] instance.
  *
- * The tag is built from the locale's components in the following order:
- * - language code
- * - script code
- * - region code
- * - variant code
- *
- * Components are separated by hyphens.
+ * This function is maintained for backward compatibility. New code should use the
+ * [Locale.languageTag] property.
  *
  * @return A BCP 47 language tag string (e.g., "en-US", "zh-Hans-CN").
+ * @see Locale.languageTag
  */
-fun Locale.toLanguageTag(): String {
-    return buildString {
-        append(languageCode)
-        if (scriptCode != null) {
-            append("-")
-            append(scriptCode)
-        }
-        if (regionCode != null) {
-            append("-")
-            append(regionCode)
-        }
-        if (variantCode != null) {
-            append("-")
-            append(variantCode)
-        }
-    }
-}
+@Deprecated(
+    message = "Use the languageTag property instead.",
+    replaceWith = ReplaceWith("languageTag")
+)
+fun Locale.toLanguageTag(): String = languageTag
