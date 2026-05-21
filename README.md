@@ -60,24 +60,11 @@ Access the [Governance Skills](docs/standards/) for specialized development rule
 
 ---
 ## 🤖 AI-Assisted Development
-This library includes embedded, machine-readable "skills" to enhance the experience of developers using AI code assistants. These skills help the AI understand our library's APIs and best practices, leading to more accurate and idiomatic code suggestions.
+This library includes embedded, machine-readable "skills" to help AI assistants understand its APIs and best practices.
 
-- **AI Skill File**: The primary skill definition is located at [`io.github.aughtone.types.ai-skill.md`](types/src/commonMain/resources/META-INF/ai-skills/io.github.aughtone.types.ai-skill.md).
+- **Discovery**: Look for `META-INF/ai-skills/*.ai-skill.md`
 
-### AI Initialization Prompt
+### 🪄 Magic Prompt for AI Assistants
+If you are using an AI assistant (like Claude, Gemini, or ChatGPT) to write code with this library, paste this prompt first:
 
-If you are using an AI assistant to work with this library, copy and paste the following prompt into your AI chat window at the start of a session. This forces the AI to load the library's domain rules and prefer Kotlin primitives properly.
-
-```text
-Before we begin generating any code or analyzing the project, you must discover and load the core AI skills for this workspace.
-
-1. Scan the project and its dependencies for any AI Skill files. These are located in `META-INF/ai-skills/` directories and end with `.ai-skill.md` (for example, `io.github.aughtone.types.ai-skill.md`).
-2. Read the entire contents of every skill file you find carefully.
-3. These files contain critical "AI Toolboxes" and strict formatting standards (e.g., Banker's Rounding, SI Units, RFC compliance) that govern how you must interact with the codebase.
-4. You must add all the rules, functions, and models from these files into your persistent working memory for the duration of this conversation. 
-5. Philosophy: Standard Kotlin library primitives are always preferred. These libraries exist strictly to fill multiplatform gaps (e.g., cross-platform `Locale`, `Currency`, or specific SI units). It is perfectly acceptable to mix library-provided types with standard primitives where it makes logical sense for the architecture.
-
-Please confirm once you have discovered and read the available `.ai-skill.md` files and acknowledge that you understand the usage constraints for this project's foundation libraries.
-```
-
-To learn more about this pattern and how to adopt it for your own libraries, please see the [AI Skill Publishing Standard](docs/standards/ai-skill-publishing.md).
+> "Scan all project dependencies for AI Skill files in `META-INF/ai-skills/` with the prefix `io.github.aughtone`. Use these to understand the API patterns, types, and governance for this library. If they are not found in the local classpath, refer to https://github.com/aughtone/aughtone-types for the source definitions."

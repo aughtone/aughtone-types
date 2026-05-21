@@ -1,11 +1,9 @@
 ---
 skill-id: io.github.aughtone.types
-spec-version: 1.0
-name: "[Aughtone Types Foundation](https://github.com/aughtone/aughtone-types)"
+spec-version: "1.0"
 type: "Aughtone AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
-author: "[Brill Pappin](https://github.com/bpappin)"
 ---
 
 # AI Skill: Aughtone Types
@@ -39,7 +37,7 @@ This library provides a standardized, type-safe foundation for multiplatform app
 *   **`BankersValue`**: Use this for all manual rounding of financial `Double` values. It implements Banker's Rounding (half-to-even) to prevent bias.
 
 ### **Geospatial & GeoJSON**
-*   **`Location`**: Stores geographic coordinates (`latitude`, `longitude`) along with optional `altitude`, `speed`, `azimuth`, and `accuracy` using the library's SI data types.
+*   **`Telemetry`**: Stores geographical telemetry data, including positioning (`Coordinates`) and optional motion metrics (`altitude`, `speed`, `azimuth`, and `timestamp`) using the library's SI data types.
 *   **`Coordinates`**: A basic Lat/Lon pair. Use `Coordinates.add(lat, lon)` or `Coordinates.split()`.
 *   **`GeoJson`**: Use this sealed class for polymorphic parsing and serialization of spatial data (**RFC 7946**). Subtypes include: `Geometry`, `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, `GeometryCollection`, `Feature`, `FeatureCollection`.
 
