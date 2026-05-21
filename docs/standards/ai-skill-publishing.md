@@ -11,7 +11,7 @@ As AI assistants become more integrated into IDEs, they need a reliable way to u
 -   Scaffold new implementations using the library's best practices.
 -   Avoid common pitfalls and anti-patterns.
 
-By embedding this information directly within the library's resources, we ensure that the skills are versioned and distributed alongside the code they describe, even when the source code is not directly available to the AI agent.
+By embedding this information directly within the library's resources, we ensure that the skills are versioned and distributed alongside the code they describe.
 
 ## The "How"
 
@@ -33,99 +33,70 @@ For a library with Maven coordinates `io.github.aughtone:types`, the primary ski
 src/commonMain/resources/META-INF/ai-skills/io.github.aughtone.types.ai-skill.md
 ```
 
-If the library has multiple specific skillsets (e.g., core and networking), you would use:
-- `io.github.aughtone.types-core.ai-skill.md`
-- `io.github.aughtone.types-networking.ai-skill.md`
-
 ### 2. Include Mandatory Metadata
 
-Every `.ai-skill.md` file MUST begin with a YAML frontmatter block. This allows AI assistants to verify the identity and compatibility of the skill even if it is moved or extracted.
+Every `.ai-skill.md` file MUST begin with a YAML frontmatter block.
 
 ```markdown
 ---
 skill-id: [library_maven_group].[library_maven_artifact]
-spec-version: "[version]"
+spec-version: "1.0"
+type: "Aughtone AI-Skill"
 scope: [core|api|guides|...]
 compatibility: "[version_range]"
 ---
 ```
 
-**Example:**
-
-```markdown
----
-skill-id: io.github.aughtone.types
-spec-version: 1.0
-scope: core
-compatibility: ">=1.0.0"
----
-```
-
 ### 3. Add Skill Content
 
-Below the metadata block, add Markdown content that describes the library's features and how an AI should integrate them.
-
 #### **Core Content:**
--   **Core data types** and their serialization formats.
-*   **Key functions** and their intended usage.
--   **Step-by-step guides** for common tasks.
--   **Architectural patterns** and best practices.
+- **The AI Toolbox**: Group primary APIs by domain. Define "Preference" rules (e.g., "Use Extension X over Utility Y").
+- **Compliance & Standards**: List specific RFCs, ISOs, or industry specs.
+- **Immutability & Data**: Define the approach to state and data handling.
 
 #### **Agent Onboarding (Mandatory):**
-Include a specific `## 🤖 Agent Onboarding` section. This section provides explicit instructions for an AI agent on how to bootstrap this library into a new workspace.
-
-**Example:**
-```markdown
-## 🤖 Agent Onboarding
-1. **Context Registration**: Add this skill file to the `AGENTS.md` of the consuming project.
-2. **README Verification**: Ensure the root `README.md` contains the "AI-Assisted Development" section.
-3. **Usage Rules**: When generating code using this library, always prioritize the immutable patterns defined in the [Types Section](#).
-```
+Include a specific `## 🤖 Agent Onboarding` section. This provides instructions for an AI agent on how to bootstrap this library into a *new* workspace.
 
 ### 4. Update the `README.md`
 
-To make this feature discoverable by both humans and AIs, add a section to your root `README.md` file. It must include a "Magic Prompt" that directs the AI to scan the compiled dependencies.
+Add this section to your root `README.md` to make the skills discoverable:
 
 ```markdown
 ## 🤖 AI-Assisted Development
+This library includes embedded, machine-readable "skills" to help AI assistants understand its APIs and best practices.
 
-This library includes embedded, machine-readable "skills" to enhance the experience of developers using AI code assistants. These skills help the AI understand our library's APIs and best practices, leading to more accurate and idiomatic code suggestions.
-
--   **AI Skill Discovery**: Look for `META-INF/ai-skills/*.ai-skill.md`
+- **Discovery**: Look for `META-INF/ai-skills/*.ai-skill.md`
 
 ### 🪄 Magic Prompt for AI Assistants
-Use this prompt to inform your AI assistant about the standards and patterns embedded in this library:
+If you are using an AI assistant (like Claude, Gemini, or ChatGPT) to write code with this library, paste this prompt first:
 
-> "Scan all project dependencies for AI Skill files located in `META-INF/ai-skills/` with the prefix `[library_maven_group]`. Use these files to understand the coding standards, API patterns, and governance rules for the library. If you cannot find them in the dependencies, refer to the [Public Repository URL] for the source definitions."
-
-To learn how to add this capability to your own library, see our [AI Skill Publishing Standard](docs/standards/ai-skill-publishing.md).
+> "Scan all project dependencies for AI Skill files in `META-INF/ai-skills/` with the prefix `[library_maven_group]`. Use these to understand the API patterns, types, and governance for this library. If they are not found in the local classpath, refer to [Public Repository URL] for the source definitions."
 ```
 
-### 5. Developer Quick Start
+---
 
-To add AI skills to your library, follow these steps:
+## 🪄 Automated Bootstrapping: The Unified Magic Prompt
 
-1.  **Identify the Namespace**: Use your library's Maven coordinates (e.g., `com.example.lib`).
-2.  **Create the File**: Create `src/commonMain/resources/META-INF/ai-skills/com.example.lib.ai-skill.md`.
-3.  **Add Metadata**: Paste the YAML frontmatter at the top of the file.
-4.  **Write Content**: Describe your core APIs and patterns.
-5.  **Add Agent Onboarding**: Copy/paste the `## 🤖 Agent Onboarding` section and customize it.
-6.  **Update README**: Add the `## 🤖 AI-Assisted Development` section with the Magic Prompt to your root `README.md`.
-7.  **Publish**: Build and publish your library. The skill will be bundled automatically as a resource.
+To initialize this standard in a repository automatically, copy the prompt below and provide it to an AI agent (like Claude or Gemini).
 
-### 6. Automated Bootstrapping
+### **The Meta-Prompt**
 
-If you are using an AI agent (like Antigravity), you can use the following "Magic Prompt" to initialize this standard in your project automatically:
+**Role:** You are a Senior Staff Engineer specializing in Developer Experience (DX) and AI-Assisted Development.
+**Task:** Analyze this repository and initialize the "AI Skill Publishing" and "Agent Governance" standards.
 
-> **Prompt:** `agent: bootstrap-ai-skills [group]:[artifact]`
+**1. Identity & Standardized Naming**
+- Determine Maven `group` and `artifact` from build files.
+- Path: `src/commonMain/resources/META-INF/ai-skills/[group].[artifact].ai-skill.md`
 
-**When an agent receives this prompt, it MUST perform the following actions:**
+**2. Create AI-Skill Definition**
+Generate the file with YAML frontmatter (`skill-id`, `spec-version: 1.0`, `type: "Aughtone AI-Skill"`) and sections for the **AI Toolbox**, **Compliance**, **Immutability**, and **🤖 Usage Rules**.
 
-1.  **Identify Namespace**: Read `build.gradle.kts` or `gradle.properties` to confirm the library's identity.
-2.  **Create Skill File**: Create the file `src/commonMain/resources/META-INF/ai-skills/[group].[artifact].ai-skill.md`.
-3.  **Inject Metadata**: Add the YAML frontmatter with `skill-id`, `spec-version`, `scope: core`, and `compatibility`.
-4.  **Scaffold Content**: Add placeholders for API descriptions and the mandatory `## 🤖 Agent Onboarding` section.
-5.  **Update README**: Append the `## 🤖 AI-Assisted Development` section (including the Dependency Scan Magic Prompt) to the root `README.md`.
-6.  **Update AGENTS.md**: Add a reference to the new skill file in the project's `AGENTS.md` to ensure immediate governance.
+**3. Create Agent Onboarding Guide (AGENTS.md)**
+Generate a guide in the root for repository contributors covering:
+- Documentation Hierarchy (e.g., 5-sector hierarchy).
+- Core Principles (TDD, Immutability-first).
+- Interaction Rules (Plan-first, mandatory approval).
+- Linkage to the Skill file created in step 2.
 
-This protocol allows for instantaneous, zero-config onboarding of libraries into an AI-assisted development workflow.
+**4. Update README.md**
+Append the `## 🤖 AI-Assisted Development` section (from Step 4 of this standard) to the end of the root `README.md`.
