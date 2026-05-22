@@ -49,7 +49,7 @@ data class Telemetry(
  * as milliseconds since the epoch. A zero effectively means the time is not available.
  */
 @Deprecated(
-    "Use Telemetry instead. The class name was consing confusion between a point and the rich telemetry it is.",
+    "Use Telemetry instead. The class name was causing confusion between a point and the rich telemetry it is.",
     replaceWith = ReplaceWith("Telemetry", "io.github.aughtone.types.geo.Telemetry")
 )
 @Serializable

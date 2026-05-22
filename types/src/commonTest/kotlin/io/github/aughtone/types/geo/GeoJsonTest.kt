@@ -1,11 +1,6 @@
 package io.github.aughtone.types.geo
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -51,6 +46,32 @@ class GeoJsonTest {
         // Test deserialization
         val decodedPoint = json.decodeFromString<GeoJson>(pointJsonString)
         assertEquals(point, decodedPoint)
+    }
+
+    @Test
+    fun `Point with altitude serializes and deserializes correctly`() {
+        val point = Point(longitude = 100.0, latitude = 0.0, altitude = 10.0)
+        val pointJsonString = """
+            {
+                "type": "Point",
+                "coordinates": [
+                    ${100.0},
+                    ${0.0},
+                    ${10.0}
+                ]
+            }
+        """.trimIndent()
+
+        // Test serialization
+        val encodedJson = json.encodeToString<GeoJson>(point)
+        assertEquals(pointJsonString, encodedJson)
+
+        // Test deserialization
+        val decodedPoint = json.decodeFromString<GeoJson>(pointJsonString)
+        assertIs<Point>(decodedPoint)
+        assertEquals(100.0, decodedPoint.longitude)
+        assertEquals(0.0, decodedPoint.latitude)
+        assertEquals(10.0, decodedPoint.altitude)
     }
 
     @Test
