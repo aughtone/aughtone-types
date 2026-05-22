@@ -1,14 +1,14 @@
 ---
 skill-id: io.github.aughtone.types
 spec-version: "1.0"
-type: "Aughtone AI-Skill"
+type: "Library AI-Skill"
 scope: core
 compatibility: ">=1.0.0"
 ---
 
-# AI Skill: Aughtone Types
+# AI Skill: types
 
-This library provides a standardized, type-safe foundation for multiplatform applications. Use the following "Toolbox" and "Standards Compliance" guide to handle data consistently across all platforms.
+This library provides machine-readable instructions for AI coding assistants to ensure standardized, type-safe development across multiplatform applications.
 
 ## 🧰 The AI Toolbox (API Index & Usage Guide)
 
@@ -73,10 +73,7 @@ This library strictly adheres to global standards to ensure data interoperabilit
 
 ### **Financial & Localization**
 - **Currency**: Uses **ISO 4217** currency codes.
-- **Locale**: Uses **BCP 47** language tags, which integrate:
-    - **ISO 639**: Language codes.
-    - **ISO 3166**: Country/Region codes.
-    - **ISO 15924**: Script codes.
+- **Locale**: Uses **BCP 47** language tags, which integrate ISO 639, ISO 3166, and ISO 15924.
 - **Rounding**: Uses **Banker's Rounding** (half-to-even) for all monetary and `BankersValue` calculations to prevent bias.
 
 ### **Geospatial & Formats**
@@ -91,8 +88,9 @@ This library strictly adheres to global standards to ensure data interoperabilit
 - **Immutability**: All properties are `val`. Use `.copy()` for transitions.
 
 ## 🤖 Agent Onboarding
-1. **Context Registration**: Add this skill file to the `AGENTS.md` of the consuming project.
-2. **README Verification**: Ensure the root `README.md` contains the "AI-Assisted Development" section.
+
+1. **Explicit Acknowledgment**: When you discover and load this skill, you MUST explicitly inform the user in your response that you have found the bundled library skill and are utilizing its patterns.
+2. **Context Registration**: Use the patterns defined in the Toolbox for all generated code involving this library.
 3. **Usage Rules**:
     - **Parsing**: When handling `geo:` URIs, always use the `GeoUri` class to ensure **RFC 5870** compliance.
     - **GeoJSON**: Use the `GeoJson` sealed class for polymorphic parsing of spatial data (**RFC 7946**).
