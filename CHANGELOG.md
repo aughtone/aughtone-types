@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **`BigInteger` & `BigDecimal`**: Added new arbitrary-precision mathematical types in pure Kotlin (`commonMain`) for complete behavior consistency across all multiplatform targets.
 - **Operator Overloading**: Added standard Kotlin arithmetic operators (`+`, `-`, `*`, `/`, `%`, and unary `-`) to `BigInteger` and `BigDecimal` for concise mathematical expressions.
 - **iOS/Apple Locale Normalization**: Fixed Apple-specific native system locale parsing by converting underscore-separated locale tags (e.g. `en_US`) to standard BCP 47 hyphen-separated format and stripping configuration suffix tags.
+- **Differential Parity Testing**: Added a comprehensive testing suite validating mathematical operations, bitwise logic, scaling, and rounding parity against the JDK standard baseline (on JVM) and the Ionspin bignum library (on KMP targets).
+- **Parity Documentation & Metadata**: Integrated a test status table in `README.md` and indexed the arbitrary precision math types in the library's embedded AI-skills metadata (`io.github.aughtone.types.ai-skill.md`).
+
+### Fixed
+- **Knuth Division Overflow**: Resolved a potential 64-bit overflow in the division quotient/remainder estimation loop inside `BigInteger` by utilizing `ULong` comparison bounds.
+- **BigDecimal Zero Layout**: Corrected `BigDecimal.toString()` layout format when formatting a zero value with a positive scale (e.g., returning `"0.00"` to align with Java and standard specification).
 
 ## [2.2.0] - 2026-05-15
 

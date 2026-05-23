@@ -34,7 +34,7 @@ class BigDecimal(
     }
 
     override fun toString(): String {
-        if (unscaledValue.signum == 0) return "0"
+        if (unscaledValue.signum == 0 && scale == 0) return "0"
         val signStr = if (unscaledValue.signum < 0) "-" else ""
         val absStr = unscaledValue.negateIfNegative().toString()
         

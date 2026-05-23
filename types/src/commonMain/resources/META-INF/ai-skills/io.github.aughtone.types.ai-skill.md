@@ -36,6 +36,17 @@ This library provides machine-readable instructions for AI coding assistants to 
     *   `Money.toDouble()`: Convert `Money` back to a Double.
 *   **`BankersValue`**: Use this for all manual rounding of financial `Double` values. It implements Banker's Rounding (half-to-even) to prevent bias.
 
+### **Mathematics (Arbitrary Precision)**
+*   **`BigInteger`**: Platform-independent arbitrary-precision integers.
+    *   `BigInteger.parseString(str: String)`: Parse a base-10 string into a `BigInteger`.
+    *   `BigInteger.toString()`: Convert to base-10 string representation.
+    *   Supports standard arithmetic operators (`+`, `-`, `*`, `/`, `%`), bitwise logic (`and`, `or`, `xor`, `not`), shifts (`shiftLeft`, `shiftRight`), and bit manipulations (`testBit`, `setBit`, `clearBit`).
+*   **`BigDecimal`**: Platform-independent arbitrary-precision decimals with scale and rounding.
+    *   `BigDecimal.parseString(str: String)`: Parse a decimal string into a `BigDecimal`.
+    *   `BigDecimal.setScale(newScale: Int, roundingMode: RoundingMode)`: Adjust scale with rounding behavior.
+    *   `BigDecimal.stripTrailingZeros()`: Canonicalizes scale by removing trailing zeroes.
+    *   `BigDecimal.divide(other: BigDecimal, scale: Int, roundingMode: RoundingMode)`: Division with scale and rounding mode.
+
 ### **Geospatial & GeoJSON**
 *   **`Telemetry`**: Stores geographical telemetry data, including positioning (`Coordinates`) and optional motion metrics (`altitude`, `speed`, `azimuth`, and `timestamp`) using the library's SI data types.
 *   **`Coordinates`**: A basic Lat/Lon pair. Use `Coordinates.add(lat, lon)` or `Coordinates.split()`.

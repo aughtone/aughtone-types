@@ -71,3 +71,16 @@ Then the result is `"0.33"`
 Given `BigDec` A is `"600.0"`
 When `stripTrailingZeros` is invoked
 Then the result has its scale reduced appropriately (yielding unscaled `6`, scale `-2`, typically represented as `6E+2`)
+
+## Scenarios: Comparison & Differential Testing
+
+**Scenario: KMP Differential Parity**
+Given a generated suite of test values (including edge cases, zero, and random integers/decimals)
+When operations (addition, subtraction, multiplication, division, modulo, shifts, scale adjustment, rounding, and parsing) are executed on both `io.github.aughtone.types.number` and `com.ionspin.kotlin.bignum`
+Then the string values, comparisons, scales, and outputs must exactly match.
+
+**Scenario: JVM Baseline Parity**
+Given a generated suite of test values (including edge cases, zero, and random integers/decimals)
+When operations (addition, subtraction, multiplication, division, modulo, shifts, scale adjustment, rounding, and parsing) are executed on both `io.github.aughtone.types.number` and JDK standard library math types (`java.math.BigInteger`/`BigDecimal`)
+Then the string values, comparisons, scales, and outputs must exactly match.
+

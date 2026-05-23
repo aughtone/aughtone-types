@@ -248,7 +248,7 @@ class BigDecimalTest {
         assertEquals("12345E+3", bd2.toString())
 
         val bdZero = BigDecimal(BigInteger.ZERO, 5)
-        assertEquals("0", bdZero.toString())
+        assertEquals("0.00000", bdZero.toString())
     }
 
     @Test

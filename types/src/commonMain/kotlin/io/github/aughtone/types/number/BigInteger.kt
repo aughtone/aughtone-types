@@ -572,7 +572,7 @@ class BigInteger internal constructor(
                 var qHat = ((uJn shl 32) or uJn1) / vN1
                 var rHat = ((uJn shl 32) or uJn1) % vN1
                 
-                while (qHat >= 4294967296L || qHat * vN2 > (rHat shl 32) + uJn2) {
+                while (qHat >= 4294967296L || (qHat.toULong() * vN2.toULong()) > ((rHat.toULong() shl 32) + uJn2.toULong())) {
                     qHat--
                     rHat += vN1
                     if (rHat >= 4294967296L) break

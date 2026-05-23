@@ -24,3 +24,7 @@ Kotlin Multiplatform lacks a unified, cross-platform standard library equivalent
 
 ## Verification
 - **AC Link**: [0001-arbitrary-precision-math.md](../ac/0001-arbitrary-precision-math.md)
+- **Differential Parity Testing**: The implementation's behavior (outputs, exception boundaries, scale mechanics, and rounding modes) will be compared and verified against:
+  - JDK standard library types (`java.math.BigInteger` and `java.math.BigDecimal`) on the JVM target.
+  - Ionspin KMP BigNum library (`com.ionspin.kotlin:bignum`) on common targets.
+
