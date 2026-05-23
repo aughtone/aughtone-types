@@ -1,6 +1,6 @@
 [versions]
 namespace = "io.github.aughtone"
-versionName = "2.2.1"
+versionName = "2.3.0"
 android-minSdk = "24"
 android-compileSdk = "37"
 

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+- **`BigInteger` & `BigDecimal`**: Added new arbitrary-precision mathematical types in pure Kotlin (`commonMain`) for complete behavior consistency across all multiplatform targets.
+- **Operator Overloading**: Added standard Kotlin arithmetic operators (`+`, `-`, `*`, `/`, `%`, and unary `-`) to `BigInteger` and `BigDecimal` for concise mathematical expressions.
+- **iOS/Apple Locale Normalization**: Fixed Apple-specific native system locale parsing by converting underscore-separated locale tags (e.g. `en_US`) to standard BCP 47 hyphen-separated format and stripping configuration suffix tags.
+
 ## [2.2.0] - 2026-05-15
 
 ### ⚠️ BREAKING CHANGES
