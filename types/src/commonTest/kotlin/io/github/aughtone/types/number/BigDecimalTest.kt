@@ -12,7 +12,7 @@ class BigDecimalTest {
 
     @Test
     fun `exact binary representation from Double`() {
-        val bd = BigDecimal.valueOf(0.1)
+        val bd = BigDecimal.valueOfExact(0.1)
         // Double 0.1 is exactly 0.1000000000000000055511151231257827021181583404541015625
         val expected = "0.1000000000000000055511151231257827021181583404541015625"
         assertEquals(expected, bd.toString())
@@ -180,7 +180,7 @@ class BigDecimalTest {
     @Test
     fun `verify spec defined big decimal behaviors`() {
         // Row 1: Float 0.1 (Double 0.1) | Init | | 0.1000000000000000055...
-        val r1 = BigDecimal.valueOf(0.1)
+        val r1 = BigDecimal.valueOfExact(0.1)
         assertTrue(r1.toString().startsWith("0.1000000000000000055"))
 
         // Row 2: String "0.1" | Init | | 0.1
@@ -296,5 +296,27 @@ class BigDecimalTest {
         assertEquals(BigDecimal.parseString("-10.5"), -a)
         assertEquals(BigDecimal.ZERO, -BigDecimal.ZERO)
     }
-}
 
+    @Test
+    fun `conversion to double`() {
+        val bd = BigDecimal.parseString("123.456")
+        assertEquals(123.456, bd.toDouble(), 0.0000001)
+
+        val large = BigDecimal.parseString("1.234567890123456789e20")
+        assertEquals(1.234567890123456789e20, large.toDouble(), 1.0e5)
+        
+        val small = BigDecimal.parseString("1.234567890123456789e-20")
+        assertEquals(1.234567890123456789e-20, small.toDouble(), 1.0e-35)
+    }
+
+    @Test
+    fun `constructors from string and double`() {
+        val fromString = BigDecimal("123.45")
+        assertEquals("123.45", fromString.toString())
+
+        val fromDouble = BigDecimal(123.45)
+        // Remember fromDouble uses binary representation, so it might not be exactly 123.45
+        // but it should be what Double(123.45) represents.
+        assertEquals(BigDecimal.valueOf(123.45), fromDouble)
+    }
+}

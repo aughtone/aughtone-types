@@ -49,4 +49,4 @@ fun currenciesByName(name: String, ignoreCase: Boolean = true): List<Currency> =
  * @param locale The [Locale] for which to find the currency.
  * @return The corresponding [Currency] if a mapping is found, otherwise `null`.
  */
-fun currencyFor(locale: Locale): Currency? = Currency.forLocale(locale)
+fun currencyFor(locale: Locale): Currency? = Currency.getCurrency(locale)

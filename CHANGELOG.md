@@ -6,16 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-05-16
+
+### ⚠️ BREAKING CHANGES
+- **GeoJSON Renaming**: All geometry and feature types in `io.github.aughtone.types.geo` have been renamed with a `Geo` prefix (e.g., `Point` -> `GeoPoint`, `Polygon` -> `GeoPolygon`, `Feature` -> `GeoFeature`) to prevent naming collisions and improve clarity.
+- **Money Model Refactor**:
+    - Internal storage changed from `Long` (cents) to `BigDecimal` (`value`).
+    - Supports arbitrary precision (fractions of a cent).
+    - `currency` parameter in `Money` constructor is now mandatory (defaults to `Currency.current`).
+- **Telemetry Movement**: `Telemetry` and `Location` (deprecated) have moved from the `geo` package to `io.github.aughtone.types.quantitative`.
+- **Project Structure**: Moved the `kotlin-js-store` directory to `gradle/kotlin-js-store` and updated the root build configuration.
+
 ### Added
-- **`BigInteger` & `BigDecimal`**: Added new arbitrary-precision mathematical types in pure Kotlin (`commonMain`) for complete behavior consistency across all multiplatform targets.
-- **Operator Overloading**: Added standard Kotlin arithmetic operators (`+`, `-`, `*`, `/`, `%`, and unary `-`) to `BigInteger` and `BigDecimal` for concise mathematical expressions.
-- **iOS/Apple Locale Normalization**: Fixed Apple-specific native system locale parsing by converting underscore-separated locale tags (e.g. `en_US`) to standard BCP 47 hyphen-separated format and stripping configuration suffix tags.
-- **Differential Parity Testing**: Added a comprehensive testing suite validating mathematical operations, bitwise logic, scaling, and rounding parity against the JDK standard baseline (on JVM) and the Ionspin bignum library (on KMP targets).
-- **Parity Documentation & Metadata**: Integrated a test status table in `README.md` and indexed the arbitrary precision math types in the library's embedded AI-skills metadata (`io.github.aughtone.types.ai-skill.md`).
+- **GeoJSON Altitude Support**: `GeoPoint` and `GeoBoundingBox` now support an optional third dimension for altitude (elevation) as per RFC 7946.
+- **Precision Types Enhancement**: `BigDecimal` and `BigInteger` are now `data class` types and fully `@Serializable`.
+- **New Constructors**:
+    - `BigDecimal`: Added `String`, `Double`, and `Long` constructors.
+    - `BigInteger`: Added `String` and `Long` constructors.
+- **Converters**: Added `BigDecimal.toDouble()`, `BigInteger.toInt()`, and `BigInteger.toLong()`.
+- **Currency factor**: Added `Currency.factor` for automated mathematical scaling based on digits.
+- **Agent Infrastructure**: Migrated project governance and automation skills to the new `.agents/` directory standard.
+- **Claude Guardrails**: Integrated `git-guardrails-claude-code` and established `.claude/settings.json` with a `PreToolUse` hook to prevent destructive Git operations.
+- **Claude Configuration**: Added `CLAUDE.md` and `.clauderc` to explicitly mandate reading `AGENTS.md` at session start.
 
 ### Fixed
-- **Knuth Division Overflow**: Resolved a potential 64-bit overflow in the division quotient/remainder estimation loop inside `BigInteger` by utilizing `ULong` comparison bounds.
-- **BigDecimal Zero Layout**: Corrected `BigDecimal.toString()` layout format when formatting a zero value with a positive scale (e.g., returning `"0.00"` to align with Java and standard specification).
+- **Locale Throwing Behavior**: Updated documentation to correctly reflect that `Locale.current` and `Currency.current` throw `IllegalStateException` instead of falling back to English if the system locale cannot be resolved.
+- **BigDecimal Default Scale**: The primary constructor for `BigDecimal` now has a default scale of `0`, allowing it to act as an integer by default.
 
 ## [2.2.0] - 2026-05-15
 

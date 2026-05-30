@@ -1,13 +1,41 @@
 package io.github.aughtone.types.number
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * An arbitrary-precision integer mathematically equivalent to an infinite-width integer.
- * Implemented in pure Kotlin for cross-platform support.
+ *
+ * This class provides a platform-independent implementation in pure Kotlin, ensuring
+ * identical behavior across JVM, JS, Wasm, and Native targets.
+ *
+ * @property signum The sign of the number (-1 for negative, 0 for zero, 1 for positive).
+ * @property magnitude The little-endian array of 32-bit integers representing the absolute value.
  */
-class BigInteger internal constructor(
+@Serializable
+@ConsistentCopyVisibility
+data class BigInteger internal constructor(
+    @SerialName("signum")
     val signum: Int,
+    @SerialName("magnitude")
     internal val magnitude: IntArray // little-endian: index 0 is least significant 32-bits
 ) : Comparable<BigInteger> {
+
+    /**
+     * Constructs a BigInteger from its string representation in the specified radix.
+     */
+    constructor(value: String, radix: Int = 10) : this(
+        parseString(value, radix).signum,
+        parseString(value, radix).magnitude
+    )
+
+    /**
+     * Constructs a BigInteger from a Long value.
+     */
+    constructor(value: Long) : this(
+        valueOf(value).signum,
+        valueOf(value).magnitude
+    )
 
     init {
         require(signum in -1..1) { "Signum must be -1, 0, or 1" }
@@ -134,12 +162,34 @@ class BigInteger internal constructor(
         return divideAndRemainder(other).second
     }
 
+    operator fun div(other: BigInteger): BigInteger = divide(other)
+    operator fun rem(other: BigInteger): BigInteger = remainder(other)
     operator fun plus(other: BigInteger): BigInteger = add(other)
     operator fun minus(other: BigInteger): BigInteger = subtract(other)
     operator fun times(other: BigInteger): BigInteger = multiply(other)
-    operator fun div(other: BigInteger): BigInteger = divide(other)
-    operator fun rem(other: BigInteger): BigInteger = remainder(other)
     operator fun unaryMinus(): BigInteger = if (this.signum == 0) this else BigInteger(-this.signum, this.magnitude)
+
+    /**
+     * Converts this BigInteger to an Int.
+     * If the BigInteger is too big to fit in an Int, only the low-order 32 bits are returned.
+     */
+    fun toInt(): Int {
+        if (signum == 0) return 0
+        val mag0 = if (magnitude.isNotEmpty()) magnitude[0] else 0
+        return if (signum > 0) mag0 else -mag0
+    }
+
+    /**
+     * Converts this BigInteger to a Long.
+     * If the BigInteger is too big to fit in a Long, only the low-order 64 bits are returned.
+     */
+    fun toLong(): Long {
+        if (signum == 0) return 0L
+        val mag0 = if (magnitude.isNotEmpty()) magnitude[0].toUInt().toLong() else 0L
+        val mag1 = if (magnitude.size > 1) magnitude[1].toUInt().toLong() else 0L
+        val combined = (mag1 shl 32) or mag0
+        return if (signum > 0) combined else -combined
+    }
 
 
     fun divideAndRemainder(other: BigInteger): Pair<BigInteger, BigInteger> {

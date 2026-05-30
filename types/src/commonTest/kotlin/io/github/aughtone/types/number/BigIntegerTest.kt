@@ -381,5 +381,32 @@ class BigIntegerTest {
         assertEquals(BigInteger.valueOf(-100), -a)
         assertEquals(BigInteger.valueOf(0), -BigInteger.ZERO)
     }
-}
 
+    @Test
+    fun `constructors from string and long`() {
+        assertEquals("123", BigInteger("123").toString())
+        assertEquals("-123", BigInteger("-123").toString())
+        assertEquals("255", BigInteger("FF", 16).toString())
+        assertEquals("123456789", BigInteger(123456789L).toString())
+    }
+
+    @Test
+    fun `conversion to int and long`() {
+        val large = BigInteger("12345678901234567890")
+        assertEquals(0xEB1F0AD2.toInt(), large.toInt()) // Low 32 bits of 12345678901234567890
+        
+        // toLong() should truncate or wrap if it doesn't fit
+        assertEquals(123L, BigInteger("123").toLong())
+        assertEquals(-123L, BigInteger("-123").toLong())
+        
+        assertEquals(123, BigInteger("123").toInt())
+        assertEquals(-123, BigInteger("-123").toInt())
+        
+        // Overflow cases (following Java BigInteger behavior: return low-order bits)
+        val overInt = BigInteger.valueOf(Int.MAX_VALUE.toLong() + 1L)
+        assertEquals(Int.MIN_VALUE, overInt.toInt())
+        
+        val overLong = BigInteger("18446744073709551616") // 2^64
+        assertEquals(0L, overLong.toLong())
+    }
+}

@@ -1,13 +1,44 @@
 package io.github.aughtone.types.number
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * An arbitrary-precision signed decimal number.
- * Consists of an arbitrary precision integer unscaled value and a 32-bit integer scale.
+ *
+ * A `BigDecimal` consists of an arbitrary precision integer [unscaledValue] and a 32-bit
+ * integer [scale]. If zero or positive, the scale is the number of digits to the right of
+ * the decimal point. If negative, the unscaled value of the number is multiplied by
+ * ten to the power of the negation of the scale.
+ *
+ * @property unscaledValue The arbitrary-precision integer value.
+ * @property scale The scale of this decimal (defaults to 0).
  */
-class BigDecimal(
+@Serializable
+data class BigDecimal(
+    @SerialName("unscaledValue")
     val unscaledValue: BigInteger,
-    val scale: Int
+    @SerialName("scale")
+    val scale: Int = 0
 ) : Comparable<BigDecimal> {
+
+    /**
+     * Constructs a `BigDecimal` from its string representation.
+     * @param value The string to parse.
+     */
+    constructor(value: String) : this(parseString(value).unscaledValue, parseString(value).scale)
+
+    /**
+     * Constructs a `BigDecimal` from a `Double` value, preserving its binary precision.
+     * @param value The double value.
+     */
+    constructor(value: Double) : this(valueOf(value).unscaledValue, valueOf(value).scale)
+
+    /**
+     * Constructs a `BigDecimal` from a `Long` value.
+     * @param value The long value.
+     */
+    constructor(value: Long) : this(BigInteger.valueOf(value), 0)
 
     override fun compareTo(other: BigDecimal): Int {
         if (this.scale == other.scale) {
@@ -96,6 +127,12 @@ class BigDecimal(
     operator fun div(other: BigDecimal): BigDecimal = divide(other)
     operator fun unaryMinus(): BigDecimal = BigDecimal(-this.unscaledValue, this.scale)
 
+    /**
+     * Returns the numerical value of this [BigDecimal] as a [Double].
+     *
+     * @return The double value, which may result in a loss of precision.
+     */
+    fun toDouble(): Double = toString().toDouble()
 
     fun divide(divisor: BigDecimal): BigDecimal {
         if (divisor.unscaledValue.signum == 0) {
@@ -198,6 +235,10 @@ class BigDecimal(
         }
 
         fun valueOf(value: Double): BigDecimal {
+            return parseString(value.toString())
+        }
+
+        fun valueOfExact(value: Double): BigDecimal {
             if (value.isNaN() || value.isInfinite()) {
                 throw ArithmeticException("Cannot convert NaN or Infinite double to BigDecimal")
             }

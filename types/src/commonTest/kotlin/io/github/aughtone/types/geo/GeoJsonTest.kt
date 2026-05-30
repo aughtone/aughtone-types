@@ -19,7 +19,7 @@ class GeoJsonTest {
 
     @Test
     fun `Point serializes and deserializes correctly`() {
-        val point = Point(
+        val point = GeoPoint(
             coordinates = listOf(-122.4194, 37.7749),
             bbox = listOf(-122.5, 37.7, -122.4, 37.8)
         )
@@ -50,7 +50,7 @@ class GeoJsonTest {
 
     @Test
     fun `Point with altitude serializes and deserializes correctly`() {
-        val point = Point(longitude = 100.0, latitude = 0.0, altitude = 10.0)
+        val point = GeoPoint(longitude = 100.0, latitude = 0.0, altitude = 10.0)
         val pointJsonString = """
             {
                 "type": "Point",
@@ -68,7 +68,7 @@ class GeoJsonTest {
 
         // Test deserialization
         val decodedPoint = json.decodeFromString<GeoJson>(pointJsonString)
-        assertIs<Point>(decodedPoint)
+        assertIs<GeoPoint>(decodedPoint)
         assertEquals(100.0, decodedPoint.longitude)
         assertEquals(0.0, decodedPoint.latitude)
         assertEquals(10.0, decodedPoint.altitude)
@@ -76,7 +76,7 @@ class GeoJsonTest {
 
     @Test
     fun `Polygon with null bbox serializes without bbox key`() {
-        val polygon = Polygon(
+        val polygon = GeoPolygon(
             coordinates = listOf(
                 listOf(
                     listOf(100.0, 0.0),
@@ -131,8 +131,8 @@ class GeoJsonTest {
 
     @Test
     fun `Feature with properties and geometry serializes and deserializes`() {
-        val feature = Feature(
-            geometry = Point(coordinates = listOf(1.0, 2.0)), // bbox is null here
+        val feature = GeoFeature(
+            geometry = GeoPoint(coordinates = listOf(1.0, 2.0)), // bbox is null here
             properties = mapOf("name" to "Test Point"),
             id = "feature1",
             bbox = listOf(1.0, 2.0, 1.0, 2.0)
@@ -174,7 +174,7 @@ class GeoJsonTest {
 
     @Test
     fun `Feature with null geometry serializes without geometry key`() {
-        val featureWithNullGeom = Feature(
+        val featureWithNullGeom = GeoFeature(
             geometry = null,
             properties = mapOf("status" to "No location"),
             id = null, // also test null id
@@ -196,7 +196,7 @@ class GeoJsonTest {
 
         // Deserialization from a string that is also missing the keys should work
         val decoded = json.decodeFromString<GeoJson>(jsonString)
-        assertIs<Feature>(decoded)
+        assertIs<GeoFeature>(decoded)
         assertNull(decoded.geometry)
         assertNull(decoded.id)
         assertNull(decoded.bbox)
@@ -250,17 +250,17 @@ class GeoJsonTest {
         """.trimIndent()
 
         val decodedCollection = json.decodeFromString<GeoJson>(featureCollectionJson)
-        assertIs<FeatureCollection>(decodedCollection)
+        assertIs<GeoFeatureCollection>(decodedCollection)
         assertEquals(3, decodedCollection.features.size)
 
         val firstFeature = decodedCollection.features[0]
         assertNotNull(firstFeature.geometry)
-        assertIs<Point>(firstFeature.geometry)
+        assertIs<GeoPoint>(firstFeature.geometry)
         assertEquals(listOf(102.0, 0.5), (firstFeature.geometry).coordinates)
 
         val secondFeature = decodedCollection.features[1]
         assertNotNull(secondFeature.geometry)
-        assertIs<LineString>(secondFeature.geometry)
+        assertIs<GeoLineString>(secondFeature.geometry)
         assertEquals(mapOf("prop0" to "value0", "prop1" to "value1"), secondFeature.properties)
 
         val thirdFeature = decodedCollection.features[2]

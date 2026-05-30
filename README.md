@@ -1,23 +1,24 @@
 # Aughtone Types
 
 > [!IMPORTANT]
-> **v2.0.0 Breaking Change**: All enum constants in `MetricPrefix` and `UnitOfMeasure` have been renamed from `UPPER_SNAKE_CASE` to `PascalCase` (CamelCase) to improve readability and consistency across the ecosystem.
+> **v3.0.0 Breaking Change**: All GeoJSON geometry types (e.g., `Point`, `Polygon`) have been renamed with a **`Geo` prefix** (e.g., `GeoPoint`, `GeoPolygon`). `Money` now uses `BigDecimal` for its internal value to support sub-minor units, and `Telemetry` has moved to the `quantitative` package.
 
-This project follows a specialized 5-sector documentation hierarchy.
+This project follows a specialized documentation hierarchy.
 
 ## 📚 Documentation Sectors
 - 📐 [Architecture Guidelines](docs/mandates/ARCH.md): Engineering rules and design patterns.
 - 🧠 [Functional Specifications](docs/mandates/SPEC.md): Business logic and domain constraints.
-- 🎨 [Design & UI](DESIGN.md): Presentation layer and user stories.
-- 📋 [Acceptance Criteria](docs/ac/README.md): Success outcomes and verification.
+- 🎨 [Design & UI](docs/design/resources/): Presentation layer and user stories.
+- 📋 [Acceptance Criteria](docs/ac/): Success outcomes and verification.
 - 📖 [Developer Guide](docs/guides/DEVELOPER.md): Environment setup and onboarding.
+- ⚖️ [Architectural Decisions](docs/adr/): Log of key technical choices.
 - 📜 [Changelog](CHANGELOG.md): History of changes and release notes.
 
 ## 📦 Core Data Types
 
 | Category | Type | Standard / Compliance | Description |
 | :--- | :--- | :--- | :--- |
-| **Financial** | `Money` | Banker's Rounding | Type-safe monetary values with raw integer `cents`. |
+| **Financial** | `Money` | Banker's Rounding | Arbitrary-precision monetary values with `BigDecimal` storage. |
 | | `Currency` | **ISO 4217** | Global currency definitions with scale factors. |
 | **Localization** | `Locale` | **BCP 47** | Universal language, region, and script identifiers. |
 | **Quantitative** | `Coordinates` | WGS84 | Geodetic latitude and longitude degrees. |
@@ -25,8 +26,8 @@ This project follows a specialized 5-sector documentation hierarchy.
 | | `Speed` | SI (mps) | Rate of motion in meters per second. |
 | | `Altitude` | SI (Meters) | Vertical distance above/below reference. |
 | | `Azimuth` | Degrees | Compass bearing (0-360°). |
-| **Geospatial** | `Location` | Unified Domain | Comprehensive model with coordinates, azimuth, speed, and altitude. |
-| | `GeoJson` | **RFC 7946** | `Point`, `Feature`, and `FeatureCollection` models. |
+| | `Telemetry` | Unified Domain | Comprehensive model with coordinates, azimuth, speed, and altitude. |
+| **Geospatial** | `GeoJson` | **RFC 7946** | `GeoPoint`, `GeoFeature`, and `GeoFeatureCollection` models. |
 | **SI Units** | `UnitOfMeasure` | SI / Imperial | Definitions for meters, liters, bytes, etc. |
 | | `MetricPrefix` | SI Prefixes | Scaling factors from `Quetta` to `Quecto`. |
 | **Identifiers** | `Url` | **RFC 3986** | Uniform Resource Locators (Web). |
@@ -41,8 +42,8 @@ This project follows a specialized 5-sector documentation hierarchy.
 
 ### 🌎 Domain Fundamentals
 - **Locales**: `Locale.current` or `localeFor("fr-CH")`.
-- **Money**: `Money(1250, Currency.Usd)` or `12.50.toMoney(Currency.Eur)`.
-- **Navigation**: `Location(coords, speed = 2.5.mps, azimuth = 90.degrees)`.
+- **Money**: `Money(12.50, Currency.Usd)` or `Money(BigDecimal("1.23456"), Currency.Eur)`.
+- **Telemetry**: `Telemetry(coords, speed = 2.5.mps, azimuth = 90.degrees)`.
 
 ### 📏 Quantitative & SI
 - **Distance**: `100.meters` or `5.kilometers`.
@@ -54,10 +55,10 @@ This project follows a specialized 5-sector documentation hierarchy.
 
 ### 🔢 Precision Math
 - **Arbitrary Precision**: `BigInteger("999999999999999999999999")` or `BigDecimal("123.456")`.
-- **Rounding**: `BankersValue(1.255).round(2)` -> `1.26`.
+- **Rounding**: `BigDecimal("1.255").setScale(2, RoundingMode.HALF_EVEN)` -> `1.26`.
 
 ### 🗺️ GeoJSON
-- **GeoJSON**: `Point(45.5, -122.6).toGeoJson()` (**RFC 7946**).
+- **GeoJSON**: `GeoPoint(45.5, -122.6, 100.0).toGeoJson()` (**RFC 7946**).
 
 ---
 ## 🧪 Verification & Parity
@@ -65,31 +66,7 @@ This project follows a specialized 5-sector documentation hierarchy.
 To ensure mathematical precision and behavior consistency, this library employs rigorous **Differential Parity Testing** against standard baseline libraries:
 
 - **JVM Baseline**: Parity verified against standard JDK types (`java.math.BigInteger` and `java.math.BigDecimal`).
-- **KMP Baseline**: Parity verified against the official Multiplatform [Ionspin BigNum](https://github.com/ionspin/kotlin-multiplatform-bignum) library (`com.ionspin.kotlin:bignum`).
-
-### Parity Test Status
-
-| Target / Operation Area | Aughtone Types | Java (JDK) | Ionspin BigNum | Status / Notes |
-| :--- | :---: | :---: | :---: | :--- |
-| **BigInteger Arithmetic** | ✅ Pass | ✅ Pass | ⚠️ Partial | Ionspin `%` (remainder) and `divrem` sign bugs require skipping negative dividend/divisor assertions in tests. |
-| **BigInteger Modulo** | ✅ Pass | ✅ Pass | ✅ Pass | Both match on positive divisors (Modulo requires positive divisor). |
-| **BigInteger Shifts** | ✅ Pass | ✅ Pass | ⚠️ Partial | Ionspin `shl` / `shr` do not support negative shift counts (throws `IllegalArgumentException`); mapped natively in tests. |
-| **BigInteger Bitwise** | ✅ Pass | ✅ Pass | ❌ Skipped | Ionspin crashes with a sign-constructor bug when result magnitude is zero (e.g. `x.not()` or bit toggling). |
-| **BigDecimal Arithmetic** | ✅ Pass | ✅ Pass | ✅ Pass | Matches on addition, subtraction, and multiplication. |
-| **BigDecimal Division (Exact)** | ✅ Pass | ✅ Pass | ✅ Pass | Matches on exact fractions (e.g. `1/2`, `1/5`, `10/8`). |
-| **BigDecimal Division (Rounded)**| ✅ Pass | ✅ Pass | ✅ Pass | Verified across multiple scales (0, 1, 2, 5) and rounding modes. |
-| **BigDecimal Scaling** | ✅ Pass | ✅ Pass | N/A | Only verified against JDK baseline (`setScale` parity). |
-| **BigDecimal Trailing Zeros** | ✅ Pass | ✅ Pass | ✅ Pass | `stripTrailingZeros` verified; matches on canonical numerical value. |
-
-
-The JVM baseline parity suite runs on the JVM target, while the KMP parity suite runs automatically on all targets (JVM, JS, Wasm, iOS, Linux) during:
-```bash
-./gradlew check
-```
-
----
-## 🛠️ Governance Standards
-Access the [Architecture Guidelines](docs/mandates/ARCH.md) for specialized development rules and VM/UDF governance.
+- **KMP Baseline**: Parity verified against the official Multiplatform [Ionspin BigNum](https://github.com/ionspin/kotlin-multiplatform-bignum) library.
 
 ---
 ## 🤖 AI-Assisted Development
