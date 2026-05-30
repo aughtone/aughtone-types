@@ -30,6 +30,8 @@ actual fun localeForNative(languageTag: String): Locale? {
 }
 
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
-    val languageTag = NSLocale.currentLocale.localeIdentifier
+    val rawTag = NSLocale.currentLocale.localeIdentifier
+    val languageTag = rawTag.substringBefore('@').replace('_', '-')
     return getCurrentNativeLocaleImpl(languageTag, fallbackTag)
 }
+
