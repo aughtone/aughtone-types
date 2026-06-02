@@ -116,14 +116,14 @@ class MoneyTest {
 
     @Test
     fun `floating point inaccuracy is resolved`() {
-        val m1 = 0.1.toMoney()
-        val m2 = 0.2.toMoney()
+        val m1 = 0.1.toMoney(usd)
+        val m2 = 0.2.toMoney(usd)
         val result = m1 + m2
         assertEquals(0.3, result.toDouble(), "The sum should be exactly 0.3")
     }
 
     @Test
-    fun `money with zero digits (JPY)`() {
+    fun `money with zero digits JPY`() {
         val jpy = Currency(
             code = "JPY",
             number = 392,
@@ -137,7 +137,7 @@ class MoneyTest {
     }
 
     @Test
-    fun `money with three digits (KWD)`() {
+    fun `money with three digits KWD`() {
         val kwd = Currency(
             code = "KWD",
             number = 414,

@@ -85,3 +85,9 @@ data class Azimuth(
         return Azimuth(newDegrees, accuracy?.let { it / abs(other.toFloat()) })
     }
 }
+
+fun Int.toAzimuth(accuracy: Float? = null) =
+    Azimuth(degrees = this.toDouble(), accuracy = accuracy)
+fun Long.toAzimuth(accuracy: Float? = null) =
+    Azimuth(degrees = this.toDouble(), accuracy = accuracy)
+fun Double.toAzimuth(accuracy: Float? = null) = Azimuth(degrees = this, accuracy = accuracy)

@@ -18,7 +18,8 @@ data class Speed(
     @SerialName("mps")
     val mps: Double,
     @SerialName("accuracy")
-    val accuracy: Float? = null) {
+    val accuracy: Float? = null
+) {
     init {
         require(mps >= 0.0) { "Speed in mps cannot be negative." }
         accuracy?.let { require(it >= 0.0f) { "Accuracy cannot be negative." } }
@@ -96,3 +97,28 @@ data class Speed(
         return Speed(mps / other, accuracy = accuracy)
     }
 }
+
+/**
+ * Converts this [Int] value to a [Speed] object, treating the value as meters per second.
+ *
+ * @param accuracy An optional estimate of the accuracy of the speed, as a fraction of the measured speed.
+ * @return A [Speed] object with this value as mps.
+ */
+fun Int.toSpeed(accuracy: Float? = null) = Speed(mps = this.toDouble(), accuracy = accuracy)
+
+/**
+ * Converts this [Long] value to a [Speed] object, representing meters per second.
+ *
+ * @param accuracy An optional estimate of the accuracy of the speed, as a fraction of the measured speed.
+ * @return A [Speed] instance with this value as the mps.
+ */
+fun Long.toSpeed(accuracy: Float? = null) = Speed(mps = this.toDouble(), accuracy = accuracy)
+
+/**
+ * Converts this [Double] value to a [Speed] instance.
+ *
+ * @param accuracy An optional estimate of the accuracy of the speed.
+ * @return A [Speed] object with this value as meters per second.
+ * @throws IllegalArgumentException if this value or [accuracy] is negative.
+ */
+fun Double.toSpeed(accuracy: Float? = null) = Speed(mps = this, accuracy = accuracy)

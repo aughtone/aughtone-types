@@ -124,3 +124,14 @@ data class Coordinates(
         )
     }
 }
+
+
+/**
+ * Converts a [DoubleArray] containing latitude and longitude into a [Coordinates] object.
+ *
+ * @param accuracy The horizontal accuracy of the coordinate in meters. Defaults to `null`.
+ * @return A new [Coordinates] instance using the values from the array.
+ * @throws IllegalArgumentException If the array does not contain exactly two elements (latitude and longitude),
+ * or if the values are outside the valid geographic ranges.
+ */
+fun DoubleArray.toCoordinates(accuracy: Float? = null) = Coordinates(longitude = this[0], latitude = this[1], accuracy = accuracy)
