@@ -24,28 +24,73 @@ package io.github.aughtone.types.util
  * This behaviour would negate the lazy nature of this map, so it is not yet implemented.
  */
 class LazyMap<K, V>(val lazyVals: Map<K, () -> V>, val cache: MutableMap<K, V> = mutableMapOf()) :
-    Map<K, V> by cache {
+    Map<K, V> {
     override fun containsKey(key: K): Boolean = lazyVals.containsKey(key)
-    override fun isEmpty(): Boolean =lazyVals.isEmpty()
+    override fun isEmpty(): Boolean = lazyVals.isEmpty()
     override val keys: Set<K>
         get() = lazyVals.keys
     override val size: Int
         get() = lazyVals.size
 
     override fun get(key: K): V? =
-        cache[key] ?: lazyVals[key]?.let { cache[key] = it(); cache[key] }
+        cache[key] ?: lazyVals[key]?.let {
+            val evaluated = it()
+            cache[key] = evaluated
+            evaluated
+        }
 
-    // XXX I'm not sure what I want to do with these functions yet.
-    //  They could probably b handled with a wrapper that could call into the cache, but they
-    //  are likely to be iterated over anyway.
     override val entries: Set<Map.Entry<K, V>>
-        get() = TODO("Not yet implemented")
+        get() = object : Set<Map.Entry<K, V>> {
+            override val size: Int get() = lazyVals.size
+            override fun isEmpty(): Boolean = lazyVals.isEmpty()
+            override fun iterator(): Iterator<Map.Entry<K, V>> {
+                val keyIterator = lazyVals.keys.iterator()
+                return object : Iterator<Map.Entry<K, V>> {
+                    override fun hasNext(): Boolean = keyIterator.hasNext()
+                    override fun next(): Map.Entry<K, V> {
+                        val key = keyIterator.next()
+                        val value = get(key) ?: error("Key not found in lazyVals during iteration")
+                        return object : Map.Entry<K, V> {
+                            override val key: K get() = key
+                            override val value: V get() = value
+                        }
+                    }
+                }
+            }
+            override fun contains(element: Map.Entry<K, V>): Boolean {
+                val value = get(element.key)
+                return value != null && value == element.value
+            }
+            override fun containsAll(elements: Collection<Map.Entry<K, V>>): Boolean =
+                elements.all { contains(it) }
+        }
+
     override val values: Collection<V>
-        get() = TODO("Not yet implemented")
+        get() = object : Collection<V> {
+            override val size: Int get() = lazyVals.size
+            override fun isEmpty(): Boolean = lazyVals.isEmpty()
+            override fun iterator(): Iterator<V> {
+                val keyIterator = lazyVals.keys.iterator()
+                return object : Iterator<V> {
+                    override fun hasNext(): Boolean = keyIterator.hasNext()
+                    override fun next(): V {
+                        val key = keyIterator.next()
+                        return get(key) ?: error("Key not found in lazyVals during iteration")
+                    }
+                }
+            }
+            override fun contains(element: V): Boolean = containsValue(element)
+            override fun containsAll(elements: Collection<V>): Boolean =
+                elements.all { contains(it) }
+        }
 
-    // XXX This would cause the entire map to be evaluated, defeating the lazyness of the map.
     override fun containsValue(value: V): Boolean {
-        throw UnsupportedOperationException("Accessing containsValue() would cause the entire map to be evaluated.")
+        if (cache.containsValue(value)) return true
+        for (key in lazyVals.keys) {
+            if (!cache.containsKey(key)) {
+                if (get(key) == value) return true
+            }
+        }
+        return false
     }
-
 }
