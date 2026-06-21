@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-06-21
+
+### Added
+- **GitHub Actions CI/CD**: Added a test workflow (`.github/workflows/test.yml`) running on macOS.
+- **Test Reporting**: Integrated visual JUnit test reporting via `mikepenz/action-junit-report`.
+- **Discord Build Alerts**: Added build status notifications via `sarisia/actions-status-discord` to the `#builds` channel.
+- **Currencies**: Defined 19 missing currencies inside the resource map.
+
+### Changed
+- **LazyMap Refactor**: Redesigned `LazyMap` to implement the `Map` interface directly (removing cache delegation). Fully lazy evaluation for `entries`, `values`, and short-circuiting `containsValue`.
+- **Locale Resolution**: Changed `resolveLocale` to execute the BCP 47 stepdown lookup on the resource map first, prior to native lookups.
+- **Android Compatibility (API 17+)**:
+  - Lowered `minSdk` to `17`.
+  - Replaced JDK 7+ `toLanguageTag()` and `forLanguageTag()` with manual tag-building/splitting.
+  - Utilized reflection for `getScript()` to prevent linkage errors on API < 21.
+  - Enforced JVM 17 target compiler options for Android.
+- **Yarn Lockfile Mismatch Handling**: Configured Yarn mismatch reporting to `WARNING` and auto-replace to prevent CI failures.
+- **WasmJS/JS Native Locale**: Made navigator language retrieval robust to non-browser environments and removed default `"en-US"` fallback.
+
+### Fixed
+- **BitSet.all()**: Corrected bitwise masking logic to handle signed values and partially filled words correctly.
+- **Warnings**: Cleaned up redundant Gradle property `toString()` calls and safe compiler warnings.
+
 ## [3.0.0] - 2026-05-16
 
 ### ⚠️ BREAKING CHANGES
