@@ -110,6 +110,32 @@ class BitSetTest {
     }
 
     @Test
+    fun `all returns true when empty`() {
+        val set = BitSet(0)
+        assertTrue(set.all())
+    }
+
+    @Test
+    fun `all returns false when one bit is false in partially filled word`() {
+        val set = BitSet(5, { true })
+        set.set(4, false)
+        assertFalse(set.all())
+    }
+
+    @Test
+    fun `all returns true when size is multiple of 64 and all set`() {
+        val set = BitSet(64, { true })
+        assertTrue(set.all())
+    }
+
+    @Test
+    fun `all returns false when size is multiple of 64 and one is false`() {
+        val set = BitSet(64, { true })
+        set.set(63, false)
+        assertFalse(set.all())
+    }
+
+    @Test
     fun `check any bits are set`() {
         bits.set(5)
         assertTrue(bits.any())

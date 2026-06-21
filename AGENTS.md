@@ -40,12 +40,14 @@ This repository strictly follows the **13-sector hierarchy**. All knowledge must
 ## 2. Core Development Principles
 
 - **Test-Driven Development (TDD)**: Whenever feasible, write a failing test before implementation.
-- **Kotlin Multiplatform**: All code must be multiplatform-first. Be mindful of source set placement (`commonMain`, `androidMain`, etc.).
+- **Kotlin Multiplatform**: All code must be multiplatform-first. Be mindful of source set placement (`commonMain`, `androidMain`, etc.). Avoid using parentheses `()` in test function names (e.g. `fun test name() {}`), as these are illegal characters that crash Apple and Linux native compilation.
 - **Immutability & Safety**: Maintain data structure immutability and handle serialization (`kotlinx.serialization`) correctly.
 - **Consistency**: Adhere to existing patterns; consistency outweighs personal preference.
 - **Type Preference (Avoid Shadowing)**: 
     - **`Locale`**: Prefer `io.github.aughtone.types.locale.Locale` when working in `commonMain` where cross-platform consistency is required. Be aware of potential shadowing by `java.util.Locale` or Compose-specific locales and use the fully qualified name if necessary to resolve ambiguity.
     - **`Currency`**: Prefer `io.github.aughtone.types.financial.Currency`.
+    - **`BigInteger` & `BigDecimal`**: Prefer `io.github.aughtone.types.number.BigInteger` and `io.github.aughtone.types.number.BigDecimal` for multiplatform arbitrary-precision arithmetic instead of platform-specific types or standard double/long representation.
+    - **GeoJSON Types (`GeoPoint`, etc.)**: Prefer `io.github.aughtone.types.geo.GeoPoint` over generic graphics `Point` classes. All GeoJSON types in this library use the `Geo` prefix to prevent conflicts, while retaining standard `@SerialName("Point")` annotations for RFC 7946 compliance.
 
 ## 3. Additional Guidelines
 

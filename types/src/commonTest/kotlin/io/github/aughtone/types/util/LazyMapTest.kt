@@ -73,11 +73,72 @@ class LazyMapTest {
     }
 
     @Test
-    fun `contains value throws exception`() {
-        try{
-            lazyMap.containsValue("another")
-        } catch (e: UnsupportedOperationException) {
-            assertEquals("Accessing containsValue() would cause the entire map to be evaluated.", e.message)
-        }
+    fun `contains value returns true for existing value`() {
+        assertTrue(lazyMap.containsValue("another"))
+        assertTrue(lazyMap.containsValue("go"))
+        assertTrue(lazyMap.containsValue("in a tree"))
+    }
+
+    @Test
+    fun `contains value returns false for missing value`() {
+        assertFalse(lazyMap.containsValue("bogus"))
+    }
+
+    @Test
+    fun `values returns all evaluated values`() {
+        val vals = lazyMap.values
+        assertEquals(3, vals.size)
+        assertTrue(vals.contains("another"))
+        assertTrue(vals.contains("go"))
+        assertTrue(vals.contains("in a tree"))
+    }
+
+    @Test
+    fun `entries returns all evaluated entries`() {
+        val entries = lazyMap.entries
+        assertEquals(3, entries.size)
+        assertTrue(entries.any { it.key == "one" && it.value == "another" })
+    }
+
+    @Test
+    fun `accessing entries does not evaluate elements eagerly`() {
+        val testCalled = mutableListOf(false, false)
+        val testMap = lazyMapOf(
+            "a" to { testCalled[0] = true; "first" },
+            "b" to { testCalled[1] = true; "second" }
+        )
+        // Getting entries property should not evaluate anything
+        val entries = testMap.entries
+        assertFalse(testCalled[0])
+        assertFalse(testCalled[1])
+
+        // Accessing size should not evaluate anything
+        assertEquals(2, entries.size)
+        assertFalse(testCalled[0])
+        assertFalse(testCalled[1])
+
+        // Only iterating/pulling the first entry should evaluate just that one
+        val iterator = entries.iterator()
+        assertTrue(iterator.hasNext())
+        val firstEntry = iterator.next()
+        assertEquals("a", firstEntry.key)
+        assertEquals("first", firstEntry.value)
+        assertTrue(testCalled[0])
+        assertFalse(testCalled[1])
+    }
+
+    @Test
+    fun `containsValue evaluates lazily and short-circuits`() {
+        val testCalled = mutableListOf(false, false, false)
+        val testMap = lazyMapOf(
+            "a" to { testCalled[0] = true; "first" },
+            "b" to { testCalled[1] = true; "second" },
+            "c" to { testCalled[2] = true; "third" }
+        )
+        // Checking for "second" should only evaluate "a" and "b", and skip "c"
+        assertTrue(testMap.containsValue("second"))
+        assertTrue(testCalled[0])
+        assertTrue(testCalled[1])
+        assertFalse(testCalled[2])
     }
 }

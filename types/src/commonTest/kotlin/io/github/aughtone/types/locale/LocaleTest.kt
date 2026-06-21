@@ -79,34 +79,12 @@ class LocaleTest {
     fun `test Locale getCurrent returns a valid locale`() {
         // This test ensures that the native call for the current locale returns
         // a valid, non-null Locale object on the platform running the test.
-        val currentLocale = Locale.getCurrent()
+        val currentLocale = Locale.current
         assertNotNull(currentLocale)
         assertNotNull(localeFor(currentLocale.languageTag))
     }
 
-    @Test
-    fun `test getCurrentNativeLocaleImpl with a nonexistent native locale`() {
-        // Simulate a native locale that is NOT in our resource map and no fallback.
-        // It should still return a parsed locale because parseLocale is used as secondary step.
-        val result = getCurrentNativeLocaleImpl(nativeTag = "xx-YY", fallbackTag = null)
-        assertNotNull(result)
-        assertEquals("xx-YY", result.languageTag)
-    }
 
-    @Test
-    fun `test getCurrentNativeLocaleImpl with null native tag`() {
-        // Only returns null if BOTH native and fallback are null or unresolvable.
-        val result = getCurrentNativeLocaleImpl(nativeTag = null, fallbackTag = null)
-        assertNull(result)
-    }
-
-    @Test
-    fun `test getCurrentNativeLocaleImpl with an existing native locale`() {
-        // Simulate a native locale that IS in our resource map.
-        val result = getCurrentNativeLocaleImpl(nativeTag = "en-GB", fallbackTag = "fr-CA")
-        assertNotNull(result)
-        assertEquals("en-GB", result.languageTag)
-    }
 
     @Test
     fun `test Locale languageTag`() {

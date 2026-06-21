@@ -124,7 +124,19 @@ class BitSet(private val size: Int = 1) {
      *
      * @return `true` if all bits are set to `true`, `false` otherwise.
      */
-    fun all(): Boolean = data.all { it > 0 }
+    fun all(): Boolean {
+        if (vectorSize == 0) return true
+        val fullWords = vectorSize / Long.SIZE_BITS
+        for (i in 0 until fullWords) {
+            if (data[i] != -1L) return false
+        }
+        val remainingBits = vectorSize % Long.SIZE_BITS
+        if (remainingBits > 0) {
+            val mask = (1L shl remainingBits) - 1L
+            if ((data[fullWords] and mask) != mask) return false
+        }
+        return true
+    }
 
     /**
      * Returns `true` if all bits are set to `false`, `false` otherwise.

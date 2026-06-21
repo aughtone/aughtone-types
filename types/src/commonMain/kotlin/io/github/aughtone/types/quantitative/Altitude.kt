@@ -84,3 +84,10 @@ data class Altitude(
         return Altitude(meters / other, accuracy?.let { it / abs(other.toFloat()) })
     }
 }
+
+
+fun Int.toAltitude(accuracy: Float? = null) =
+    Altitude(meters = this.toDouble(), accuracy = accuracy)
+fun Long.toAltitude(accuracy: Float? = null) =
+    Altitude(meters = this.toDouble(), accuracy = accuracy)
+fun Double.toAltitude(accuracy: Float? = null) = Altitude(meters = this, accuracy = accuracy)

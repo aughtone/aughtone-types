@@ -1,5 +1,29 @@
 package io.github.aughtone.types.locale
 
+internal fun normalizeLanguageTag(languageTag: String): String {
+    val normalized = languageTag.replace('_', '-')
+    val parts = normalized.split('-')
+    if (parts.isEmpty() || parts[0].isEmpty()) return ""
+    return buildString {
+        append(parts[0].lowercase())
+        for (i in 1 until parts.size) {
+            val part = parts[i]
+            append('-')
+            when {
+                part.length == 4 && part.all { it.isLetter() } -> {
+                    append(part.lowercase().replaceFirstChar { it.uppercase() })
+                }
+                (part.length == 2 && part.all { it.isLetter() }) || (part.length == 3 && part.all { it.isDigit() }) -> {
+                    append(part.uppercase())
+                }
+                else -> {
+                    append(part.lowercase())
+                }
+            }
+        }
+    }
+}
+
 /**
  * Retrieves a [Locale] instance from the internal resource map.
  *
@@ -11,7 +35,7 @@ package io.github.aughtone.types.locale
  * @see resolveLocale
  * @see parseLocale
  */
-fun localeFor(languageTag: String): Locale? = localeResourceMap[languageTag]
+fun localeFor(languageTag: String): Locale? = localeResourceMap[normalizeLanguageTag(languageTag)]
 
 /**
  * Resolves a [Locale] instance from the resource map using the BCP 47 "lookup" algorithm.
@@ -28,7 +52,8 @@ fun localeFor(languageTag: String): Locale? = localeResourceMap[languageTag]
  * @see currentNativeLocale
  */
 fun resolveLocale(languageTag: String): Locale? {
-    var currentTag = languageTag
+    val normalized = normalizeLanguageTag(languageTag)
+    var currentTag = normalized
     while (currentTag.isNotEmpty()) {
         val locale = localeFor(currentTag)
         if (locale != null) {
@@ -36,7 +61,7 @@ fun resolveLocale(languageTag: String): Locale? {
         }
         currentTag = currentTag.substringBeforeLast('-', "")
     }
-    return null
+    return localeForNative(normalized)
 }
 
 /**
@@ -98,24 +123,7 @@ fun parseLocale(languageTag: String): Locale {
  */
 expect fun localeForNative(languageTag: String): Locale?
 
-/**
- * The core, testable implementation for retrieving the current native locale.
- *
- * It takes an optional native language tag and attempts to find a match.
- * It first tries to resolve the tag against the resource map (for rich metadata),
- * then falls back to parsing the tag directly. If no native tag is provided or resolved,
- * it repeats the process with the fallback tag.
- *
- * @param nativeTag The language tag from the native platform, or null if unavailable.
- * @param fallbackTag The optional fallback language tag.
- * @return The determined [Locale], or `null` if neither the native tag nor the fallback tag can be resolved.
- */
-internal fun getCurrentNativeLocaleImpl(nativeTag: String?, fallbackTag: String?): Locale? {
-    val nativeLocale = nativeTag?.let { resolveLocale(it) ?: parseLocale(it) }
-    if (nativeLocale != null) return nativeLocale
-    
-    return fallbackTag?.let { resolveLocale(it) ?: parseLocale(it) }
-}
+
 
 /**
  * Retrieves the current default [Locale] for the native platform.
@@ -147,4 +155,4 @@ fun availableLocales(): List<Locale> = localeResourceMap.values.toList()
  * @return A list of matching [Locale]s.
  */
 fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
-    availableLocales().filter { it.displayName?.contains(name, ignoreCase) == true }
+    availableLocales().filter { it.displayName.contains(name, ignoreCase) }

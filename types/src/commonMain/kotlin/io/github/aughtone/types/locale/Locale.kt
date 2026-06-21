@@ -85,9 +85,9 @@ data class Locale(
 
 
         /**
-         * Returns the [Currency] associated with the provided IETF BCP 4
+         * Returns the [Locale] associated with the provided IETF BCP 4 language tag.
          */
-        fun getLocale(languageTag: String): Currency? =
-            localeToCurrencyMap[languageTag]?.let { currencyFor(it) }
+        fun getLocale(languageTag: String): Locale? =
+            resolveLocale(languageTag)
     }
 }

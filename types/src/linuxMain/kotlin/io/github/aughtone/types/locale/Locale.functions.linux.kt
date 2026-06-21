@@ -9,12 +9,12 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val langEnv = getenv("LANG")?.toKString()
     val localeString = langEnv?.split(".")?.firstOrNull()
     val languageTag = localeString?.replace("_", "-")
-
-    return getCurrentNativeLocaleImpl(languageTag, fallbackTag)
+    val tag = languageTag ?: fallbackTag ?: return null
+    return resolveLocale(tag) ?: parseLocale(tag)
 }
 
 actual fun localeForNative(languageTag: String): Locale? {
     // Linux does not provide a standard native API to look up arbitrary locale data without side effects.
     // We fall back to the shared resource map.
-    return resolveLocale(languageTag)
+    return localeFor(languageTag)
 }

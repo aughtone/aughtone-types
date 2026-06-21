@@ -18,7 +18,8 @@ data class Distance(
     @SerialName("meters")
     val meters: Double,
     @SerialName("accuracy")
-    val accuracy: Float? = null) {
+    val accuracy: Float? = null
+) {
 
     init {
         require(meters >= 0.0) { "Distance in meters cannot be negative." }
@@ -141,3 +142,31 @@ data class Distance(
         return Distance(meters % other.meters, accuracy = null)
     }
 }
+
+
+/**
+ * Converts this [Int] to a [Distance] object, treating the value as meters.
+ *
+ * @param accuracy The optional estimated accuracy of the distance measurement.
+ * @return A [Distance] instance with this value as the number of meters.
+ */
+fun Int.toDistance(accuracy: Float? = null) =
+    Distance(meters = this.toDouble(), accuracy = accuracy)
+
+/**
+ * Converts this [Long] value representing meters into a [Distance] object.
+ *
+ * @param accuracy The optional estimated accuracy of the distance measurement.
+ * @return A new [Distance] instance.
+ */
+fun Long.toDistance(accuracy: Float? = null) =
+    Distance(meters = this.toDouble(), accuracy = accuracy)
+
+/**
+ * Converts this [Double] value to a [Distance] instance.
+ *
+ * @param accuracy The estimated accuracy of the distance measurement, as a fraction of the measured distance.
+ *                 If null, the accuracy is unknown.
+ * @return A [Distance] object with this value as meters.
+ */
+fun Double.toDistance(accuracy: Float? = null) = Distance(meters = this, accuracy = accuracy)
