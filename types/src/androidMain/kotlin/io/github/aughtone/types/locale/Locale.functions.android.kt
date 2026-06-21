@@ -1,26 +1,43 @@
 package io.github.aughtone.types.locale
 
 import java.util.Locale as JavaLocale
-import java.util.MissingResourceException
 
 actual fun localeForNative(languageTag: String): Locale? {
-    return try {
-        val javaLocale = JavaLocale.forLanguageTag(languageTag)
-        // isO3Language will throw a MissingResourceException if the locale is not valid
-        javaLocale.isO3Language
-        Locale(
-            languageCode = javaLocale.language,
-            regionCode = javaLocale.country.takeIf { it.isNotEmpty() },
-            scriptCode = javaLocale.script.takeIf { it.isNotEmpty() },
-            variantCode = javaLocale.variant.takeIf { it.isNotEmpty() },
-            displayName = javaLocale.displayName
-        )
-    } catch (e: MissingResourceException) {
-        null
-    }
+    val parsed = parseLocale(languageTag)
+    val javaLocale = JavaLocale(parsed.languageCode, parsed.regionCode ?: "", parsed.variantCode ?: "")
+    return Locale(
+        languageCode = parsed.languageCode,
+        regionCode = parsed.regionCode,
+        scriptCode = parsed.scriptCode,
+        variantCode = parsed.variantCode,
+        displayName = javaLocale.displayName
+    )
 }
 
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
-    val languageTag = JavaLocale.getDefault().toLanguageTag()
-    return getCurrentNativeLocaleImpl(languageTag, fallbackTag)
+    val defaultLocale = JavaLocale.getDefault()
+    val tag = buildString {
+        append(defaultLocale.language)
+        val script = try {
+            val method = defaultLocale.javaClass.getMethod("getScript")
+            method.invoke(defaultLocale) as? String ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        if (script.isNotEmpty()) {
+            append("-")
+            append(script)
+        }
+        val country = defaultLocale.country
+        if (country.isNotEmpty()) {
+            append("-")
+            append(country)
+        }
+        val variant = defaultLocale.variant
+        if (variant.isNotEmpty()) {
+            append("-")
+            append(variant)
+        }
+    }
+    return resolveLocale(tag) ?: fallbackTag?.let { resolveLocale(it) } ?: parseLocale(tag)
 }

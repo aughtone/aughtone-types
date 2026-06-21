@@ -11,8 +11,8 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = libs.versions.namespace.get().toString()
-version = libs.versions.versionName.get().toString()
+group = libs.versions.namespace.get()
+version = libs.versions.versionName.get()
 
 //noinspection WrongGradleMethod
 kotlin {
@@ -21,8 +21,13 @@ kotlin {
     jvm()
 
     android {
-        namespace = libs.versions.namespace.get().toString()
+        namespace = libs.versions.namespace.get()
         compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
     }
 
     // See: https://kotlinlang.org/docs/js-project-setup.html
