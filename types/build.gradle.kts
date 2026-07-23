@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = libs.versions.namespace.get()
+group = libs.versions.group.get()
 version = libs.versions.versionName.get()
 
 //noinspection WrongGradleMethod
@@ -31,7 +31,7 @@ kotlin {
     }
 
     // See: https://kotlinlang.org/docs/js-project-setup.html
-    js(IR) {
+    js {
         browser {
             generateTypeScriptDefinitions()
             webpackTask {

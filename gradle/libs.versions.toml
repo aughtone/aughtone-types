@@ -1,5 +1,6 @@
 [versions]
-namespace = "io.github.aughtone"
+namespace = "io.github.aughtone.types"
+group = "io.github.aughtone"
 versionName = "3.1.0"
 android-minSdk = "17"
 android-compileSdk = "37"
@@ -9,7 +10,7 @@ kotlin = "2.4.0"
 kotlinx-serialization = "1.11.0"
 kotlinx-datetime = "0.8.0"
 vanniktech = "0.37.0"
-kotlinBrowser = "2026.6.5"
+kotlinBrowser = "2026.7.1"
 ionspin-bignum ="0.3.10"
 
 [libraries]
