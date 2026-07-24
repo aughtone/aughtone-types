@@ -17,3 +17,13 @@ actual fun localeForNative(languageTag: String): Locale? {
     // We fall back to the shared resource map.
     return localeFor(languageTag)
 }
+
+actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? = try {
+    val displayInTag = displayIn.languageTag
+    val languageTag = locale.languageTag
+    val name = js("new Intl.DisplayNames([displayInTag], { type: 'language', fallback: 'none' }).of(languageTag)")
+    (name as? String)?.takeIf { it.isNotBlank() }
+} catch (e: Throwable) {
+    // Intl.DisplayNames is unavailable (older browsers/Node) or the tag is malformed.
+    null
+}

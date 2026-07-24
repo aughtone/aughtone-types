@@ -15,3 +15,19 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val tag = languageTag ?: fallbackTag ?: return null
     return resolveLocale(tag) ?: parseLocale(tag)
 }
+
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+private fun intlDisplayNameOrNull(displayInTag: String, languageTag: String): String? =
+    js(
+        """(function() {
+            try {
+                var name = new Intl.DisplayNames([displayInTag], { type: 'language', fallback: 'none' }).of(languageTag);
+                return (name === undefined || name === '') ? null : name;
+            } catch (e) {
+                return null;
+            }
+        })()"""
+    )
+
+actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? =
+    intlDisplayNameOrNull(displayIn.languageTag, locale.languageTag)

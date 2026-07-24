@@ -52,10 +52,15 @@ data class GeoBoundingBox(
     /**
      * Converts to a double array matching standard GeoJSON bbox format:
      * [west, south, (minAltitude), east, north, (maxAltitude)]
+     *
+     * If only one of [minAltitude] or [maxAltitude] is present, the known value is used for
+     * both bounds so that the altitude information is not lost.
      */
     fun toDoubleArray(): DoubleArray {
-        return if (minAltitude != null && maxAltitude != null) {
-            doubleArrayOf(west, south, minAltitude, east, north, maxAltitude)
+        val lowAltitude = minAltitude ?: maxAltitude
+        val highAltitude = maxAltitude ?: minAltitude
+        return if (lowAltitude != null && highAltitude != null) {
+            doubleArrayOf(west, south, lowAltitude, east, north, highAltitude)
         } else {
             doubleArrayOf(west, south, east, north)
         }

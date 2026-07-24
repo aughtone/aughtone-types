@@ -51,6 +51,23 @@ class DistanceTest {
     }
 
     @Test
+    fun `minus operator floors at zero`() {
+        val d1 = Distance(5.0, 0.1f)
+        val d2 = Distance(10.0, 0.2f)
+        val result = d1 - d2
+        assertEquals(0.0, result.meters)
+        assertNull(result.accuracy)
+    }
+
+    @Test
+    fun `div by negative Int floors at zero`() {
+        val d1 = Distance(10.0, 0.1f)
+        val result = d1 / -2
+        assertEquals(0.0, result.meters)
+        assertEquals(0.1f, result.accuracy)
+    }
+
+    @Test
     fun `minus operator resulting in zero`() {
         val d1 = Distance(10.0, 0.1f)
         val d2 = Distance(10.0, 0.2f)

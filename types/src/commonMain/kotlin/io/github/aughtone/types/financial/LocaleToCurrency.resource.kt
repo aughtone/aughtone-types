@@ -83,6 +83,7 @@ internal val localeToCurrencyMap: Map<String, String> = mapOf(
     "is-IS" to "ISK",
     "it-CH" to "CHF",
     "it-IT" to "EUR",
+    "iu-CA" to "CAD",
     "ja-JP" to "JPY",
     "ka-GE" to "GEL",
     "kk-KZ" to "KZT",

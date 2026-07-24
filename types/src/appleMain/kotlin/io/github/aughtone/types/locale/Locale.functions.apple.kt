@@ -2,6 +2,7 @@ package io.github.aughtone.types.locale
 
 import platform.Foundation.NSLocale
 import platform.Foundation.NSLocaleIdentifier
+import platform.Foundation.NSLocaleLanguageCode
 import platform.Foundation.countryCode
 import platform.Foundation.currentLocale
 import platform.Foundation.languageCode
@@ -27,6 +28,16 @@ actual fun localeForNative(languageTag: String): Locale? {
         variantCode = nsLocale.variantCode?.takeIf { it.isNotEmpty() },
         displayName = currentDisplayName ?: selfDisplayName
     )
+}
+
+actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? {
+    val displayLocale = NSLocale(localeIdentifier = displayIn.languageTag)
+    // An unknown language subtag yields no localized name (or is echoed back verbatim),
+    // meaning the platform has no CLDR data for it; report null so callers can fall back.
+    val languageName = displayLocale.displayNameForKey(NSLocaleLanguageCode, locale.languageCode)
+    if (languageName == null || languageName.equals(locale.languageCode, ignoreCase = true)) return null
+    return displayLocale.displayNameForKey(NSLocaleIdentifier, locale.languageTag)
+        ?.takeIf { it.isNotBlank() }
 }
 
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {

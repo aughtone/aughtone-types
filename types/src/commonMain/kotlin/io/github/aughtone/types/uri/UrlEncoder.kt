@@ -2,102 +2,188 @@ package io.github.aughtone.types.uri
 
 
 /**
- * Utility object for URL encoding strings.
+ * Utility object for percent-encoding and decoding strings.
  *
- * This class provides a method to encode strings according to the URL encoding rules,
- * which involves replacing unsafe characters with their percent-encoded equivalents (e.g., "%20" for a space).
- * It supports UTF-8 encoding for characters outside the basic ASCII range.
+ * [encode]/[decode] follow RFC 3986: only ASCII unreserved characters
+ * (ALPHA / DIGIT / "-" / "." / "_" / "~") are left bare, all other characters
+ * (including space, as "%20") are percent-encoded as their UTF-8 bytes using
+ * uppercase hexadecimal digits.
  *
- * It's based in RFC 3986 rules.
+ * [encodeFormData]/[decodeFormData] follow the legacy
+ * `application/x-www-form-urlencoded` rules where space maps to "+",
+ * "*" is left bare and "~" is encoded.
  */
 object UrlEncoder {
-    /**
-     * Set of characters that are considered safe (unreserved) and do not need to be encoded.
-     */
-    private val UNRESERVED_CHARS = setOf(
-        '-', '_', '.', '*' // RFC 3986 unreserved characters
-    )
+
+    private fun isUnreserved(char: Char): Boolean =
+        char in 'A'..'Z' || char in 'a'..'z' || char in '0'..'9' ||
+                char == '-' || char == '.' || char == '_' || char == '~'
+
+    private fun isFormSafe(char: Char): Boolean =
+        char in 'A'..'Z' || char in 'a'..'z' || char in '0'..'9' ||
+                char == '-' || char == '.' || char == '_' || char == '*'
 
     /**
-     * Encodes a string according to URL encoding rules.
+     * Percent-encodes [value] according to RFC 3986.
      *
-     * This function takes a string and encodes it to a URL-safe format.
-     * It follows the following rules:
-     * - Alphanumeric characters and characters in [UNRESERVED_CHARS] are left as-is.
-     * - Spaces are encoded as '+'.
-     * - All other characters are encoded using percent-encoding (%XX),
-     *   where XX is the uppercase hexadecimal representation of the character's UTF-8 byte value.
+     * Characters outside the ASCII unreserved set are encoded as the uppercase
+     * hexadecimal representation of their UTF-8 bytes. Surrogate pairs are
+     * combined into a single code point before encoding.
      *
      * @param value The string to be encoded.
-     * @return The URL-encoded string.
+     * @return The percent-encoded string.
+     * @throws IllegalArgumentException if [value] contains an unpaired surrogate.
      */
-    fun encode(value: String): String {
-        val encoded = StringBuilder()
+    fun encode(value: String): String = encodeInternal(value, ::isUnreserved, spaceAsPlus = false)
 
-        for (char in value) {
+    /**
+     * Encodes [value] as `application/x-www-form-urlencoded` form data:
+     * space becomes "+", "*" is left bare and "~" is percent-encoded.
+     *
+     * @param value The string to be encoded.
+     * @return The form-encoded string.
+     * @throws IllegalArgumentException if [value] contains an unpaired surrogate.
+     */
+    fun encodeFormData(value: String): String =
+        encodeInternal(value, ::isFormSafe, spaceAsPlus = true)
+
+    private fun encodeInternal(
+        value: String,
+        isSafe: (Char) -> Boolean,
+        spaceAsPlus: Boolean,
+    ): String {
+        val encoded = StringBuilder()
+        var i = 0
+        while (i < value.length) {
+            val char = value[i]
             when {
-                char.isLetterOrDigit() || UNRESERVED_CHARS.contains(char) -> {
-                    encoded.append(char) // Safe characters can be directly appended
+                isSafe(char) -> {
+                    encoded.append(char)
+                    i++
                 }
 
-                char == ' ' -> {
-                    encoded.append("+") // Spaces are often encoded as '+'
+                spaceAsPlus && char == ' ' -> {
+                    encoded.append('+')
+                    i++
                 }
 
                 else -> {
-                    // Encode other characters using %XX (percent-encoding)
-                    val bytes = encodeToUtf8(char)
-                    for (byte in bytes) {
-                        encoded.append("%")
-                        encoded.append(byteToHex(byte)) // Format as two uppercase hex digits
+                    // Combine surrogate pairs so supplementary characters encode
+                    // as real UTF-8 (4 bytes), not CESU-8.
+                    val codePoint: Int
+                    if (char.isHighSurrogate() && i + 1 < value.length && value[i + 1].isLowSurrogate()) {
+                        codePoint =
+                            0x10000 + ((char.code - 0xD800) shl 10) + (value[i + 1].code - 0xDC00)
+                        i += 2
+                    } else {
+                        require(!char.isSurrogate()) { "Unpaired surrogate at index $i" }
+                        codePoint = char.code
+                        i++
+                    }
+                    for (byte in encodeUtf8(codePoint)) {
+                        encoded.append('%')
+                        encoded.append(byteToHex(byte))
                     }
                 }
             }
         }
-
         return encoded.toString()
     }
 
     /**
-     * Encodes a single character to its UTF-8 byte representation.
+     * Decodes a percent-encoded string according to RFC 3986.
      *
-     * @param char The character to encode.
-     * @return The UTF-8 encoded byte array.
+     * "+" is kept as a literal plus sign; use [decodeFormData] for form data.
+     *
+     * @param value The string to decode.
+     * @return The decoded string.
+     * @throws IllegalArgumentException if [value] contains a malformed percent
+     * sequence or the decoded bytes are not valid UTF-8.
      */
-    private fun encodeToUtf8(char: Char): ByteArray {
-        return when {
-            char.code <= 0x7F -> byteArrayOf(char.code.toByte())
-            char.code <= 0x7FF -> {
-                val code = char.code
-                val byte1 = (0b11000000 or ((code shr 6) and 0b00011111)).toByte()
-                val byte2 = (0b10000000 or (code and 0b00111111)).toByte()
-                byteArrayOf(byte1, byte2)
-            }
+    fun decode(value: String): String = decodeInternal(value, plusAsSpace = false)
 
-            char.code <= 0xFFFF -> {
-                val code = char.code
-                val byte1 = (0b11100000 or ((code shr 12) and 0b00001111)).toByte()
-                val byte2 = (0b10000000 or ((code shr 6) and 0b00111111)).toByte()
-                val byte3 = (0b10000000 or (code and 0b00111111)).toByte()
-                byteArrayOf(byte1, byte2, byte3)
-            }
+    /**
+     * Decodes `application/x-www-form-urlencoded` form data:
+     * "+" becomes a space, then percent sequences are decoded.
+     *
+     * @param value The string to decode.
+     * @return The decoded string.
+     * @throws IllegalArgumentException if [value] contains a malformed percent
+     * sequence or the decoded bytes are not valid UTF-8.
+     */
+    fun decodeFormData(value: String): String = decodeInternal(value, plusAsSpace = true)
 
-            else -> throw IllegalArgumentException("Unsupported character: ${char.code}")
+    private fun decodeInternal(value: String, plusAsSpace: Boolean): String {
+        val out = StringBuilder()
+        val bytes = mutableListOf<Byte>()
+
+        fun flush() {
+            if (bytes.isNotEmpty()) {
+                val decoded = try {
+                    bytes.toByteArray().decodeToString(throwOnInvalidSequence = true)
+                } catch (e: CharacterCodingException) {
+                    throw IllegalArgumentException("Invalid UTF-8 in percent-encoded sequence", e)
+                }
+                out.append(decoded)
+                bytes.clear()
+            }
         }
+
+        var i = 0
+        while (i < value.length) {
+            val char = value[i]
+            if (char == '%') {
+                require(i + 2 < value.length) { "Incomplete percent sequence at index $i" }
+                bytes.add(((hexValue(value[i + 1], i) shl 4) or hexValue(value[i + 2], i)).toByte())
+                i += 3
+            } else {
+                flush()
+                out.append(if (plusAsSpace && char == '+') ' ' else char)
+                i++
+            }
+        }
+        flush()
+        return out.toString()
+    }
+
+    private fun hexValue(char: Char, at: Int): Int = when (char) {
+        in '0'..'9' -> char - '0'
+        in 'A'..'F' -> char - 'A' + 10
+        in 'a'..'f' -> char - 'a' + 10
+        else -> throw IllegalArgumentException("Invalid hex digit '$char' in percent sequence at index $at")
+    }
+
+    /**
+     * Encodes a single Unicode code point to its UTF-8 byte representation.
+     */
+    private fun encodeUtf8(codePoint: Int): ByteArray = when {
+        codePoint <= 0x7F -> byteArrayOf(codePoint.toByte())
+        codePoint <= 0x7FF -> byteArrayOf(
+            (0xC0 or (codePoint shr 6)).toByte(),
+            (0x80 or (codePoint and 0x3F)).toByte(),
+        )
+
+        codePoint <= 0xFFFF -> byteArrayOf(
+            (0xE0 or (codePoint shr 12)).toByte(),
+            (0x80 or ((codePoint shr 6) and 0x3F)).toByte(),
+            (0x80 or (codePoint and 0x3F)).toByte(),
+        )
+
+        else -> byteArrayOf(
+            (0xF0 or (codePoint shr 18)).toByte(),
+            (0x80 or ((codePoint shr 12) and 0x3F)).toByte(),
+            (0x80 or ((codePoint shr 6) and 0x3F)).toByte(),
+            (0x80 or (codePoint and 0x3F)).toByte(),
+        )
     }
 
     /**
      * Converts a byte to its two-digit uppercase hexadecimal string representation.
-     *
-     * @param byte The byte to convert.
-     * @return The two-digit uppercase hexadecimal string.
      */
     private fun byteToHex(byte: Byte): String {
-        val unsignedByte = byte.toInt() and 0xFF // Convert to unsigned (0-255)
+        val unsignedByte = byte.toInt() and 0xFF
         val hexChars = "0123456789ABCDEF"
-        val highNibble = (unsignedByte shr 4) and 0x0F // Get the upper 4 bits
-        val lowNibble = unsignedByte and 0x0F // Get the lower 4 bits
-        return "${hexChars[highNibble]}${hexChars[lowNibble]}" // Lookup characters and combine
+        return "${hexChars[unsignedByte shr 4]}${hexChars[unsignedByte and 0x0F]}"
     }
 
 }

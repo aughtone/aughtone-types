@@ -43,6 +43,23 @@ class CoordinatesTest {
     }
 
     @Test
+    fun `minus operator returns combined accuracy for coincident points`() {
+        val c1 = Coordinates(10.0, 20.0, accuracy = 1.5f)
+        val c2 = Coordinates(10.0, 20.0, accuracy = 2.5f)
+        val distance: Distance = c1 - c2
+        assertEquals(0.0, distance.meters)
+        assertEquals(4.0f, requireNotNull(distance.accuracy), 1e-6f)
+    }
+
+    @Test
+    fun `plus operator wraps longitude across the antimeridian`() {
+        val c1 = Coordinates(0.0, 179.9)
+        val c2 = c1.plus(Distance(100000.0), Azimuth(90.0))
+        assertEquals(0.0, c2.latitude, 1e-6)
+        assertEquals(-179.2007, c2.longitude, 1e-3)
+    }
+
+    @Test
     fun `unaryMinus operator`() {
         val c1 = Coordinates(45.0, 90.0, accuracy = 1.0f)
         val c2 = -c1
@@ -65,5 +82,29 @@ class CoordinatesTest {
         val (lat, lon) = c1.split()
         assertEquals(45.0, lat)
         assertEquals(90.0, lon)
+    }
+
+    @Test
+    fun `toCoordinates uses longitude first order`() {
+        val c = doubleArrayOf(-122.4194, 37.7749).toCoordinates()
+        assertEquals(-122.4194, c.longitude)
+        assertEquals(37.7749, c.latitude)
+    }
+
+    @Test
+    fun `toCoordinates ignores a third altitude element`() {
+        val c = doubleArrayOf(-122.4194, 37.7749, 15.0).toCoordinates()
+        assertEquals(-122.4194, c.longitude)
+        assertEquals(37.7749, c.latitude)
+    }
+
+    @Test
+    fun `toCoordinates rejects invalid array sizes`() {
+        assertFailsWith<IllegalArgumentException> {
+            doubleArrayOf(1.0).toCoordinates()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            doubleArrayOf(1.0, 2.0, 3.0, 4.0).toCoordinates()
+        }
     }
 }

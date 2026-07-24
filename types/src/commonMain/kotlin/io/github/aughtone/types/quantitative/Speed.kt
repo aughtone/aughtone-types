@@ -53,14 +53,16 @@ data class Speed(
     /**
      * Subtracts another Speed from this Speed.
      *
+     * Since a `Speed` cannot be negative, a difference below zero is floored at zero mps.
+     *
      * The accuracy of the resulting `Speed` is calculated by adding the absolute uncertainties of the two operands.
      * If either operand has a null accuracy, the resulting accuracy will also be null.
      *
      * @param other The Speed to subtract.
-     * @return A new Speed representing the difference.
+     * @return A new Speed representing the difference, floored at zero.
      */
     operator fun minus(other: Speed): Speed {
-        val newMps = mps - other.mps
+        val newMps = (mps - other.mps).coerceAtLeast(0.0)
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * mps
             val absoluteError2 = other.accuracy * other.mps
@@ -78,23 +80,29 @@ data class Speed(
     /**
      * Multiplies this Speed by a scalar value.
      *
+     * Since a `Speed` cannot be negative, a product below zero (a negative scalar)
+     * is floored at zero mps.
+     *
      * @param other The scalar value to multiply by.
-     * @return A new Speed representing the product.
+     * @return A new Speed representing the product, floored at zero.
      */
     operator fun times(other: Double): Speed {
-        return Speed(mps * other, accuracy = accuracy)
+        return Speed((mps * other).coerceAtLeast(0.0), accuracy = accuracy)
     }
 
     /**
      * Divides this Speed by a scalar value.
      *
+     * Since a `Speed` cannot be negative, a quotient below zero (a negative scalar)
+     * is floored at zero mps.
+     *
      * @param other The scalar value to divide by.
-     * @return A new Speed representing the quotient.
+     * @return A new Speed representing the quotient, floored at zero.
      * @throws ArithmeticException if dividing by zero.
      */
     operator fun div(other: Double): Speed {
         if (other == 0.0) throw ArithmeticException("Division by zero")
-        return Speed(mps / other, accuracy = accuracy)
+        return Speed((mps / other).coerceAtLeast(0.0), accuracy = accuracy)
     }
 }
 

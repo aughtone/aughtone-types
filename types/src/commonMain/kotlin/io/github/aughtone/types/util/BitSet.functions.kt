@@ -2,12 +2,12 @@ package io.github.aughtone.types.util
 
 
 /**
- * Creates an empty [BitSet].
+ * Creates an empty [BitSet] of size 0.
  */
-fun bitSet(): BitSet = BitSet()
+fun bitSet(): BitSet = BitSet(size = 0)
 
 /**
- * Creates an empty [BitSet].
+ * Creates an empty [BitSet] of size 0.
  */
 fun emptyBitSet(): BitSet = bitSet()
 

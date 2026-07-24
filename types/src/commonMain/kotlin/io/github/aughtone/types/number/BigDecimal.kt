@@ -22,17 +22,19 @@ data class BigDecimal(
     val scale: Int = 0
 ) : Comparable<BigDecimal> {
 
+    private constructor(source: BigDecimal) : this(source.unscaledValue, source.scale)
+
     /**
      * Constructs a `BigDecimal` from its string representation.
      * @param value The string to parse.
      */
-    constructor(value: String) : this(parseString(value).unscaledValue, parseString(value).scale)
+    constructor(value: String) : this(parseString(value))
 
     /**
      * Constructs a `BigDecimal` from a `Double` value, preserving its binary precision.
      * @param value The double value.
      */
-    constructor(value: Double) : this(valueOf(value).unscaledValue, valueOf(value).scale)
+    constructor(value: Double) : this(valueOf(value))
 
     /**
      * Constructs a `BigDecimal` from a `Long` value.
@@ -138,45 +140,61 @@ data class BigDecimal(
         if (divisor.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
         }
+        if (this.unscaledValue.signum == 0) {
+            return BigDecimal(BigInteger.ZERO, this.scale - divisor.scale)
+        }
         val (q, r) = this.unscaledValue.divideAndRemainder(divisor.unscaledValue)
         if (r.signum == 0) {
             return BigDecimal(q, this.scale - divisor.scale)
         }
-        
-        var tempDividend = this.unscaledValue
-        var currentScale = this.scale - divisor.scale
-        
-        for (i in 1..200) {
-            tempDividend = tempDividend.multiply(BigInteger.TEN)
-            currentScale++
-            val (q2, r2) = tempDividend.divideAndRemainder(divisor.unscaledValue)
-            if (r2.signum == 0) {
-                return BigDecimal(q2, currentScale)
-            }
+
+        // The expansion terminates iff the reduced denominator has only factors of 2 and 5.
+        val den = divisor.unscaledValue.negateIfNegative()
+        var reduced = den.divide(gcd(this.unscaledValue.negateIfNegative(), den))
+        var twos = 0
+        var fives = 0
+        val two = BigInteger.valueOf(2)
+        val five = BigInteger.valueOf(5)
+        while (true) {
+            val (q2, r2) = reduced.divideAndRemainder(two)
+            if (r2.signum != 0) break
+            reduced = q2
+            twos++
         }
-        throw ArithmeticException("Non-terminating decimal expansion; no exact representable decimal result.")
+        while (true) {
+            val (q5, r5) = reduced.divideAndRemainder(five)
+            if (r5.signum != 0) break
+            reduced = q5
+            fives++
+        }
+        if (reduced != BigInteger.ONE) {
+            throw ArithmeticException("Non-terminating decimal expansion; no exact representable decimal result.")
+        }
+        val extraDigits = maxOf(twos, fives)
+        val exact = this.unscaledValue.multiply(powerOfTen(extraDigits)).divide(divisor.unscaledValue)
+        return BigDecimal(exact, this.scale - divisor.scale + extraDigits)
     }
 
-    fun divide(divisor: BigDecimal, scale: Int, roundingMode: RoundingMode): BigDecimal {
-        if (divisor.unscaledValue.signum == 0) {
+    fun divide(other: BigDecimal, scale: Int, roundingMode: RoundingMode): BigDecimal {
+        if (other.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
         }
-        val k = scale + divisor.scale - this.scale
+        val k = scale + other.scale - this.scale
         val num: BigInteger
         val den: BigInteger
         if (k >= 0) {
             num = this.unscaledValue.multiply(powerOfTen(k))
-            den = divisor.unscaledValue
+            den = other.unscaledValue
         } else {
             num = this.unscaledValue
-            den = divisor.unscaledValue.multiply(powerOfTen(-k))
+            den = other.unscaledValue.multiply(powerOfTen(-k))
         }
-        
+
         val (q, r) = num.divideAndRemainder(den)
         if (r.signum == 0) {
             return BigDecimal(q, scale)
         }
-        
+
         val roundedUnscaled = round(q, r, den, roundingMode)
         return BigDecimal(roundedUnscaled, scale)
     }
@@ -334,6 +352,17 @@ data class BigDecimal(
             return result
         }
 
+        private fun gcd(a: BigInteger, b: BigInteger): BigInteger {
+            var x = a
+            var y = b
+            while (y.signum != 0) {
+                val t = x.remainder(y)
+                x = y
+                y = t
+            }
+            return x
+        }
+
         private fun BigInteger.negateIfNegative(): BigInteger {
             return if (this.signum < 0) this.negate() else this
         }
@@ -371,7 +400,6 @@ data class BigDecimal(
                             RoundingMode.HALF_UP -> true
                             RoundingMode.HALF_DOWN -> false
                             RoundingMode.HALF_EVEN -> qAbs.testBit(0)
-                            else -> false
                         }
                     }
                 }

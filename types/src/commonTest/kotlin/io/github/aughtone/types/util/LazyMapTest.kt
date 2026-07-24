@@ -128,6 +128,44 @@ class LazyMapTest {
     }
 
     @Test
+    fun `null values are cached and supplier invoked only once`() {
+        var calls = 0
+        val map = lazyMapOf<String, String?>("a" to { calls++; null })
+        assertNull(map["a"])
+        assertNull(map["a"])
+        assertEquals(1, calls)
+        assertTrue(map.cache.containsKey("a"))
+    }
+
+    @Test
+    fun `entries iteration yields null values`() {
+        val map = lazyMapOf<String, String?>("a" to { null }, "b" to { "value" })
+        val entries = map.entries.toList()
+        assertEquals(2, entries.size)
+        assertEquals("a", entries[0].key)
+        assertNull(entries[0].value)
+        assertEquals("value", entries[1].value)
+        assertTrue(map.values.contains(null))
+    }
+
+    @Test
+    fun `equals and hashCode match an equivalent plain map`() {
+        val map = lazyMapOf("a" to { 1 }, "b" to { 2 })
+        val plain = mapOf("a" to 1, "b" to 2)
+        assertEquals<Map<String, Int>>(plain, map)
+        assertEquals<Map<String, Int>>(map, plain)
+        assertEquals(plain.hashCode(), map.hashCode())
+    }
+
+    @Test
+    fun `equals returns false for a different map`() {
+        val map = lazyMapOf("a" to { 1 })
+        assertFalse(map == mapOf("a" to 2))
+        assertFalse(map == mapOf("b" to 1))
+        assertFalse(map == mapOf("a" to 1, "b" to 2))
+    }
+
+    @Test
     fun `containsValue evaluates lazily and short-circuits`() {
         val testCalled = mutableListOf(false, false, false)
         val testMap = lazyMapOf(
