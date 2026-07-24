@@ -156,3 +156,41 @@ fun availableLocales(): List<Locale> = localeResourceMap.values.toList()
  */
 fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
     availableLocales().filter { it.displayName.contains(name, ignoreCase) }
+
+/**
+ * Returns the display name of this [Locale], localized for the language of [displayIn].
+ *
+ * Resolution is delegated to the platform's own CLDR data via [localizedDisplayNameForNative]:
+ * `java.util.Locale` on JVM/Android, `NSLocale` on Apple platforms, and `Intl.DisplayNames`
+ * on JS/WasmJS. When the platform has no localized name available (for example on Linux,
+ * which ships no native locale-name data, or for unknown language codes), this falls back
+ * to the English [Locale.displayName].
+ *
+ * **Warning:** Because names come from the underlying OS, the exact wording may vary
+ * slightly between platforms and OS versions. See ADR 0003 for the rationale and tradeoffs.
+ *
+ * @param displayIn The locale whose language the name should be rendered in.
+ * Defaults to [Locale.current].
+ * @return The localized display name, or the English [Locale.displayName] as a fallback.
+ * @see localizedDisplayNameForNative
+ */
+fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
+    localizedDisplayNameForNative(this, displayIn) ?: displayName
+
+/**
+ * Retrieves the display name of [locale], localized for the language of [displayIn],
+ * using the native platform's CLDR data.
+ *
+ * This is an `expect` function, requiring a platform-specific implementation. Platforms
+ * without native locale-name data (like Linux) return `null`, as do all platforms when
+ * the language is unknown to their CLDR data.
+ *
+ * **Warning:** The results of this function may vary between platforms due to differences
+ * in their underlying locale systems.
+ *
+ * @param locale The locale whose name should be produced.
+ * @param displayIn The locale whose language the name should be rendered in.
+ * @return The localized display name, or `null` when the platform cannot provide one.
+ * @see Locale.localizedDisplayName
+ */
+expect fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String?

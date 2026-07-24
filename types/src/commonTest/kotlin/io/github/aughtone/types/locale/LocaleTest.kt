@@ -106,6 +106,43 @@ class LocaleTest {
     }
 
     @Test
+    fun `test localeFor resolves expanded world language set`() {
+        val expectedScriptCodes: Map<String, String?> = mapOf(
+            "am" to "Ethi", "as" to "Beng", "bn" to "Beng", "bo" to "Tibt",
+            "fil" to null, "gu" to "Gujr", "ha" to null, "ig" to null,
+            "jv" to null, "km" to "Khmr", "kn" to "Knda", "ku" to null,
+            "ky" to "Cyrl", "lo" to "Laoo", "ml" to "Mlym", "mn" to "Cyrl",
+            "mr" to "Deva", "my" to "Mymr", "ne" to "Deva", "or" to "Orya",
+            "pa" to "Guru", "ps" to "Arab", "sd" to "Arab", "si" to "Sinh",
+            "so" to null, "su" to null, "ta" to "Taml", "te" to "Telu",
+            "tg" to "Cyrl", "tl" to null, "ug" to "Arab", "ur" to "Arab",
+            "yo" to null, "zu" to null
+        )
+        expectedScriptCodes.forEach { (code, scriptCode) ->
+            val locale = localeFor(code)
+            assertNotNull(locale, "Expected '$code' in the locale resource map")
+            assertEquals(code, locale.languageCode, "Unexpected languageCode for '$code'")
+            assertEquals(scriptCode, locale.scriptCode, "Unexpected scriptCode for '$code'")
+            assertNull(locale.regionCode, "Base language entry '$code' should not carry a regionCode")
+        }
+    }
+
+    @Test
+    fun `test localizedDisplayName is never blank and falls back for unknown locales`() {
+        listOf("en", "fr", "bn", "zh-Hans").forEach { tag ->
+            val locale = localeFor(tag)
+            assertNotNull(locale)
+            val name = locale.localizedDisplayName(displayIn = locale)
+            assertTrue(name.isNotBlank(), "localizedDisplayName for '$tag' should not be blank")
+        }
+
+        // Unknown locales have no CLDR data on any platform, so the English
+        // displayName fallback must be returned.
+        val unknown = parseLocale("zz-ZZ")
+        assertEquals(unknown.displayName, unknown.localizedDisplayName(displayIn = unknown))
+    }
+
+    @Test
     fun `test localesByName filters correctly`() {
         val englishLocales = localesByName("English")
         assertTrue(englishLocales.isNotEmpty(), "Should find locales with 'English' in the name")

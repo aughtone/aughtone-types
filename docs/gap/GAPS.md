@@ -25,3 +25,10 @@ This document tracks identified technical debt, missing features, and cross-plat
 - **Resolution**: Integrate JetBrains `kotlinx.benchmark` plugin into the Gradle build and create JMH benchmarks for critical operations (addition, division, Knuth division, scaling) to profile performance and avoid regression.
 - **Target Release**: 2.3.0
 
+### gap: Bundled Localized Display-Name Tables
+- **Status**: OPEN
+- **Priority**: LOW
+- **Context**: ADR 0003 delegates locale display-name localization to platform CLDR data. Linux targets therefore only get the English fallback, and wording differs slightly across OSes. Byte-identical, all-platform names require bundling generated per-display-language Kotlin tables (~90 strings each, one lazily-initialized table per language via `lazyMapOf`), plus tooling to generate/refresh them from CLDR. AI-assisted maintenance makes the table upkeep tractable, but it is deliberately deferred.
+- **Resolution**: Generate one Kotlin table file per display language plus a registry keyed by language code; load-on-first-access keeps RAM at one table (a few KB). Build an AI-assisted CLDR extraction/refresh workflow to maintain them.
+- **Target Release**: TBD
+

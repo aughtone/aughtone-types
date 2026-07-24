@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+- **Locales**: Added 34 base-language locales to the locale resource map (Amharic, Assamese, Bengali, Burmese, Filipino, Gujarati, Hausa, Igbo, Javanese, Kannada, Khmer, Kurdish, Kyrgyz, Lao, Malayalam, Marathi, Mongolian, Nepali, Odia, Pashto, Punjabi, Sindhi, Sinhala, Somali, Sundanese, Tagalog, Tajik, Tamil, Telugu, Tibetan, Urdu, Uyghur, Yoruba, Zulu), with ISO 15924 script codes for non-Latin scripts.
+- **Localized Display Names**: New `Locale.localizedDisplayName(displayIn)` resolving names via platform CLDR data (JVM/Android `java.util.Locale`, Apple `NSLocale`, JS/Wasm `Intl.DisplayNames`), falling back to the English `displayName` (see ADR 0003).
+
 ## [3.1.0] - 2026-06-21
 
 ### Added
