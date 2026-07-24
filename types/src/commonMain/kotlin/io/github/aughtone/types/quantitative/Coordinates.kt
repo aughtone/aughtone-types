@@ -51,6 +51,11 @@ data class Coordinates(
     /**
      * Calculates the distance between this and another `Coordinates` using the Haversine formula.
      *
+     * The accuracy of the resulting [Distance] is relative (a fraction of the distance), computed
+     * from the sum of the two absolute accuracies in meters divided by the distance. When the two
+     * points coincide (distance is zero) a relative accuracy is undefined, so the combined
+     * absolute accuracy in meters is returned instead.
+     *
      * @param other The other `Coordinates`.
      * @return The distance between the two coordinates as a `Distance` object.
      */
@@ -73,7 +78,7 @@ data class Coordinates(
             if (distanceInMeters > 0) {
                 (absoluteAccuracySum / distanceInMeters).toFloat()
             } else {
-                null
+                absoluteAccuracySum
             }
         } else {
             null
@@ -84,6 +89,10 @@ data class Coordinates(
 
     /**
      * Calculates a new `Coordinates` by moving a certain distance from a starting point in a given direction.
+     *
+     * The resulting longitude is normalized into [-180, 180) so that paths crossing the
+     * antimeridian produce valid coordinates, and the latitude is clamped to [-90, 90] to guard
+     * against floating point rounding at the poles.
      *
      * @param distance The distance to move.
      * @param bearing The direction to move in.
@@ -105,8 +114,8 @@ data class Coordinates(
         }
 
         return Coordinates(
-            latitude = toDegrees(lat2Rad),
-            longitude = toDegrees(lon2Rad),
+            latitude = toDegrees(lat2Rad).coerceIn(-90.0, 90.0),
+            longitude = normalizeLongitude(toDegrees(lon2Rad)),
             accuracy = newAccuracy
         )
     }
@@ -127,11 +136,24 @@ data class Coordinates(
 
 
 /**
- * Converts a [DoubleArray] containing latitude and longitude into a [Coordinates] object.
+ * Normalizes a longitude in decimal degrees into the range [-180, 180).
+ */
+internal fun normalizeLongitude(longitude: Double): Double =
+    ((longitude + 180.0) % 360.0 + 360.0) % 360.0 - 180.0
+
+/**
+ * Converts a [DoubleArray] position into a [Coordinates] object.
+ *
+ * The array follows the GeoJSON (RFC 7946) position order: index 0 is the longitude,
+ * index 1 is the latitude, and an optional index 2 is the altitude. Any altitude element
+ * is ignored, since [Coordinates] does not carry altitude.
  *
  * @param accuracy The horizontal accuracy of the coordinate in meters. Defaults to `null`.
  * @return A new [Coordinates] instance using the values from the array.
- * @throws IllegalArgumentException If the array does not contain exactly two elements (latitude and longitude),
+ * @throws IllegalArgumentException If the array does not contain exactly 2 or 3 elements,
  * or if the values are outside the valid geographic ranges.
  */
-fun DoubleArray.toCoordinates(accuracy: Float? = null) = Coordinates(longitude = this[0], latitude = this[1], accuracy = accuracy)
+fun DoubleArray.toCoordinates(accuracy: Float? = null): Coordinates {
+    require(size == 2 || size == 3) { "Expected 2 or 3 elements (longitude, latitude, altitude), found $size" }
+    return Coordinates(longitude = this[0], latitude = this[1], accuracy = accuracy)
+}

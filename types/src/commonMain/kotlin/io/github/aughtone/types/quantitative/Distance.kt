@@ -53,14 +53,16 @@ data class Distance(
     /**
      * Subtracts another Distance from this Distance.
      *
+     * Since a `Distance` cannot be negative, a difference below zero is floored at zero meters.
+     *
      * The accuracy of the resulting `Distance` is calculated by adding the absolute uncertainties of the two operands.
      * If either operand has a null accuracy, the resulting accuracy will also be null.
      *
      * @param other The Distance to subtract.
-     * @return A new Distance representing the difference.
+     * @return A new Distance representing the difference, floored at zero.
      */
     operator fun minus(other: Distance): Distance {
-        val newMeters = meters - other.meters
+        val newMeters = (meters - other.meters).coerceAtLeast(0.0)
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * meters
             val absoluteError2 = other.accuracy * other.meters
@@ -116,16 +118,19 @@ data class Distance(
     /**
      * Divides this Distance by an Integer.
      *
+     * Since a `Distance` cannot be negative, a quotient below zero (a negative divisor)
+     * is floored at zero meters.
+     *
      * The accuracy of the resulting `Distance` is the same as the original `Distance`,
      * as the integer is assumed to be an exact value with no uncertainty.
      *
      * @param other The Integer to divide by.
-     * @return A new Distance representing the quotient.
+     * @return A new Distance representing the quotient, floored at zero.
      * @throws ArithmeticException if dividing by zero.
      */
     operator fun div(other: Int): Distance {
         if (other == 0) throw ArithmeticException("Division by zero")
-        return Distance(meters / other.toDouble(), accuracy = accuracy)
+        return Distance((meters / other.toDouble()).coerceAtLeast(0.0), accuracy = accuracy)
     }
 
     /**

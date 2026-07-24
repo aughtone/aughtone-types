@@ -44,7 +44,7 @@ fun currenciesByName(name: String, ignoreCase: Boolean = true): List<Currency> =
 /**
  * Retrieves the [Currency] for a given [Locale].
  *
- * This function delegates to [Currency.Companion.forLocale] to perform the lookup.
+ * This function delegates to [Currency.Companion.getCurrency] to perform the lookup.
  *
  * @param locale The [Locale] for which to find the currency.
  * @return The corresponding [Currency] if a mapping is found, otherwise `null`.

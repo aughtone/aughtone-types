@@ -8,12 +8,12 @@ import kotlinx.serialization.Serializable
  *
  * @property scheme The protocol scheme (e.g., "http", "https").
  * @property userInfo The user information part of the authority (e.g., "user:password").
- * @property host The host name or IP address.
+ * @property host The host name or IP address. IPv6 literals keep their brackets (e.g., "[::1]").
  * @property port The port number, or null if the default port for the scheme is used.
  * @property path The path component of the URL.
  * @property query The query string, not including the leading '?'.
  * @property fragment The fragment identifier, not including the leading '#'.
- * @property authority The authority part of the URL, combining host and port (e.g., "example.com:8080").
+ * @property authority The authority part of the URL, combining userInfo, host and port (e.g., "user@example.com:8080").
  * @property identity A string representing the resource identity from the path, query and fragment (e.g., "/path?query#fragment")
  * @constructor Creates a [Url] instance with the specified components.
  * @see Uri
@@ -36,29 +36,44 @@ data class Url(
     val fragment: String,
 ) {
     /**
-     * The authority part of the URL, combining [host] and [port] (e.g., "example.com:8080").
-     * If the [port] is null it will not be included, except if the [host] is empty.
-     * If the [host] is empty, it will return the port with a leading ":".
+     * The authority part of the URL, in the form `[userInfo "@"] host [":" port]`.
+     * The [userInfo] and [port] parts are omitted when empty or null.
      */
-    val authority: String = "$host:$port"
+    val authority: String = buildString {
+        if (userInfo.isNotEmpty()) append(userInfo).append('@')
+        append(host)
+        if (port != null) append(':').append(port)
+    }
+
     /**
      * A string representing the resource identity constructed from the [path], [query], and [fragment].
      *
-     * It combines these components in the format: `path?query#fragment`.
+     * It combines these components in the format: `path[?query][#fragment]`, omitting
+     * the '?' and '#' delimiters when the corresponding component is empty.
      *
      * For example, if `path` is "/example", `query` is "key=value", and `fragment` is "section1",
      * then `identity` will be "/example?key=value#section1".
      */
-    val identity: String = "$path?$query#$fragment"
+    val identity: String = buildString {
+        append(path)
+        if (query.isNotEmpty()) append('?').append(query)
+        if (fragment.isNotEmpty()) append('#').append(fragment)
+    }
 
     /**
      * Returns a string representation of the URL.
      *
-     * The string is formatted as: `scheme://authority/path?query#fragment`.
+     * The string is formatted as: `scheme://authority path[?query][#fragment]`.
+     * Empty query and fragment components are omitted, and a '/' is inserted
+     * before a non-empty path that does not already start with one.
      *
      * @return A string representation of the URL.
      */
-    override fun toString(): String = "$scheme://${authority}/$path?$query#$fragment"
+    override fun toString(): String = buildString {
+        append(scheme).append("://").append(authority)
+        if (path.isNotEmpty() && !path.startsWith("/")) append('/')
+        append(identity)
+    }
 
     /**
      * Converts this [Url] instance to a [Uri] instance.

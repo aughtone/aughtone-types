@@ -27,6 +27,9 @@ This library provides machine-readable instructions for AI coding assistants to 
     *   **Contract**: `Money.value` is a `BigDecimal` storing the precise amount. `Money.minorUnits` returns the value rounded to the currency's standard digits using Banker's Rounding.
     *   `Double.toMoney(Currency)`: Safely convert a double to `Money`.
     *   `BigDecimal.toMoney(Currency)`: Safely convert a big decimal to `Money`.
+    *   **Division**: `/` stays exact for terminating quotients and rounds HALF_EVEN otherwise — it never throws for ordinary divisors like 3.
+    *   **⚠️ Long operator asymmetry**: `+ Long` / `- Long` treat the operand as **minor units** (cents); `* Long` / `/ Long` treat it as a **dimensionless multiplier**. Prefer `plusMinorUnits` / `minusMinorUnits` for clarity.
+    *   **Currency matching**: Arithmetic guards compare currencies by ISO `code`, not full object equality.
 
 ### **Mathematics (Arbitrary Precision)**
 All types are `data class` and `@Serializable`.
@@ -37,6 +40,8 @@ All types are `data class` and `@Serializable`.
     *   `BigDecimal(String)` / `BigDecimal(Double)` / `BigDecimal(Long)`: Primary constructors.
     *   `toDouble()`: Conversion back to platform primitives.
     *   `setScale(newScale: Int, roundingMode: RoundingMode)`: Precision control.
+    *   `divide(other)`: Exact division; throws `ArithmeticException` only for genuinely non-terminating quotients.
+    *   `divide(other, scale, roundingMode)`: Rounding division that always succeeds — prefer this when the divisor is arbitrary.
 
 ### **Geospatial & GeoJSON (RFC 7946)**
 All geometry types are now prefixed with `Geo` to avoid naming collisions.
@@ -52,6 +57,8 @@ Located in `io.github.aughtone.types.quantitative`.
 
 ### **Networking & Identifiers (RFC Compliant)**
 *   **`Uri`**, **`Url`**, **`Urn`**, **`GeoUri`**: Type-safe manipulators for standard identifiers.
+*   **`UrlEncoder`**: `encode`/`decode` implement RFC 3986 percent-encoding (UTF-8 bytes, `%20` for space, uppercase hex). Use `encodeFormData`/`decodeFormData` only for `application/x-www-form-urlencoded` payloads (`+` for space).
+*   **`UrlBuilder`**: Query parameters may repeat — `addQueryParameter` appends rather than replacing.
 
 ## 📜 Compliance & Standards
 - **URI/URL**: RFC 3986.

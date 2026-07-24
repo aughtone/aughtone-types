@@ -8,6 +8,10 @@ package io.github.aughtone.types.uri
  * This class provides methods to add different parts of a URL,
  * such as the scheme, host, port, path segments, and query parameters.
  *
+ * Path segments and query parameters are percent-encoded per RFC 3986
+ * (spaces become "%20", never "+"). Repeated query parameter names are
+ * preserved in insertion order.
+ *
  * Example Usage:
  * ```kotlin
  * val url = UrlBuilder().apply {
@@ -46,9 +50,10 @@ class UrlBuilder {
     private val pathSegments: MutableList<String> = mutableListOf()
 
     /**
-     * The query parameters of the URL.
+     * The query parameters of the URL, as name/value pairs in insertion order.
+     * A list is used so repeated parameter names are preserved.
      */
-    private val queryParameters: MutableMap<String, String> = mutableMapOf()
+    private val queryParameters: MutableList<Pair<String, String>> = mutableListOf()
 
     /**
      * Adds a path segment to the URL.
@@ -73,13 +78,14 @@ class UrlBuilder {
     }
 
     /**
-     * Adds a query parameter to the URL.
+     * Adds a query parameter to the URL. Calling this again with the same
+     * name appends another parameter instead of replacing the first.
      ** @param name The name of the query parameter.
      * @param value The value of the query parameter.
      * @return This UrlBuilder instance.
      */
     fun addQueryParameter(name: String, value: String): UrlBuilder {
-        queryParameters[UrlEncoder.encode(name)] = UrlEncoder.encode(value)
+        queryParameters.add(UrlEncoder.encode(name) to UrlEncoder.encode(value))
         return this
     }
 
@@ -116,8 +122,8 @@ class UrlBuilder {
         if (queryParameters.isNotEmpty()) {
             url.append("?")
             url.append(
-                queryParameters.entries.joinToString("&") {
-                    "${it.key}=${it.value}"
+                queryParameters.joinToString("&") { (name, value) ->
+                    "$name=$value"
                 }
             )
         }

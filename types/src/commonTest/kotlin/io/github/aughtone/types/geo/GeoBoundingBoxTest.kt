@@ -58,6 +58,14 @@ class GeoBoundingBoxTest {
     }
 
     @Test
+    fun `toDoubleArray uses single-sided altitude for both bounds`() {
+        val minOnly = GeoBoundingBox(1.0, 2.0, 3.0, 4.0, minAltitude = 5.0)
+        assertEquals(listOf(1.0, 2.0, 5.0, 3.0, 4.0, 5.0), minOnly.toDoubleArray().toList())
+        val maxOnly = GeoBoundingBox(1.0, 2.0, 3.0, 4.0, maxAltitude = 7.0)
+        assertEquals(listOf(1.0, 2.0, 7.0, 3.0, 4.0, 7.0), maxOnly.toDoubleArray().toList())
+    }
+
+    @Test
     fun `toDoubleArray returns 6 elements for 3D`() {
         val bbox = GeoBoundingBox(1.0, 2.0, 3.0, 4.0, 5.0, 10.0)
         val array = bbox.toDoubleArray()

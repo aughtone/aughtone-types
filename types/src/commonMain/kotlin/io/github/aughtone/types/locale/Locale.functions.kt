@@ -1,15 +1,34 @@
 package io.github.aughtone.types.locale
 
+// Legacy ISO 639 codes still returned by some platforms (e.g. java.util.Locale on
+// Android and JVM < 17), mapped to their modern BCP 47 equivalents.
+private val legacyLanguageCodes: Map<String, String> = mapOf(
+    "iw" to "he",
+    "in" to "id",
+    "ji" to "yi",
+)
+
 internal fun normalizeLanguageTag(languageTag: String): String {
     val normalized = languageTag.replace('_', '-')
     val parts = normalized.split('-')
     if (parts.isEmpty() || parts[0].isEmpty()) return ""
     return buildString {
-        append(parts[0].lowercase())
+        val language = parts[0].lowercase()
+        append(legacyLanguageCodes[language] ?: language)
+        var afterSingleton = false
         for (i in 1 until parts.size) {
             val part = parts[i]
             append('-')
             when {
+                // Everything after a singleton (extension or private-use marker like
+                // "u" or "x") stays lowercase per BCP 47 canonical form.
+                afterSingleton -> {
+                    append(part.lowercase())
+                }
+                part.length == 1 -> {
+                    afterSingleton = true
+                    append(part.lowercase())
+                }
                 part.length == 4 && part.all { it.isLetter() } -> {
                     append(part.lowercase().replaceFirstChar { it.uppercase() })
                 }
@@ -71,8 +90,9 @@ fun resolveLocale(languageTag: String): Locale? {
  * If a match is found in the internal resource map, it is returned (preserving any
  * pre-defined display names and metadata).
  *
- * If no exact match is found, it manually parses the tag into its components and
- * creates a new [Locale] instance.
+ * If no exact match is found, it normalizes the tag's casing (language lowercase,
+ * script Titlecase, region UPPERCASE) and manually parses it into its components,
+ * creating a new [Locale] instance.
  *
  * @param languageTag The IETF BCP 47 language tag (e.g., "en-US", "zh-Hans-CN").
  * @return A [Locale] instance representing the provided tag.
@@ -81,15 +101,22 @@ fun parseLocale(languageTag: String): Locale {
     val existing = localeFor(languageTag)
     if (existing != null) return existing
 
-    val parts = languageTag.split('-')
+    val normalized = normalizeLanguageTag(languageTag)
+    val parts = normalized.split('-')
     val language = parts.getOrNull(0) ?: ""
     var script: String? = null
     var region: String? = null
     val variants = mutableListOf<String>()
+    var afterSingleton = false
 
     for (i in 1 until parts.size) {
         val part = parts[i]
         when {
+            afterSingleton -> variants.add(part)
+            part.length == 1 -> {
+                afterSingleton = true
+                variants.add(part)
+            }
             part.length == 4 && part.all { it in 'a'..'z' || it in 'A'..'Z' } -> script = part
             (part.length == 2 && part.all { it in 'a'..'z' || it in 'A'..'Z' }) ||
             (part.length == 3 && part.all { it in '0'..'9' }) -> region = part
@@ -102,7 +129,7 @@ fun parseLocale(languageTag: String): Locale {
         scriptCode = script,
         regionCode = region,
         variantCode = if (variants.isEmpty()) null else variants.joinToString("-"),
-        displayName = languageTag
+        displayName = normalized
     )
 }
 
@@ -112,7 +139,8 @@ fun parseLocale(languageTag: String): Locale {
  * This function is an `expect` function, requiring a platform-specific implementation
  * to look up locale information using the native APIs of the target platform (e.g., JVM, Android, iOS).
  * On platforms where a native lookup is not possible or practical (like Linux or Web), this function
- * should fall back to using the [resolveLocale] function.
+ * should fall back to the strict [localeFor] lookup. Implementations must not call
+ * [resolveLocale], which itself delegates to this function and would recurse.
  *
  * **Warning:** The results of this function may vary between platforms due to differences in
  * their underlying locale systems. For consistent results, prefer using [resolveLocale].

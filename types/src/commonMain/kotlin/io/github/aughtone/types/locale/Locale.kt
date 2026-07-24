@@ -52,7 +52,7 @@ data class Locale(
      * - `en-US` (language and region)
      * - `zh-Hans` (language and script)
      * - `zh-Hans-CN` (language, script, and region)
-     * - `es-419` (language and variant)
+     * - `es-419` (language and UN M.49 numeric region, carried in [regionCode])
      */
     val languageTag: String = buildString {
         append(languageCode)

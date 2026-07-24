@@ -65,25 +65,40 @@ data class Currency(
          * @see Locale.current
          */
         val current: Currency
-            get() = requireNotNull(localeToCurrencyMap[Locale.current.languageTag]?.let {
-                currencyFor(
-                    it
-                )
-            }) { "Your locale could not be found, or there was no currency mapped to it. Try getCurrency(Locale) or construct your own." }
+            get() = requireNotNull(getCurrency(Locale.current)) { "Your locale could not be found, or there was no currency mapped to it. Try getCurrency(Locale) or construct your own." }
 
         /**
          * Retrieves the currency associated with the specified locale.
          *
-         * This function looks up the [Currency] corresponding to the language tag of the
-         * provided [locale]. If no mapping exists for the given locale, it returns `null`.
+         * The lookup follows a BCP 47 stepdown: the full language tag is tried first,
+         * then candidates with the script and variant subtags dropped. Since the region
+         * is what selects a currency, language-region is preferred before the bare
+         * language (e.g. `zh-Hans-CN` -> `zh-CN` -> `zh-Hans` -> `zh`).
          *
          * @param locale The locale to look up. Defaults to [Locale.current].
          * @return The [Currency] associated with the locale, or `null` if not found.
          */
         fun getCurrency(locale: Locale = Locale.current): Currency? =
-            localeToCurrencyMap[locale.languageTag]?.let { currencyFor(it) }
+            currencyCodeFor(locale)?.let { currencyFor(it) }
 
-
+        private fun currencyCodeFor(locale: Locale): String? {
+            val language = locale.languageCode
+            val script = locale.scriptCode
+            val region = locale.regionCode
+            val candidates = buildList {
+                add(locale.languageTag)
+                if (region != null) {
+                    if (script != null) add("$language-$script-$region")
+                    add("$language-$region")
+                }
+                if (script != null) add("$language-$script")
+                add(language)
+            }.distinct()
+            for (tag in candidates) {
+                localeToCurrencyMap[tag]?.let { return it }
+            }
+            return null
+        }
     }
 
 }

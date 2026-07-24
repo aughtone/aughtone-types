@@ -1,5 +1,6 @@
 package io.github.aughtone.types.locale
 
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -77,11 +78,55 @@ class LocaleTest {
 
     @Test
     fun `test Locale getCurrent returns a valid locale`() {
-        // This test ensures that the native call for the current locale returns
-        // a valid, non-null Locale object on the platform running the test.
-        val currentLocale = Locale.current
-        assertNotNull(currentLocale)
-        assertNotNull(localeFor(currentLocale.languageTag))
+        // When the platform can determine a system locale, it must resolve.
+        // Environments with no system locale at all (e.g. containers without LANG)
+        // are documented to throw, which is acceptable here.
+        val currentLocale = try {
+            Locale.current
+        } catch (e: IllegalStateException) {
+            return
+        } catch (e: IllegalArgumentException) {
+            return
+        }
+        // resolveLocale, since script-bearing tags like zh-Hans-CN resolve by stepdown.
+        assertNotNull(resolveLocale(currentLocale.languageTag))
+    }
+
+    @Test
+    fun `test legacy hebrew code resolves to modern locale`() {
+        val locale = resolveLocale("iw-IL")
+        assertNotNull(locale)
+        assertEquals("he", locale.languageCode)
+        assertEquals("IL", locale.regionCode)
+    }
+
+    @Test
+    fun `test legacy indonesian code resolves to modern locale`() {
+        val locale = resolveLocale("in-ID")
+        assertNotNull(locale)
+        assertEquals("id", locale.languageCode)
+    }
+
+    @Test
+    fun `test parseLocale normalizes casing for unknown tags`() {
+        val locale = parseLocale("en-in")
+        assertEquals("en", locale.languageCode)
+        assertEquals("IN", locale.regionCode)
+        assertEquals("en-IN", locale.languageTag)
+    }
+
+    @Test
+    fun `test normalize keeps extension subtags lowercase`() {
+        assertEquals("th-TH-u-nu-thai", normalizeLanguageTag("th-TH-u-nu-thai"))
+        assertEquals("en-x-priv", normalizeLanguageTag("en-X-PRIV"))
+    }
+
+    @Test
+    fun `test script bearing locale round trips through resolveLocale`() {
+        val azeri = localeFor("az")
+        assertNotNull(azeri)
+        assertEquals("az-Latn", azeri.languageTag)
+        assertNotNull(resolveLocale(azeri.languageTag))
     }
 
 
@@ -95,6 +140,7 @@ class LocaleTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun `test Locale toLanguageTag compatibility`() {
         assertEquals("en-US", Locale("en", "US", displayName = "").toLanguageTag())
     }
@@ -143,10 +189,19 @@ class LocaleTest {
     }
 
     @Test
+    fun `test Locale serialization round trip`() {
+        val json = Json { encodeDefaults = true }
+        val locale = localeFor("zh-CN")
+        assertNotNull(locale)
+        val encoded = json.encodeToString(Locale.serializer(), locale)
+        assertEquals(locale, json.decodeFromString(Locale.serializer(), encoded))
+    }
+
+    @Test
     fun `test localesByName filters correctly`() {
         val englishLocales = localesByName("English")
         assertTrue(englishLocales.isNotEmpty(), "Should find locales with 'English' in the name")
-        assertTrue(englishLocales.all { it.displayName?.contains("English", ignoreCase = true) == true })
+        assertTrue(englishLocales.all { it.displayName.contains("English", ignoreCase = true) })
 
         val caseInsensitiveLocales = localesByName("english", ignoreCase = true)
         assertEquals(englishLocales.size, caseInsensitiveLocales.size)

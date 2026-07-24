@@ -28,7 +28,7 @@ package io.github.aughtone.types.units
  */
 enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Acre("ac", "acre"),
-    AcreFoot("ac⋅ft", "ac ft", "ac⋅ft", "acft"),
+    AcreFoot("ac⋅ft", "ac ft", "acft"),
     Ampere("A"),
     ArcMinute("′", "'", "arc⋅min"), // minute of arc, same as symbol for feet (')
     ArcSecond("″", "\"", "arc⋅sec", "asec"), // same as symbol for inches (")
@@ -90,7 +90,7 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     LightYear("ly"),
     Liter("L"),
     LiterPerKilometer("L/km"),
-    LiterPer100Kilometers("L/1OOkm"),
+    LiterPer100Kilometers("L/100km"),
     Lux("lx"),
     Megabit("Mbit", "Mb"),
     Megabyte("MiB", "MB"),

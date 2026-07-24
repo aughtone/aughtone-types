@@ -5,10 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class UrlBuilderTest {
-    val testChineseParam = "你好 你好"
-    val testEncodedChineseParam = "你好+你好"
-
-    private val encoder = UrlEncoder
 
     @Test
     fun `Simple URL`() {
@@ -50,7 +46,7 @@ class UrlBuilderTest {
             .build()
 
         assertEquals(
-            "https://search.example.com:8080/search/results?q=kotlin+url+builder&page=2",
+            "https://search.example.com:8080/search/results?q=kotlin%20url%20builder&page=2",
             url
         )
     }
@@ -69,9 +65,36 @@ class UrlBuilderTest {
             .build()
 
         assertEquals(
-            "https://search.example.com:8080/search+with+space/results?q+with+space=kotlin+url+builder+with+space&page=2",
+            "https://search.example.com:8080/search%20with%20space/results?q%20with%20space=kotlin%20url%20builder%20with%20space&page=2",
             url
         )
+    }
+
+    @Test
+    fun `URL with non ascii path segment is percent encoded`() {
+        val url = UrlBuilder()
+            .apply {
+                scheme = "https"
+                host = "example.com"
+                addPathSegment("你好")
+            }
+            .build()
+
+        assertEquals("https://example.com/%E4%BD%A0%E5%A5%BD", url)
+    }
+
+    @Test
+    fun `Repeated query parameter names are preserved in order`() {
+        val url = UrlBuilder()
+            .apply {
+                scheme = "https"
+                host = "example.com"
+                addQueryParameter("tag", "a")
+                addQueryParameter("tag", "b")
+            }
+            .build()
+
+        assertEquals("https://example.com?tag=a&tag=b", url)
     }
 
     @Test
