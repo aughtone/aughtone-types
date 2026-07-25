@@ -1,6 +1,8 @@
 # Aughtone Types
 
 > [!IMPORTANT]
+> **v3.2.0 Behavioral Fixes**: This release corrects long-standing bugs whose output or validation changes for existing code. `UrlEncoder.encode` is now true RFC 3986 percent-encoding — use `encodeFormData` for the previous `application/x-www-form-urlencoded` behavior. `Url`/`Uri`/`Urn`/`GeoUri` string output is now well-formed, and `Urn`/`GeoUri` construction now rejects invalid input. Critical arbitrary-precision fixes also land in `BigInteger`/`BigDecimal` division and `BankersValue`. See the [changelog](CHANGELOG.md) for the full list.
+>
 > **v3.0.0 Breaking Change**: All GeoJSON geometry types (e.g., `Point`, `Polygon`) have been renamed with a **`Geo` prefix** (e.g., `GeoPoint`, `GeoPolygon`). `Money` now uses `BigDecimal` for its internal value to support sub-minor units, and `Telemetry` has moved to the `quantitative` package.
 
 This project follows a specialized documentation hierarchy.
