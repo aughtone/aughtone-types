@@ -20,6 +20,7 @@ This library provides machine-readable instructions for AI coding assistants to 
     *   `Locale.current`: Primary API to get the platform's native system locale.
     *   `localeFor(languageTag: String)`: Strict lookup of a BCP 47 tag in the internal resource map.
     *   `resolveLocale(languageTag: String)`: Lookup with fallback (e.g., "en-US" -> "en").
+    *   `Locale.localizedDisplayName(displayIn)`: The locale's name rendered in the language of `displayIn`, via each platform's native CLDR data (JVM/Android `java.util.Locale`, Apple `NSLocale`, JS/Wasm `Intl.DisplayNames`). Falls back to the English `displayName`; Linux and unknown language codes always yield that fallback.
 *   **`Currency`**: Represents ISO 4217 currencies.
     *   `Currency.current`: Retrieve the currency for the system's current locale.
     *   `availableCurrencies()`: Get a list of all supported currencies.

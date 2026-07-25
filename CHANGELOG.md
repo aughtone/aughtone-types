@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-07-23
+
+### ⚠️ Behavior Changes
+
+No APIs were removed or renamed, but the following correct previously non-compliant behavior and will change results for code written against 3.1.x. Review these before upgrading.
+
+- **UrlEncoder.encode output** (space/`~`/`*`/non-ASCII) is now RFC 3986 rather than form encoding — use `encodeFormData` for the previous behavior. ⚠️ This changes output **silently**: callers building `application/x-www-form-urlencoded` payloads must switch to `encodeFormData`.
+- **Url/Uri/Urn/GeoUri toString** shapes are now well-formed; code depending on the previous malformed output will see different strings.
+- **Urn construction** now rejects invalid NIDs — throws where malformed input was previously accepted.
+- **GeoUri construction** now rejects out-of-range coordinates and negative uncertainty — throws where invalid input was previously accepted.
+- **UrlBuilder repeated query parameters**: `addQueryParameter` appends instead of silently replacing, so repeated keys now emit multiple parameters.
+
 ### Fixed
 - **BigInteger Division (CRITICAL)**: Both division paths (single-word and multi-word Knuth) used signed 64-bit arithmetic where unsigned was required, silently producing wrong quotients/remainders whenever a quotient digit or intermediate value reached 2³¹ (e.g. `16116354936157110357 / 3752381294`). Affected `divide`, `remainder`, `mod`, `modPow`, `modInverse`, and all `BigDecimal` division/scaling. Verified with a 7,000-case seeded differential fuzz suite against `java.math`.
 - **BigInteger.shiftRight**: Shifting a positive value down to zero produced a corrupted instance (`signum=1`, empty magnitude) that was not equal to `ZERO`. The class `init` block now enforces the full invariant on every construction path, so invalid serialized payloads are also rejected on deserialization.
@@ -38,14 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **UrlEncoder.decode / encodeFormData / decodeFormData**.
 - **Urn r/q/f components** (`rComponent`, `qComponent`, `fComponent`).
 - **Money.plusMinorUnits / minusMinorUnits**: Self-describing alternatives to the `Long` operators (whose minor-unit vs multiplier asymmetry is now loudly documented).
-- **UrlBuilder repeated query parameters**: `addQueryParameter` appends instead of silently replacing.
 - **Test infrastructure**: Seeded differential division/shift fuzz suite vs `java.math` (jvmTest); serialization round-trip and invalid-payload rejection tests for the number types; strict-Json round-trips for all GeoJSON types; `CurrencyMismatchTest` rewritten with real assertions covering every resource-map locale's generated `languageTag`.
-
-### Changed
-- **UrlEncoder.encode output** (space/`~`/`*`/non-ASCII) is RFC 3986 rather than form encoding — use `encodeFormData` for the old behavior.
-- **Url/Uri/Urn/GeoUri toString** shapes corrected as above; code depending on the previous malformed output will see different strings.
-- **Urn construction** now rejects invalid NIDs.
-- **GeoUri construction** now rejects out-of-range coordinates and negative uncertainty.
 
 ## [3.1.0] - 2026-06-21
 
