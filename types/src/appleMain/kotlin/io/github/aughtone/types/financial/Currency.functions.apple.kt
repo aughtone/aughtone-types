@@ -27,7 +27,7 @@ actual fun currencyForNative(currencyCode: String): Currency? {
 
     return Currency(
         code = currencyCode,
-        symbol = resource?.symbol ?: formatter.currencySymbol ?: currencyCode,
+        symbol = resource?.symbol ?: formatter.currencySymbol,
         name = nativeName ?: resource?.name ?: currencyCode,
         digits = resource?.digits ?: formatter.maximumFractionDigits.toInt(),
         number = resource?.number ?: -1, // apple doesn't expose the ISO numeric code.
