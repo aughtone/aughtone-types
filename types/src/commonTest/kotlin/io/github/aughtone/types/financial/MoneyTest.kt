@@ -157,4 +157,65 @@ class MoneyTest {
         // minorUnits should be rounded to 2 digits for USD
         assertEquals(123L, money.minorUnits)
     }
+
+    @Test
+    fun `division by three rounds half even`() {
+        val m = Money(1000L, usd) // $10.00
+        assertEquals(333L, (m / 3L).minorUnits)
+        assertEquals(333L, (m / 3.0).minorUnits)
+    }
+
+    @Test
+    fun `division stays exact when terminating`() {
+        val m = Money(1000L, usd)
+        val half = m / 2L
+        assertEquals(500L, half.minorUnits)
+        assertTrue { half.value.compareTo(BigDecimal("5.00")) == 0 }
+    }
+
+    @Test
+    fun `negative division rounds half even`() {
+        val m = Money(-1000L, usd)
+        assertEquals(-333L, (m / 3L).minorUnits)
+    }
+
+    @Test
+    fun `division by zero still throws`() {
+        val m = Money(1000L, usd)
+        assertFailsWith<ArithmeticException> { m / 0L }
+    }
+
+    @Test
+    fun `negative amounts work in arithmetic`() {
+        val m1 = Money(-1050L, usd)
+        assertEquals(-1050L, m1.minorUnits)
+        assertEquals(-1050L, Money(-10.50, usd).minorUnits)
+        val m2 = Money(550L, usd)
+        assertEquals(-500L, (m1 + m2).minorUnits)
+        assertEquals(-1600L, (m1 - m2).minorUnits)
+    }
+
+    @Test
+    fun `arithmetic accepts currencies matched by code`() {
+        // Same ISO code but different display metadata, e.g. from a native lookup.
+        val nativeUsd = usd.copy(name = "US-Dollar", symbol = "US$")
+        val total = Money(1000L, usd) + Money(550L, nativeUsd)
+        assertEquals(1550L, total.minorUnits)
+        assertEquals(usd, total.currency)
+    }
+
+    @Test
+    fun `minor unit named operations`() {
+        val m = Money(1000L, usd)
+        assertEquals(1250L, m.plusMinorUnits(250L).minorUnits)
+        assertEquals(750L, m.minusMinorUnits(250L).minorUnits)
+    }
+
+    @Test
+    fun `long scalar semantics differ between addition and multiplication`() {
+        val m = Money(1000L, usd)
+        // plus and minus take minor units, times and div take dimensionless multipliers.
+        assertEquals(1002L, (m + 2L).minorUnits)
+        assertEquals(2000L, (m * 2L).minorUnits)
+    }
 }

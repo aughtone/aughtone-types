@@ -43,17 +43,81 @@ class BankersValueTest {
 
     @Test
     fun `div operator with another BankersValue`() {
-        // 3.5 rounds to 4 (even)
-        assertEquals(4, (BankersValue.fromDouble(3.5) / BankersValue.fromDouble(1.0)).toLong())
+        // Dividing by $1.00 is the identity: $3.50 / $1.00 = $3.50 (350 cents)
+        assertEquals(350, (BankersValue.fromDouble(3.5) / BankersValue.fromDouble(1.0)).toLong())
+        assertEquals(250, (BankersValue.fromDouble(2.5) / BankersValue.fromDouble(1.0)).toLong())
 
-        // 2.5 rounds to 2 (even)
-        assertEquals(2, (BankersValue.fromDouble(2.5) / BankersValue.fromDouble(1.0)).toLong())
+        // Half-cent quotients use banker's rounding: $0.07 / $2.00 = 3.5 cents -> 4
+        assertEquals(4, (BankersValue.fromLong(7) / BankersValue.fromDouble(2.0)).toLong())
+        // $0.05 / $2.00 = 2.5 cents -> 2
+        assertEquals(2, (BankersValue.fromLong(5) / BankersValue.fromDouble(2.0)).toLong())
 
-        // 4.5 rounds to 4
-        assertEquals(4, (BankersValue.fromDouble(4.5) / BankersValue.fromDouble(1.0)).toLong())
+        // Normal rounding: $0.10 / $3.00 = 3.33... cents -> 3
+        assertEquals(3, (BankersValue.fromLong(10) / BankersValue.fromDouble(3.0)).toLong())
+    }
 
-        // Normal rounding
-        assertEquals(3, (BankersValue.fromDouble(2.51) / BankersValue.fromDouble(1.0)).toLong())
+    @Test
+    fun `times and div are inverses for exact cases`() {
+        val a = BankersValue.fromLong(1000) // $10.00
+        val b = BankersValue.fromLong(500)  // $5.00
+        assertEquals(5000, (a * b).toLong())
+        assertEquals(1000, ((a * b) / b).toLong())
+        assertEquals(500, ((a * b) / a).toLong())
+    }
+
+    @Test
+    fun `times is exact for large amounts`() {
+        // 482637353 * 507069465 / 100 = 2447306643747261.45 -> 2447306643747261
+        // The old Double-based path returned 2447306643747262.
+        val a = BankersValue.fromLong(482637353)
+        val b = BankersValue.fromLong(507069465)
+        assertEquals(2447306643747261, (a * b).toLong())
+    }
+
+    @Test
+    fun `times applies bankers rounding on half cents`() {
+        // 5 * 30 cents = 150 / 100 = 1.5 -> 2 (even)
+        assertEquals(2, (BankersValue.fromLong(5) * BankersValue.fromLong(30)).toLong())
+        // 5 * 50 cents = 250 / 100 = 2.5 -> 2 (even)
+        assertEquals(2, (BankersValue.fromLong(5) * BankersValue.fromLong(50)).toLong())
+        // negative tie: -5 * 30 = -150 / 100 = -1.5 -> -2 (even)
+        assertEquals(-2, (BankersValue.fromLong(-5) * BankersValue.fromLong(30)).toLong())
+    }
+
+    @Test
+    fun `div with negative values uses bankers rounding`() {
+        // -5 / 2 = -2.5 -> -2 (even)
+        assertEquals(-2, (BankersValue.fromLong(-5) / 2).toLong())
+        // -7 / 2 = -3.5 -> -4 (even)
+        assertEquals(-4, (BankersValue.fromLong(-7) / 2).toLong())
+    }
+
+    @Test
+    fun `fromDouble detects half-cent ties exactly`() {
+        // 0.575 dollars = 57.5 cents -> 58 (even); the Double product 0.575 * 100
+        // is 57.49999999999999, which the old implementation rounded to 57.
+        assertEquals(58, BankersValue.fromDouble(0.575).toLong())
+        assertEquals(-58, BankersValue.fromDouble(-0.575).toLong())
+        // 1.005 dollars = 100.5 cents -> 100 (even)
+        assertEquals(100, BankersValue.fromDouble(1.005).toLong())
+        // 2.675 dollars = 267.5 cents -> 268 (even)
+        assertEquals(268, BankersValue.fromDouble(2.675).toLong())
+    }
+
+    @Test
+    fun `nan and infinity are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            BankersValue.fromDouble(Double.NaN)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            BankersValue.fromDouble(Double.POSITIVE_INFINITY)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            BankersValue.fromLong(100) / Double.NaN
+        }
+        assertFailsWith<IllegalArgumentException> {
+            BankersValue.fromLong(100) / Double.NEGATIVE_INFINITY
+        }
     }
 
     @Test

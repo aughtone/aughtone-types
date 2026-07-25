@@ -14,6 +14,15 @@ actual fun localeForNative(languageTag: String): Locale? {
     )
 }
 
+actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? {
+    val target = JavaLocale(locale.languageCode, locale.regionCode ?: "", locale.variantCode ?: "")
+    val inLocale = JavaLocale(displayIn.languageCode, displayIn.regionCode ?: "")
+    // An untranslated language subtag is echoed back verbatim, meaning the platform has no
+    // CLDR data for it; report null so callers can fall back.
+    if (target.getDisplayLanguage(inLocale).equals(locale.languageCode, ignoreCase = true)) return null
+    return target.getDisplayName(inLocale).takeIf { it.isNotBlank() }
+}
+
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val defaultLocale = JavaLocale.getDefault()
     val tag = buildString {

@@ -9,25 +9,29 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
 
     operator fun plus(other: BankersValue) = BankersValue(cents + other.cents)
     operator fun minus(other: BankersValue) = BankersValue(cents - other.cents)
-    operator fun times(other: BankersValue) = BankersValue(bankersRound(cents.toDouble() * other.cents.toDouble() / 100.0))
+
+    operator fun times(other: BankersValue) =
+        BankersValue(bankersDivide(BigInteger.valueOf(cents).multiply(BigInteger.valueOf(other.cents)), HUNDRED))
+
     operator fun rem(other: BankersValue) = BankersValue(cents % other.cents)
 
     operator fun div(other: BankersValue): BankersValue {
         if (other.cents == 0L) throw ArithmeticException("Division by zero")
-        return BankersValue(bankersRound(cents.toDouble() / other.cents.toDouble()))
+        return BankersValue(bankersDivide(BigInteger.valueOf(cents).multiply(HUNDRED), BigInteger.valueOf(other.cents)))
     }
 
     operator fun div(other: Int): BankersValue {
         if (other == 0) throw ArithmeticException("Division by zero")
-        return BankersValue(bankersRound(cents.toDouble() / other))
+        return BankersValue(bankersDivide(BigInteger.valueOf(cents), BigInteger.valueOf(other.toLong())))
     }
 
     operator fun div(other: Long): BankersValue {
         if (other == 0L) throw ArithmeticException("Division by zero")
-        return BankersValue(bankersRound(cents.toDouble() / other))
+        return BankersValue(bankersDivide(BigInteger.valueOf(cents), BigInteger.valueOf(other)))
     }
 
     operator fun div(other: Double): BankersValue {
+        require(!other.isNaN() && !other.isInfinite()) { "Cannot divide by NaN or Infinite double" }
         if (other == 0.0) throw ArithmeticException("Division by zero")
         return BankersValue(bankersRound(cents.toDouble() / other))
     }
@@ -40,12 +44,23 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
     }
 
     companion object {
+        private val HUNDRED = BigInteger.valueOf(100)
+
         fun fromLong(value: Long) = BankersValue(value)
         fun fromInt(value: Int) = BankersValue(value.toLong())
 
         fun fromDouble(dollars: Double): BankersValue {
-            return BankersValue(bankersRound(dollars * 100))
+            require(!dollars.isNaN() && !dollars.isInfinite()) { "Cannot convert NaN or Infinite double" }
+            // Route through the decimal string form so half-cent ties are detected exactly.
+            val cents = BigDecimal.valueOf(dollars)
+                .multiply(BigDecimal(HUNDRED, 0))
+                .setScale(0, RoundingMode.HALF_EVEN)
+            return BankersValue(cents.unscaledValue.toLong())
         }
+
+        // Exact integer division of num by den with banker's (half-even) rounding.
+        private fun bankersDivide(num: BigInteger, den: BigInteger): Long =
+            BigDecimal(num, 0).divide(BigDecimal(den, 0), 0, RoundingMode.HALF_EVEN).unscaledValue.toLong()
 
         private fun bankersRound(num: Double): Long {
             val floor = floor(num)

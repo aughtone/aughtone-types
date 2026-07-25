@@ -21,26 +21,25 @@ data class BigInteger internal constructor(
     internal val magnitude: IntArray // little-endian: index 0 is least significant 32-bits
 ) : Comparable<BigInteger> {
 
+    private constructor(source: BigInteger) : this(source.signum, source.magnitude)
+
     /**
      * Constructs a BigInteger from its string representation in the specified radix.
      */
-    constructor(value: String, radix: Int = 10) : this(
-        parseString(value, radix).signum,
-        parseString(value, radix).magnitude
-    )
+    constructor(value: String, radix: Int = 10) : this(parseString(value, radix))
 
     /**
      * Constructs a BigInteger from a Long value.
      */
-    constructor(value: Long) : this(
-        valueOf(value).signum,
-        valueOf(value).magnitude
-    )
+    constructor(value: Long) : this(valueOf(value))
 
     init {
         require(signum in -1..1) { "Signum must be -1, 0, or 1" }
         if (signum == 0) {
             require(magnitude.isEmpty()) { "Magnitude must be empty if signum is 0" }
+        } else {
+            require(magnitude.isNotEmpty()) { "Magnitude must not be empty if signum is not 0" }
+            require(magnitude[magnitude.size - 1] != 0) { "Magnitude must not have leading zero words" }
         }
     }
 
@@ -337,7 +336,8 @@ data class BigInteger internal constructor(
                 }
                 carry = v and ((1L shl bitShift) - 1)
             }
-            return BigInteger(1, stripLeadingZeros(newMag, newMag.size))
+            val stripped = stripLeadingZeros(newMag, newMag.size)
+            return if (stripped.isEmpty()) ZERO else BigInteger(1, stripped)
         } else {
             val neededLen = maxOf(1, this.magnitude.size - wordShift + 2)
             val twos = this.toTwosComplement(neededLen + wordShift)
@@ -590,15 +590,16 @@ data class BigInteger internal constructor(
 
         private fun divideMagnitudeSingleDigit(u: IntArray, divisor: UInt): Pair<IntArray, IntArray> {
             val quotient = IntArray(u.size)
-            var remainder = 0L
-            val d = divisor.toLong()
+            var remainder = 0uL
+            val d = divisor.toULong()
             for (i in u.indices.reversed()) {
-                val current = (remainder shl 32) or u[i].toUInt().toLong()
-                quotient[i] = (current / d).toInt()
+                // Unsigned 64-bit division: the dividend can exceed Long.MAX_VALUE.
+                val current = (remainder shl 32) or u[i].toUInt().toULong()
+                quotient[i] = (current / d).toLong().toInt()
                 remainder = current % d
             }
             val q = stripLeadingZeros(quotient, quotient.size)
-            val r = if (remainder == 0L) IntArray(0) else intArrayOf(remainder.toInt())
+            val r = if (remainder == 0uL) IntArray(0) else intArrayOf(remainder.toLong().toInt())
             return Pair(q, r)
         }
 
@@ -619,8 +620,10 @@ data class BigInteger internal constructor(
                 val uJn1 = normalizedU[j + n - 1].toUInt().toLong()
                 val uJn2 = if (j + n - 2 >= 0) normalizedU[j + n - 2].toUInt().toLong() else 0L
                 
-                var qHat = ((uJn shl 32) or uJn1) / vN1
-                var rHat = ((uJn shl 32) or uJn1) % vN1
+                // Unsigned 64-bit division: uJn can be >= 2^31, overflowing a signed dividend.
+                val dividend = (uJn.toULong() shl 32) or uJn1.toULong()
+                var qHat = (dividend / vN1.toULong()).toLong()
+                var rHat = (dividend % vN1.toULong()).toLong()
                 
                 while (qHat >= 4294967296L || (qHat.toULong() * vN2.toULong()) > ((rHat.toULong() shl 32) + uJn2.toULong())) {
                     qHat--

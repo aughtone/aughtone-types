@@ -141,10 +141,8 @@ class BitSet(private val size: Int = 1) {
     /**
      * Returns `true` if all bits are set to `false`, `false` otherwise.
      *
-     * This method checks if every element in the underlying `data` array is not equal to -1L.
-     * -1L in two's complement representation is all bits set to `true`. If none of the elements is -1L
-     * that means that there is at least one bit in false. If there is no such a bit set to `true`,
-     * that means all bits are set to `false`.
+     * This method checks that every word in the underlying `data` array is equal to 0L,
+     * meaning no bit in the set has been set to `true`.
      *
      * @return `true` if all bits are set to `false`, `false` otherwise.
      */

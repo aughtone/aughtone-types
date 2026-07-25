@@ -18,3 +18,9 @@ actual fun localeForNative(languageTag: String): Locale? {
     // We fall back to the shared resource map.
     return localeFor(languageTag)
 }
+
+actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? {
+    // Linux does not provide native CLDR display-name data.
+    // Returning null lets callers fall back to the English displayName.
+    return null
+}

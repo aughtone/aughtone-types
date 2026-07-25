@@ -18,6 +18,13 @@ class AzimuthTest {
     }
 
     @Test
+    fun `constructor normalizes 360 to 0`() {
+        assertEquals(0.0, Azimuth(360.0).degrees)
+        assertEquals(Azimuth(0.0), Azimuth(360.0))
+        assertEquals(1.0f, Azimuth(360.0, 1.0f).accuracy)
+    }
+
+    @Test
     fun `Accuracy cannot be negative`() {
         assertFailsWith<IllegalArgumentException> {
             Azimuth(1.0, -0.1f)
@@ -83,6 +90,22 @@ class AzimuthTest {
         val result = a1 / 2.0
         assertEquals(5.0, result.degrees)
         assertEquals(0.5f, result.accuracy)
+    }
+
+    @Test
+    fun `times operator with negative scalar wraps around`() {
+        val a1 = Azimuth(90.0, 1.0f)
+        val result = a1 * -1.0
+        assertEquals(270.0, result.degrees)
+        assertEquals(1.0f, result.accuracy)
+    }
+
+    @Test
+    fun `div operator with negative scalar wraps around`() {
+        val a1 = Azimuth(90.0, 1.0f)
+        val result = a1 / -1.0
+        assertEquals(270.0, result.degrees)
+        assertEquals(1.0f, result.accuracy)
     }
 
     @Test

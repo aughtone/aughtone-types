@@ -267,4 +267,51 @@ class GeoJsonTest {
         assertNull(thirdFeature.geometry)
         assertEquals(mapOf("name" to "Null Island"), thirdFeature.properties)
     }
+
+    @Test
+    fun `all GeoJson types round trip through a strict default Json`() {
+        val strictJson = Json
+        val ring = listOf(
+            listOf(100.0, 0.0),
+            listOf(101.0, 0.0),
+            listOf(101.0, 1.0),
+            listOf(100.0, 0.0)
+        )
+        val samples: List<GeoJson> = listOf(
+            GeoPoint(-122.4194, 37.7749),
+            GeoPoint(100.0, 0.0, 15.5),
+            GeoLineString(coordinates = listOf(listOf(100.0, 0.0), listOf(101.0, 1.0))),
+            GeoPolygon(coordinates = listOf(ring)),
+            GeoMultiPoint(coordinates = listOf(listOf(100.0, 0.0), listOf(101.0, 1.0))),
+            GeoMultiLineString(
+                coordinates = listOf(
+                    listOf(listOf(100.0, 0.0), listOf(101.0, 1.0)),
+                    listOf(listOf(102.0, 2.0), listOf(103.0, 3.0))
+                )
+            ),
+            GeoMultiPolygon(coordinates = listOf(listOf(ring))),
+            GeometryCollection(
+                geometries = listOf(
+                    GeoPoint(1.0, 2.0),
+                    GeoLineString(coordinates = listOf(listOf(1.0, 2.0), listOf(3.0, 4.0)))
+                )
+            ),
+            GeoFeature(
+                geometry = GeoPoint(1.0, 2.0),
+                properties = mapOf("name" to "Test"),
+                id = "f1",
+                bbox = listOf(1.0, 2.0, 1.0, 2.0)
+            ),
+            GeoFeature(geometry = null, properties = mapOf("status" to "no geometry")),
+            GeoFeatureCollection(
+                features = listOf(GeoFeature(geometry = GeoPoint(5.0, 6.0))),
+                bbox = listOf(5.0, 6.0, 5.0, 6.0)
+            )
+        )
+        for (original in samples) {
+            val encoded = strictJson.encodeToString<GeoJson>(original)
+            val decoded = strictJson.decodeFromString<GeoJson>(encoded)
+            assertEquals(original, decoded, "Round trip failed for ${original::class.simpleName}")
+        }
+    }
 }

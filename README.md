@@ -1,6 +1,8 @@
 # Aughtone Types
 
 > [!IMPORTANT]
+> **v3.2.0 Behavioral Fixes**: This release corrects long-standing bugs whose output or validation changes for existing code. `UrlEncoder.encode` is now true RFC 3986 percent-encoding — use `encodeFormData` for the previous `application/x-www-form-urlencoded` behavior. `Url`/`Uri`/`Urn`/`GeoUri` string output is now well-formed, and `Urn`/`GeoUri` construction now rejects invalid input. Critical arbitrary-precision fixes also land in `BigInteger`/`BigDecimal` division and `BankersValue`. See the [changelog](CHANGELOG.md) for the full list.
+>
 > **v3.0.0 Breaking Change**: All GeoJSON geometry types (e.g., `Point`, `Polygon`) have been renamed with a **`Geo` prefix** (e.g., `GeoPoint`, `GeoPolygon`). `Money` now uses `BigDecimal` for its internal value to support sub-minor units, and `Telemetry` has moved to the `quantitative` package.
 
 This project follows a specialized documentation hierarchy.
@@ -59,6 +61,25 @@ This project follows a specialized documentation hierarchy.
 
 ### 🗺️ GeoJSON
 - **GeoJSON**: `GeoPoint(45.5, -122.6, 100.0).toGeoJson()` (**RFC 7946**).
+
+---
+## 🌐 Localized Display Names
+
+`Locale.displayName` from the bundled resource data is always **English**. To show a locale's name in the end user's own language:
+
+```kotlin
+localeFor("bn")?.localizedDisplayName() // "bengali" for a French user, "ベンガル語" for a Japanese user
+```
+
+Rather than bundling a full translation matrix (~90 × 90 names) into every app, this delegates to the CLDR data each platform already ships — `java.util.Locale` (JVM/Android), `NSLocale` (Apple), `Intl.DisplayNames` (JS/Wasm). Bundled resource files aren't viable everywhere: browsers can't read files synchronously, and klibs can't deliver resources into an iOS app bundle.
+
+**Tradeoffs to be aware of:**
+- Names come from the OS, so wording may differ slightly between platforms and OS versions (e.g. "Chinese (Simplified)" vs "Simplified Chinese").
+- Linux targets have no system CLDR data — they always return the English fallback.
+- Browsers need `Intl.DisplayNames` (widely available since ~2020); older environments fall back to English.
+- The function never returns `null` — the worst case is the English `displayName`.
+
+See [ADR 0003](docs/adr/0003-localized-display-names-via-platform-cldr.md) for the full rationale, and [GAPS.md](docs/gap/GAPS.md) for the deferred bundled-tables alternative.
 
 ---
 ## 🧪 Verification & Parity

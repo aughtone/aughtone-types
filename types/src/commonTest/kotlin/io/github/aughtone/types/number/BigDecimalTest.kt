@@ -310,6 +310,44 @@ class BigDecimalTest {
     }
 
     @Test
+    fun `parsing edge forms`() {
+        assertEquals("0.5", BigDecimal(".5").toString())
+        assertEquals(1, BigDecimal(".5").scale)
+        assertEquals("-0.5", BigDecimal("-.5").toString())
+        assertEquals("1", BigDecimal("1.").toString())
+        assertEquals(0, BigDecimal("1.").scale)
+        assertEquals("1.2", BigDecimal("+1.2").toString())
+        assertEquals("0", BigDecimal("-0").toString())
+        assertEquals("0.00", BigDecimal("-0.00").toString())
+        assertEquals(0, BigDecimal("-0.00").unscaledValue.signum)
+        assertEquals("1E+3", BigDecimal("1e+3").toString())
+        assertEquals("0.001", BigDecimal("1e-3").toString())
+        // round trip of exponent form
+        assertEquals(BigDecimal("6E+2"), BigDecimal(BigDecimal("6E+2").toString()))
+    }
+
+    @Test
+    fun `invalid strings are rejected`() {
+        assertFailsWith<NumberFormatException> { BigDecimal(".") }
+        assertFailsWith<NumberFormatException> { BigDecimal("") }
+        assertFailsWith<NumberFormatException> { BigDecimal("1.2.3") }
+        assertFailsWith<NumberFormatException> { BigDecimal("abc") }
+        assertFailsWith<NumberFormatException> { BigDecimal("1e") }
+        assertFailsWith<NumberFormatException> { BigDecimal("1e2.5") }
+    }
+
+    @Test
+    fun `setScale with negative target scale`() {
+        assertEquals("12E+2", BigDecimal("1234.5").setScale(-2, RoundingMode.HALF_UP).toString())
+        assertEquals("13E+2", BigDecimal("1250").setScale(-2, RoundingMode.HALF_UP).toString())
+        assertEquals("12E+2", BigDecimal("1250").setScale(-2, RoundingMode.HALF_EVEN).toString())
+        assertEquals("-12E+2", BigDecimal("-1234.5").setScale(-2, RoundingMode.CEILING).toString())
+        assertEquals("-13E+2", BigDecimal("-1234.5").setScale(-2, RoundingMode.FLOOR).toString())
+        assertEquals("600", BigDecimal("6E+2").setScale(0).toString())
+        assertEquals("0E+2", BigDecimal(BigInteger.ZERO, -2).toString())
+    }
+
+    @Test
     fun `constructors from string and double`() {
         val fromString = BigDecimal("123.45")
         assertEquals("123.45", fromString.toString())

@@ -1,6 +1,7 @@
 package io.github.aughtone.types.units
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class UnitOfMeasureTest {
@@ -150,6 +151,14 @@ class UnitOfMeasureTest {
         assertTrue(
             historicValues.containsAll(UnitOfMeasure.entries.map { it.name }),
             "There are new unchecked values for the enum."
+        )
+    }
+
+    @Test
+    fun `findFirst resolves liters per 100 kilometers symbol`() {
+        assertEquals(
+            UnitOfMeasure.LiterPer100Kilometers,
+            UnitOfMeasure.findFirst("L/100km")
         )
     }
 }

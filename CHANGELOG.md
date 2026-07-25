@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-07-23
+
+### ⚠️ Behavior Changes
+
+No APIs were removed or renamed, but the following correct previously non-compliant behavior and will change results for code written against 3.1.x. Review these before upgrading.
+
+- **UrlEncoder.encode output** (space/`~`/`*`/non-ASCII) is now RFC 3986 rather than form encoding — use `encodeFormData` for the previous behavior. ⚠️ This changes output **silently**: callers building `application/x-www-form-urlencoded` payloads must switch to `encodeFormData`.
+- **Url/Uri/Urn/GeoUri toString** shapes are now well-formed; code depending on the previous malformed output will see different strings.
+- **Urn construction** now rejects invalid NIDs — throws where malformed input was previously accepted.
+- **GeoUri construction** now rejects out-of-range coordinates and negative uncertainty — throws where invalid input was previously accepted.
+- **UrlBuilder repeated query parameters**: `addQueryParameter` appends instead of silently replacing, so repeated keys now emit multiple parameters.
+
+### Fixed
+- **BigInteger Division (CRITICAL)**: Both division paths (single-word and multi-word Knuth) used signed 64-bit arithmetic where unsigned was required, silently producing wrong quotients/remainders whenever a quotient digit or intermediate value reached 2³¹ (e.g. `16116354936157110357 / 3752381294`). Affected `divide`, `remainder`, `mod`, `modPow`, `modInverse`, and all `BigDecimal` division/scaling. Verified with a 7,000-case seeded differential fuzz suite against `java.math`.
+- **BigInteger.shiftRight**: Shifting a positive value down to zero produced a corrupted instance (`signum=1`, empty magnitude) that was not equal to `ZERO`. The class `init` block now enforces the full invariant on every construction path, so invalid serialized payloads are also rejected on deserialization.
+- **BigDecimal.divide (exact)**: Replaced the arbitrary 200-digit iteration cap with an exact termination test (2/5 factorization of the reduced divisor); exactly-representable quotients of any length now succeed (e.g. `1 / 2²⁰¹`).
+- **BankersValue**: `times` now computes exactly via integer math (was rounding through `Double`, off by a cent for large products); `div` rescales correctly so `(a*b)/b == a`; `fromDouble` detects half-cent ties exactly (`0.575` → 58¢, was 57¢); NaN/Infinity operands now throw instead of silently producing 0.
+- **Currency lookup for script-bearing locales (CRITICAL)**: `Currency.current`/`getCurrency` now resolve through BCP 47 stepdown, fixing permanently-broken lookups for `zh-CN`, `zh-HK`, `zh-SG`, `zh-TW`, `sr-RS`, and `uz-UZ` (whose `languageTag` carries a script subtag). Previously `Currency.current` threw for all Chinese-locale devices.
+- **Apple currencyForNative**: No longer crashes with `NoSuchElementException` for codes outside the user's preferred languages; `NSNumberFormatter` is now configured with currency style before fraction digits are read (previously reported `digits=0` for every currency).
+- **JVM/Android currencyForNative**: Returns `null` for unknown codes per the expect contract instead of leaking `IllegalArgumentException`.
+- **Legacy ISO language codes**: `iw`/`in`/`ji` (returned by JVM/Android platform APIs) now normalize to `he`/`id`/`yi`, fixing `Locale.current`/`Currency.current` for Hebrew, Indonesian, and Yiddish users.
+- **Money division**: `/ 3L` no longer throws for non-terminating quotients — division stays exact when terminating and otherwise rounds HALF_EVEN with two guard digits of sub-minor precision.
+- **Money currency guards**: Arithmetic now compares currencies by ISO code, so semantically-identical `Currency` instances from different sources (native vs resource) no longer raise a mismatch.
+- **UrlEncoder (CRITICAL)**: `encode` is now genuinely RFC 3986 — non-ASCII characters are percent-encoded as UTF-8 bytes (previously passed through raw), astral characters encode as real 4-byte UTF-8 (was invalid CESU-8), space → `%20`, `~` unreserved, uppercase hex. New `decode` added. Legacy form semantics preserved as `encodeFormData`/`decodeFormData`.
+- **Url**: `authority`/`identity`/`toString` no longer emit `host:null`, `?#` residue, or a doubled slash, and now include `userInfo`. `Uri.toUrl` is IPv6-bracket-aware, leaves absent ports `null`, and throws `IllegalArgumentException` on malformed ports.
+- **Urn**: RFC 8141 NID validation, case-insensitive `urn:` prefix and NID equality, and `r`/`q`/`f` component parsing (previously swallowed into the NSS).
+- **GeoUri**: Coordinate/uncertainty range validation, platform-stable plain-decimal formatting (no JVM scientific notation, no JS `.0` divergence — closes the platform-serialization gap for GeoUri), and structurally-correct `toUri` output (no `//` authority on `geo:`/`urn:` URIs).
+- **Coordinates.plus**: Longitude now wraps across the antimeridian instead of throwing.
+- **Azimuth**: Negative scalar `times`/`div` wrap via floor-mod (`90° × -1` → `270°`); `360.0` normalizes to `0.0` at construction so equality is consistent.
+- **Distance/Speed**: `minus` (and negative-scalar operations) floor at zero instead of throwing.
+- **UnitOfMeasure**: `LiterPer100Kilometers` symbol fixed — `"L/1OOkm"` (letter O's) → `"L/100km"`.
+- **LazyMap**: Null values now cache correctly and no longer crash `entries`/`values` iteration; suppliers invoked at most once per key; structural `equals`/`hashCode` per the Map contract; documentation corrected.
+- **BitSet**: `emptyBitSet()`/`bitSet()` now return a size-0 set as documented.
+- **GeoBoundingBox.toDoubleArray**: Single-sided altitude bounds are preserved instead of silently dropped.
+- **KMF**: Trailing space removed from the Comorian Franc display name.
+
+### Added
+- **Locales**: Added 34 base-language locales to the locale resource map (Amharic, Assamese, Bengali, Burmese, Filipino, Gujarati, Hausa, Igbo, Javanese, Kannada, Khmer, Kurdish, Kyrgyz, Lao, Malayalam, Marathi, Mongolian, Nepali, Odia, Pashto, Punjabi, Sindhi, Sinhala, Somali, Sundanese, Tagalog, Tajik, Tamil, Telugu, Tibetan, Urdu, Uyghur, Yoruba, Zulu), with ISO 15924 script codes for non-Latin scripts.
+- **Localized Display Names**: New `Locale.localizedDisplayName(displayIn)` resolving names via platform CLDR data (JVM/Android `java.util.Locale`, Apple `NSLocale`, JS/Wasm `Intl.DisplayNames`), falling back to the English `displayName` (see ADR 0003).
+- **28 missing active ISO 4217 currencies**: RWF, SBD, SCR, SDG, SHP, SLE, SOS, SRD, SSP, STN, SVC, SZL, TJS, TMT, TOP, TZS, UGX, UYI, UYW, VED, VUV, WST, XAF, XCD, XOF, XPF, ZMW, ZWG.
+- **BigDecimal.divide(other, scale, roundingMode)**: Public rounding division that always succeeds.
+- **UrlEncoder.decode / encodeFormData / decodeFormData**.
+- **Urn r/q/f components** (`rComponent`, `qComponent`, `fComponent`).
+- **Money.plusMinorUnits / minusMinorUnits**: Self-describing alternatives to the `Long` operators (whose minor-unit vs multiplier asymmetry is now loudly documented).
+- **Test infrastructure**: Seeded differential division/shift fuzz suite vs `java.math` (jvmTest); serialization round-trip and invalid-payload rejection tests for the number types; strict-Json round-trips for all GeoJSON types; `CurrencyMismatchTest` rewritten with real assertions covering every resource-map locale's generated `languageTag`.
+
 ## [3.1.0] - 2026-06-21
 
 ### Added

@@ -8,6 +8,9 @@ on:
   pull_request:
     branches: [ "develop" ]
 
+env:
+  GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+UseParallelGC"
+
 jobs:
   test:
     name: Run Multiplatform Tests

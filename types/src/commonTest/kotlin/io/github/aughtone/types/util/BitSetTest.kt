@@ -31,6 +31,13 @@ class BitSetTest {
     }
 
     @Test
+    fun `emptyBitSet has size 0`() {
+        assertEquals(0, emptyBitSet().size())
+        assertEquals(0, bitSet().size())
+        assertTrue(emptyBitSet().none())
+    }
+
+    @Test
     fun `set a bit at index 2`() {
         bits.set(2)
         assertFalse(bits[0])

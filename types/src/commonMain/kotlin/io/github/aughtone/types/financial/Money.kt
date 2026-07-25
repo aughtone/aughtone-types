@@ -53,38 +53,43 @@ data class Money(
     constructor(value: Double, currency: Currency = Currency.current) : this(BigDecimal.valueOf(value), currency)
 
     /**
-     * Adds another `Money` object to this one.
-     * @throws IllegalArgumentException if the currencies do not match.
+     * Adds another `Money` object to this one. Currencies are matched by ISO 4217 [Currency.code],
+     * so instances sourced from the resource map and from platform-native lookups are compatible.
+     * The result keeps this instance's [currency].
+     * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun plus(other: Money): Money {
-        require(this.currency == other.currency) { "Cannot add money with different currencies." }
+        require(this.currency.code == other.currency.code) { "Cannot add money with different currencies." }
         return Money(this.value + other.value, this.currency)
     }
 
     /**
-     * Subtracts another `Money` object from this one.
-     * @throws IllegalArgumentException if the currencies do not match.
+     * Subtracts another `Money` object from this one. Currencies are matched by ISO 4217
+     * [Currency.code]. The result keeps this instance's [currency].
+     * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun minus(other: Money): Money {
-        require(this.currency == other.currency) { "Cannot subtract money with different currencies." }
+        require(this.currency.code == other.currency.code) { "Cannot subtract money with different currencies." }
         return Money(this.value - other.value, this.currency)
     }
 
     /**
-     * Multiplies this `Money` object by another `Money` object.
+     * Multiplies this `Money` object by another `Money` object. Currencies are matched by
+     * ISO 4217 [Currency.code].
      * Note: Multiplying two monetary values is an unusual operation.
      */
     operator fun times(other: Money): Money {
-        require(this.currency == other.currency) { "Cannot multiply money with different currencies." }
+        require(this.currency.code == other.currency.code) { "Cannot multiply money with different currencies." }
         return Money(this.value * other.value, this.currency)
     }
 
     /**
      * Divides this `Money` object by another `Money` object, returning a [Double] ratio.
-     * @throws IllegalArgumentException if the currencies do not match.
+     * Currencies are matched by ISO 4217 [Currency.code].
+     * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun div(other: Money): Double {
-        require(this.currency == other.currency) { "Cannot divide money with different currencies." }
+        require(this.currency.code == other.currency.code) { "Cannot divide money with different currencies." }
         return this.value.toDouble() / other.value.toDouble()
     }
 
@@ -111,37 +116,77 @@ data class Money(
 
     /**
      * Divides this `Money` object by a scalar value.
+     *
+     * The result is exact when the quotient terminates; otherwise it is rounded with
+     * Banker's Rounding (HALF_EVEN) at a scale of `max(value.scale, currency.digits) + 2`,
+     * keeping two guard digits of sub-minor precision.
      */
     operator fun div(scalar: Double): Money {
-        return Money(this.value / BigDecimal(scalar), this.currency)
+        return Money(dividedValue(BigDecimal(scalar)), this.currency)
     }
 
     /**
-     * Adds a scalar [Long] value (in minor units) to this `Money` object.
+     * Adds a scalar [Long] value to this `Money` object.
+     *
+     * **Warning:** the [Long] operand is interpreted as **minor units** (e.g., cents for USD):
+     * `Money(1000L, usd) + 250L` is $10.00 + $2.50. This differs from [times] and [div],
+     * where a [Long] is a dimensionless multiplier. Prefer [plusMinorUnits] for clarity.
      */
-    operator fun plus(scalar: Long): Money {
-        return Money(this.value + BigDecimal(io.github.aughtone.types.number.BigInteger(scalar), currency.digits), this.currency)
-    }
+    operator fun plus(scalar: Long): Money = plusMinorUnits(scalar)
 
     /**
-     * Subtracts a scalar [Long] value (in minor units) from this `Money` object.
+     * Subtracts a scalar [Long] value from this `Money` object.
+     *
+     * **Warning:** the [Long] operand is interpreted as **minor units** (e.g., cents for USD).
+     * This differs from [times] and [div], where a [Long] is a dimensionless multiplier.
+     * Prefer [minusMinorUnits] for clarity.
      */
-    operator fun minus(scalar: Long): Money {
-        return Money(this.value - BigDecimal(io.github.aughtone.types.number.BigInteger(scalar), currency.digits), this.currency)
+    operator fun minus(scalar: Long): Money = minusMinorUnits(scalar)
+
+    /**
+     * Adds the given number of **minor units** (e.g., cents for USD) to this `Money` object.
+     */
+    fun plusMinorUnits(minorUnits: Long): Money {
+        return Money(this.value + BigDecimal(BigInteger(minorUnits), currency.digits), this.currency)
     }
 
     /**
-     * Multiplies this `Money` object by a scalar [Long] value.
+     * Subtracts the given number of **minor units** (e.g., cents for USD) from this `Money` object.
+     */
+    fun minusMinorUnits(minorUnits: Long): Money {
+        return Money(this.value - BigDecimal(BigInteger(minorUnits), currency.digits), this.currency)
+    }
+
+    /**
+     * Multiplies this `Money` object by a **dimensionless** [Long] multiplier:
+     * `Money(1000L, usd) * 2L` is $20.00. Note that this differs from [plus]/[minus],
+     * where a [Long] is a minor-unit amount.
      */
     operator fun times(scalar: Long): Money {
         return Money(this.value * BigDecimal(scalar), this.currency)
     }
 
     /**
-     * Divides this `Money` object by a scalar [Long] value.
+     * Divides this `Money` object by a **dimensionless** [Long] divisor. Note that this
+     * differs from [plus]/[minus], where a [Long] is a minor-unit amount.
+     *
+     * The result is exact when the quotient terminates; otherwise it is rounded with
+     * Banker's Rounding (HALF_EVEN) at a scale of `max(value.scale, currency.digits) + 2`,
+     * keeping two guard digits of sub-minor precision.
      */
     operator fun div(scalar: Long): Money {
-        return Money(this.value / BigDecimal(scalar), this.currency)
+        return Money(dividedValue(BigDecimal(scalar)), this.currency)
+    }
+
+    private fun dividedValue(divisor: BigDecimal): BigDecimal = try {
+        this.value / divisor
+    } catch (e: ArithmeticException) {
+        if (divisor.unscaledValue.signum == 0) throw e
+        this.value.divide(
+            divisor,
+            maxOf(this.value.scale, currency.digits) + 2,
+            RoundingMode.HALF_EVEN
+        )
     }
 
     /**
