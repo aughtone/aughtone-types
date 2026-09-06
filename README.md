@@ -5,16 +5,11 @@
 >
 > **v3.0.0 Breaking Change**: All GeoJSON geometry types (e.g., `Point`, `Polygon`) have been renamed with a **`Geo` prefix** (e.g., `GeoPoint`, `GeoPolygon`). `Money` now uses `BigDecimal` for its internal value to support sub-minor units, and `Telemetry` has moved to the `quantitative` package.
 
-This project follows a specialized documentation hierarchy.
-
-## 📚 Documentation Sectors
-- 📐 [Architecture Guidelines](docs/mandates/ARCH.md): Engineering rules and design patterns.
-- 🧠 [Functional Specifications](docs/mandates/SPEC.md): Business logic and domain constraints.
-- 🎨 [Design & UI](docs/design/resources/): Presentation layer and user stories.
-- 📋 [Acceptance Criteria](docs/ac/): Success outcomes and verification.
-- 📖 [Developer Guide](docs/guides/DEVELOPER.md): Environment setup and onboarding.
-- ⚖️ [Architectural Decisions](docs/adr/): Log of key technical choices.
+## 📚 Documentation
+- 📖 [Developer Guide](docs/knowledge/developer-guides/developer-guide.md): Building, testing, publishing.
+- ⚖️ [Architecture Decision Records](docs/knowledge/architecture-decision-records/): Why the library is shaped this way, and what was rejected.
 - 📜 [Changelog](CHANGELOG.md): History of changes and release notes.
+- 🗺️ [How the docs work](docs/README.md): The whole system — knowledge in `docs/knowledge/`, work in [Issues](https://github.com/aughtone/aughtone-types/issues).
 
 ## 📦 Core Data Types
 
@@ -39,6 +34,7 @@ This project follows a specialized documentation hierarchy.
 | | `BigDecimal` | Pure Kotlin | Arbitrary-precision decimal math with rounding support. |
 | **Utilities** | `BitSet` | Multiplatform | Space-efficient storage for bit-level flags. |
 | | `BankersValue` | Half-to-Even | Precision math with bias-free rounding rules. |
+| **Control Flow** | `Outcome` | Sealed (KMP-safe) | Success-or-failure result that survives the Swift/JS boundary, unlike `kotlin.Result`. |
 
 ## 🚀 Quick Usage
 
@@ -58,6 +54,10 @@ This project follows a specialized documentation hierarchy.
 ### 🔢 Precision Math
 - **Arbitrary Precision**: `BigInteger("999999999999999999999999")` or `BigDecimal("123.456")`.
 - **Rounding**: `BigDecimal("1.255").setScale(2, RoundingMode.HALF_EVEN)` -> `1.26`.
+
+### ✅ Success or Failure
+- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Error`; `when` over the two, or use `fold`, `map`, `recover`, `dataOrElse`.
+- Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure as data. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
 
 ### 🗺️ GeoJSON
 - **GeoJSON**: `GeoPoint(45.5, -122.6, 100.0).toGeoJson()` (**RFC 7946**).
@@ -79,7 +79,7 @@ Rather than bundling a full translation matrix (~90 × 90 names) into every app,
 - Browsers need `Intl.DisplayNames` (widely available since ~2020); older environments fall back to English.
 - The function never returns `null` — the worst case is the English `displayName`.
 
-See [ADR 0003](docs/adr/0003-localized-display-names-via-platform-cldr.md) for the full rationale, and [GAPS.md](docs/gap/GAPS.md) for the deferred bundled-tables alternative.
+See [ADR-0003](docs/knowledge/architecture-decision-records/localized-display-names-via-platform-cldr.md) for the full rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for the deferred bundled-tables alternative.
 
 ---
 ## 🧪 Verification & Parity
@@ -89,13 +89,3 @@ To ensure mathematical precision and behavior consistency, this library employs 
 - **JVM Baseline**: Parity verified against standard JDK types (`java.math.BigInteger` and `java.math.BigDecimal`).
 - **KMP Baseline**: Parity verified against the official Multiplatform [Ionspin BigNum](https://github.com/ionspin/kotlin-multiplatform-bignum) library.
 
----
-## 🤖 AI-Assisted Development
-This library includes embedded, machine-readable "skills" to help AI assistants understand its APIs and best practices.
-
-- **Discovery**: Look for `META-INF/ai-skills/*.ai-skill.md`
-
-### 🪄 Magic Prompt for AI Assistants
-If you are using an AI assistant (like Claude, Gemini, or ChatGPT) to write code with this library, paste this prompt first:
-
-> "Scan all project dependencies for AI Skill files in `META-INF/ai-skills/` with the prefix `io.github.aughtone`. Use these to understand the API patterns, types, and governance for this library. If they are not found in the local classpath, refer to https://github.com/aughtone/aughtone-types for the source definitions."

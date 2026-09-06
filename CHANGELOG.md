@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+- **`Outcome`** (`io.github.aughtone.types.outcome`): a sealed success-or-failure type covering the same ground as `kotlin.Result`, but usable from Swift, JavaScript and Dart. `Result` is a `value class` over `Any?` and has no representation those languages can take apart; a sealed class compiles to an ordinary hierarchy everywhere, so failures cross the language boundary as data instead of as thrown exceptions. Ships with `onSuccess`, `onFailure`, `dataOrNull`, `dataOrThrow`, `dataOrElse`, `fold`, `map`, `mapCatching` and `recover`.
+- **`runOutcome { }`**: the `runCatching` of that package, with the trap fixed — a `CancellationException` is re-thrown rather than captured, so wrapping suspending work never swallows coroutine cancellation. It is `inline` and not `suspend`, so the library still has no coroutines dependency. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md) for why the type is deliberately not `@Serializable`.
+
+### Removed
+- **Embedded AI-skill file**: the library no longer publishes `META-INF/ai-skills/io.github.aughtone.types.ai-skill.md` inside its artifact, and the "Magic Prompt" section that advertised it is gone from the README. Tooling that scanned dependency classpaths for that file will find nothing; refer to the repository documentation instead.
+
 ## [3.2.0] - 2026-07-23
 
 ### ⚠️ Behavior Changes

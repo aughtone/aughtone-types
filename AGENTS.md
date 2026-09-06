@@ -2,40 +2,55 @@
 
 This document is the master instruction set for AI agents contributing to this repository.
 
-## Persona: Gemini Code Assist
+# Working in this repository
 
-- **Identity**: I am Gemini Code Assist, a large language model created by Google, specialized for code assistance and generation.
-- **Environment**: I am embedded within Android Studio and have access to project files and IDE functionalities.
-- **Tone**: My communication style mirrors the official Android developer documentation (`developer.android.com`).
-    - For simple, direct questions, my answers are concise and to the point.
-    - For complex or open-ended requests, I provide thorough explanations, examples, and links to relevant documentation.
-- **Language**: I communicate in clear and professional English.
-- **Code**: I generate code primarily in **Kotlin**, adhering to modern Kotlin Multiplatform (KMP) development practices, including the use of coroutines and clean, testable architecture.
+## This repository is public
 
-## Interaction Protocol
+Everything committed here is world-readable and permanent — a public git
+history cannot be unpublished, only added to. Write for a stranger who
+found this repo, not for the maintainer.
 
-1.  **Plan Presentation**: For any request that involves modifying the codebase, I will first present a detailed implementation plan.
-2.  **User Approval**: I will **always** wait for your explicit approval of the plan before making any changes to the files.
-3.  **Execution**: Once the plan is approved, I will execute the steps precisely as outlined.
-4.  **Completion Notification**: I will notify you upon successful completion of the task.
+**Never commit personal details.** Concretely, that means no real names in
+prose or code comments, no personal email addresses, no machine or
+hostnames, no absolute home paths, no employer, client or private project
+names, no internal tracker keys or instance URLs, and nothing about the
+maintainer's business, billing, tax position or working habits. Verbatim
+quotes from a working conversation are the most common way all of this
+leaks at once — a design discussion is full of them.
 
-## 1. Documentation Governance
+The exceptions are deliberate and narrow: the copyright line in `LICENSE`
+and `NOTICE.md`, maintainer attribution in `README.md`, the GitHub handle
+and its `users.noreply.github.com` address as vendor in the YouTrack app
+manifest, and the published Maven coordinates used as worked examples. Do
+not add to that list without being asked, and do not strip what is on it.
 
-This repository strictly follows the **13-sector hierarchy**. All knowledge must be dispersed into:
-- 📐 **Mandates**: Global "How" and "What" (`docs/mandates/ARCH.md`, `docs/mandates/SPEC.md`)
-- 🎨 **Design**: Canonical design specification (`DESIGN.md` at root) and mockups (`docs/design/`)
-- 📖 **Stories & Criteria**: Feature PRDs (`docs/prd/`) linked to testable ACs (`docs/ac/`)
-- 🔍 **Discovery & Research**: Vendor DD (`docs/discovery/`) and Deep-dive RAD logs (`docs/research/`)
-- 🗺️ **Roadmap**: Transient trackers for missing capabilities (`docs/gap/GAPS.md`)
-- ⚖️ **Decisions & Rules**: Architectural Decision Records (`docs/adr/`) and compliance (`docs/regulations/`)
-- 📚 **Guides & Ref**: Environment/Onboarding (`docs/guides/DEVELOPER.md`) and domain knowledge (`docs/reference/`)
+Authorship of the tool is fine; identity beyond it is not. A GitHub handle
+is the right granularity — it is already public, and it is the name the
+project is known by.
 
-### Context Mapping Rules
-1. Before writing logic: Reference `docs/mandates/SPEC.md` AND `docs/ac/`.
-2. Before establishing repo definitions: Reference `docs/mandates/ARCH.md`.
-3. When rendering UI: Reference `DESIGN.md` and `docs/design/`.
-4. Goal-Oriented Design: Formalize User Stories (STORY-ID) in PRDs first.
-5. Update Docs: Intelligently disperse context into the specific specialized sector directory.
+**Document the pattern, not the person.** When a design came out of
+someone's specific situation — how they work, what tools they pay for, what
+their client expects — the reusable content is the *pattern*: this is a
+common way developers work, here is why the obvious design fails against
+it, here is how this one covers it. Written that way the reasoning survives
+intact and nothing traces back to an individual. If a fact only makes sense
+as "the maintainer does X", it does not belong here.
+
+This applies hardest to documents an agent generates from a conversation —
+RADs, ADRs, design notes, session summaries. Those are written while the
+conversation is still in context, which is exactly when quoting feels
+natural and is most dangerous.
+
+**Examples use placeholders.** `acme`, `example.com`, `PROJ-123`,
+`<instance>.youtrack.cloud`, `owner/repo`. Never a real project, org or
+instance, even one that happens to be public — a real name in an example
+reads as a live reference and invites someone to go look.
+
+**Check before you commit.** Grep your own additions for names, emails,
+hosts, home paths and project names before proposing them. If something is
+borderline, leave it out and say so — it is far cheaper to add a detail
+later than to remove one from a public history.
+
 
 ## 2. Core Development Principles
 
@@ -51,6 +66,26 @@ This repository strictly follows the **13-sector hierarchy**. All knowledge must
 
 ## 3. Additional Guidelines
 
-- **Verification First**: Check the corresponding AcceptanceCriteria.md before implementation.
-- **Embedded Skills**: This library uses machine-readable skills generated by the `to-ai-skill` process, found in `META-INF/ai-skills/io.github.aughtone.types.ai-skill.md`. Always adhere to the patterns defined there.
-- **Project Gaps**: Track identified technical debt or missing features in [GAPS.md](docs/gap/GAPS.md) using the `gap:` prefix.
+- **Verification First**: A story's acceptance criteria live on its tracker
+  issue as a task list — that checklist IS the scope. Read it before
+  implementing and check items off only when verifiably complete. Never
+  copy AC into a document; a PRD that carries its own checklist drifts from
+  the tracker immediately.
+- **Technical debt is an issue, not a file.** Anything found in passing —
+  a gap, a missing feature, a cross-platform inconsistency — is captured as
+  a GitHub issue labelled `needs-triage` (the `triage` skill does this), and
+  you return to the story you were on. Discovered work never expands the
+  current story. The retired `GAPS.md` is in `docs/_archive/` for its
+  history; nothing new goes there.
+- **No embedded skill files.** Do not add `*.ai-skill.md`,
+  `META-INF/ai-skills/` or `META-INF/agents/skills/` to this repo, and do
+  not scan dependencies for them.
+
+## 4. Where things live
+
+[docs/README.md](docs/README.md) is the front door and explains the whole
+system. In short: work is [GitHub Issues](https://github.com/aughtone/aughtone-types/issues),
+knowledge is `docs/knowledge/` (each section's `README.md` says what belongs
+in it), and `docs/WORKFLOW.md` describes how work moves. `docs/stories/` and
+`docs/dimensions.md` are generated snapshots of the tracker — read them,
+never edit them.
