@@ -1,15 +1,15 @@
 # Regulatory Standards Catalog
 
-This document defines the core principles of the regulations Coldwater operates under. Use this to verify ADRs and ACs.
+Core principles of commonly-active regulations. Use this to verify ADRs and designs. Project-specific implementation mappings live in the project's Regulations section of docs/knowledge/ (<NAME>.md).
 
 ## 🇨🇦 PIPEDA (Personal Information Protection and Electronic Documents Act)
-*   **Principle 4.4 (Limiting Collection)**: PII must only be collected if necessary. *Coldwater implementation: Sovereign Signal Extraction.*
+*   **Principle 4.4 (Limiting Collection)**: PII must only be collected if necessary.
 *   **Principle 4.5 (Limiting Use, Disclosure, and Retention)**: Data must not be used for purposes other than those for which it was collected.
-*   **Principle 4.7 (Safeguards)**: PII must be protected by security safeguards. *Coldwater implementation: Device-side AES-GCM vault.*
+*   **Principle 4.7 (Safeguards)**: PII must be protected by security safeguards.
 
 ## 🇪🇺 GDPR (General Data Protection Regulation)
 *   **Article 5(1)(c) (Data Minimization)**: Adequate, relevant and limited to what is necessary.
-*   **Article 17 (Right to Erasure)**: Users must be able to delete their data. *Coldwater implementation: Cryptographic Shredding (key deletion).*
+*   **Article 17 (Right to Erasure)**: Users must be able to delete their data.
 *   **Article 25 (Privacy by Design)**: Data protection through technology design.
 
 ## ⚖️ Law 25 (Quebec)

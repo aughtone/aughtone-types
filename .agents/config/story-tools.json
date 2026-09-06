@@ -1,0 +1,16 @@
+{
+  "tracker": {
+    "type": "github",
+    "connection": "aughtone-types",
+    "mcpServer": "github-aughtone-types",
+    "repo": "aughtone/aughtone-types",
+    "prefix": "AUT",
+    "project": "1"
+  },
+  "snapshot": "committed",
+  "updates": {
+    "check": true,
+    "skillsRepo": "bpappin/skills",
+    "skillsBranch": "master"
+  }
+}

@@ -3,6 +3,12 @@ package io.github.aughtone.types.locale
 import io.github.aughtone.types.util.lazyMapOf
 
 /**
+ * Data Source: first-party. This table is maintained by hand as source, **not** generated, and is
+ * **not** extracted from Unicode CLDR — do not cite it as CLDR data or regenerate it from a CLDR
+ * run. Where it differs from CLDR it does so deliberately: the script is carried in the display
+ * name (`Serbian (Latin)`, `Chinese (Traditional, Hong Kong)`), which CLDR drops. See
+ * `docs/reference/README.md` before changing an entry.
+ *
  * A map containing locale data, keyed by the IETF BCP 47 language tag.
  * Each entry's value is a lambda that returns a [Locale] object.
  *
@@ -13,7 +19,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "af-ZA" to { Locale(languageCode = "af", regionCode = "ZA", displayName = "Afrikaans (South Africa)") },
     "am" to { Locale(languageCode = "am", scriptCode = "Ethi", displayName = "Amharic") },
     "ar" to { Locale(languageCode = "ar", displayName = "Arabic") },
-    "ar-AE" to { Locale(languageCode = "ar", regionCode = "AE", displayName = "Arabic (U.A.E.)") },
+    "ar-AE" to { Locale(languageCode = "ar", regionCode = "AE", displayName = "Arabic (United Arab Emirates)") },
     "ar-BH" to { Locale(languageCode = "ar", regionCode = "BH", displayName = "Arabic (Bahrain)") },
     "ar-DZ" to { Locale(languageCode = "ar", regionCode = "DZ", displayName = "Arabic (Algeria)") },
     "ar-EG" to { Locale(languageCode = "ar", regionCode = "EG", displayName = "Arabic (Egypt)") },
@@ -30,8 +36,8 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "ar-TN" to { Locale(languageCode = "ar", regionCode = "TN", displayName = "Arabic (Tunisia)") },
     "ar-YE" to { Locale(languageCode = "ar", regionCode = "YE", displayName = "Arabic (Yemen)") },
     "as" to { Locale(languageCode = "as", scriptCode = "Beng", displayName = "Assamese") },
-    "az" to { Locale(languageCode = "az", scriptCode = "Latn", displayName = "Azeri (Latin)") },
-    "az-AZ" to { Locale(languageCode = "az", regionCode = "AZ", displayName = "Azerbaijani") },
+    "az" to { Locale(languageCode = "az", scriptCode = "Latn", displayName = "Azerbaijani (Latin)") },
+    "az-AZ" to { Locale(languageCode = "az", regionCode = "AZ", displayName = "Azerbaijani (Azerbaijan)") },
     "be" to { Locale(languageCode = "be", displayName = "Belarusian") },
     "be-BY" to { Locale(languageCode = "be", regionCode = "BY", displayName = "Belarusian (Belarus)") },
     "bg" to { Locale(languageCode = "bg", displayName = "Bulgarian") },
@@ -41,7 +47,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "ca" to { Locale(languageCode = "ca", displayName = "Catalan") },
     "ca-ES" to { Locale(languageCode = "ca", regionCode = "ES", displayName = "Catalan (Spain)") },
     "cs" to { Locale(languageCode = "cs", displayName = "Czech") },
-    "cs-CZ" to { Locale(languageCode = "cs", regionCode = "CZ", displayName = "Czech (Czech Republic)") },
+    "cs-CZ" to { Locale(languageCode = "cs", regionCode = "CZ", displayName = "Czech (Czechia)") },
     "da" to { Locale(languageCode = "da", displayName = "Danish") },
     "da-DK" to { Locale(languageCode = "da", regionCode = "DK", displayName = "Danish (Denmark)") },
     "de" to { Locale(languageCode = "de", displayName = "German") },
@@ -60,7 +66,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "en-IE" to { Locale(languageCode = "en", regionCode = "IE", displayName = "English (Ireland)") },
     "en-JM" to { Locale(languageCode = "en", regionCode = "JM", displayName = "English (Jamaica)") },
     "en-NZ" to { Locale(languageCode = "en", regionCode = "NZ", displayName = "English (New Zealand)") },
-    "en-TT" to { Locale(languageCode = "en", regionCode = "TT", displayName = "English (Trinidad)") },
+    "en-TT" to { Locale(languageCode = "en", regionCode = "TT", displayName = "English (Trinidad & Tobago)") },
     "en-US" to { Locale(languageCode = "en", regionCode = "US", displayName = "English (United States)") },
     "en-ZA" to { Locale(languageCode = "en", regionCode = "ZA", displayName = "English (South Africa)") },
     "es" to { Locale(languageCode = "es", displayName = "Spanish") },
@@ -87,8 +93,8 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "et-EE" to { Locale(languageCode = "et", regionCode = "EE", displayName = "Estonian (Estonia)") },
     "eu" to { Locale(languageCode = "eu", displayName = "Basque") },
     "eu-ES" to { Locale(languageCode = "eu", regionCode = "ES", displayName = "Basque (Spain)") },
-    "fa" to { Locale(languageCode = "fa", displayName = "Farsi") },
-    "fa-IR" to { Locale(languageCode = "fa", regionCode = "IR", displayName = "Farsi (Iran)") },
+    "fa" to { Locale(languageCode = "fa", displayName = "Persian") },
+    "fa-IR" to { Locale(languageCode = "fa", regionCode = "IR", displayName = "Persian (Iran)") },
     "fi" to { Locale(languageCode = "fi", displayName = "Finnish") },
     "fi-FI" to { Locale(languageCode = "fi", regionCode = "FI", displayName = "Finnish (Finland)") },
     "fil" to { Locale(languageCode = "fil", displayName = "Filipino") },
@@ -132,7 +138,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "km" to { Locale(languageCode = "km", scriptCode = "Khmr", displayName = "Khmer") },
     "kn" to { Locale(languageCode = "kn", scriptCode = "Knda", displayName = "Kannada") },
     "ko" to { Locale(languageCode = "ko", displayName = "Korean") },
-    "ko-KR" to { Locale(languageCode = "ko", regionCode = "KR", displayName = "Korean (Korea)") },
+    "ko-KR" to { Locale(languageCode = "ko", regionCode = "KR", displayName = "Korean (South Korea)") },
     "ku" to { Locale(languageCode = "ku", displayName = "Kurdish") },
     "ky" to { Locale(languageCode = "ky", scriptCode = "Cyrl", displayName = "Kyrgyz") },
     "lo" to { Locale(languageCode = "lo", scriptCode = "Laoo", displayName = "Lao") },
@@ -141,7 +147,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "lv" to { Locale(languageCode = "lv", displayName = "Latvian") },
     "lv-LV" to { Locale(languageCode = "lv", regionCode = "LV", displayName = "Latvian (Latvia)") },
     "mk" to { Locale(languageCode = "mk", displayName = "Macedonian") },
-    "mk-MK" to { Locale(languageCode = "mk", regionCode = "MK", displayName = "Macedonian (Macedonia)") },
+    "mk-MK" to { Locale(languageCode = "mk", regionCode = "MK", displayName = "Macedonian (North Macedonia)") },
     "ml" to { Locale(languageCode = "ml", scriptCode = "Mlym", displayName = "Malayalam") },
     "mn" to { Locale(languageCode = "mn", scriptCode = "Cyrl", displayName = "Mongolian") },
     "mr" to { Locale(languageCode = "mr", scriptCode = "Deva", displayName = "Marathi") },
@@ -194,7 +200,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "th-TH" to { Locale(languageCode = "th", regionCode = "TH", displayName = "Thai (Thailand)") },
     "tl" to { Locale(languageCode = "tl", displayName = "Tagalog") },
     "tr" to { Locale(languageCode = "tr", displayName = "Turkish") },
-    "tr-TR" to { Locale(languageCode = "tr", regionCode = "TR", displayName = "Turkish (Turkey)") },
+    "tr-TR" to { Locale(languageCode = "tr", regionCode = "TR", displayName = "Turkish (Türkiye)") },
     "ug" to { Locale(languageCode = "ug", scriptCode = "Arab", displayName = "Uyghur") },
     "uk" to { Locale(languageCode = "uk", displayName = "Ukrainian") },
     "uk-UA" to { Locale(languageCode = "uk", regionCode = "UA", displayName = "Ukrainian (Ukraine)") },
@@ -202,7 +208,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "uz" to { Locale(languageCode = "uz", scriptCode = "Latn", displayName = "Uzbek (Latin)") },
     "uz-UZ" to { Locale(languageCode = "uz", regionCode = "UZ", scriptCode = "Latn", displayName = "Uzbek (Latin, Uzbekistan)") },
     "vi" to { Locale(languageCode = "vi", displayName = "Vietnamese") },
-    "vi-VN" to { Locale(languageCode = "vi", regionCode = "VN", displayName = "Vietnamese (Viet Nam)") },
+    "vi-VN" to { Locale(languageCode = "vi", regionCode = "VN", displayName = "Vietnamese (Vietnam)") },
     "yo" to { Locale(languageCode = "yo", displayName = "Yoruba") },
     "zh" to { Locale(languageCode = "zh", scriptCode = "Hans", displayName = "Chinese (Simplified)") },
     "zh-Hans" to { Locale(languageCode = "zh", scriptCode = "Hans", displayName = "Chinese (Simplified)") },

@@ -1,47 +1,67 @@
 # Agent Capabilities Index
 
-**caveman**: Ultra-compressed communication mode. Cuts token usage ~75% by dropping filler, articles, and pleasantries while keeping full technical accuracy.
+What each skill in `.agents/skills/` is for, in one line. The full trigger
+conditions live in each skill's own `SKILL.md` frontmatter — this file is the
+map, not the manual.
 
-**git-guardrails-claude-code**: Set up Claude Code hooks to block dangerous git commands (push, reset --hard, clean, branch -D, etc.) before they execute.
+Skills marked **(managed)** are installed copies owned by the story-tools
+suite; the installer overwrites them on every refresh, so improving one is
+discovered work, not an edit. See [MANAGED.md](MANAGED.md).
 
-**git-guardrails-gemini**: Codifies the strict Git safety rules for Gemini CLI. Use this to remind the agent of its limitations regarding destructive Git operations.
+## Doing the work
 
-**grill-me**: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree.
+**story-workflow** (managed): Work one tracker story with strict scope discipline — the acceptance-criteria checklist IS the scope, and discovered work becomes a new linked issue rather than growing the current one.
 
-**grill-with-docs**: Grilling session that challenges your plan against the existing domain model, sharpens terminology, and updates documentation (CONTEXT.md, ADRs) inline as decisions crystallise.
+**triage** (managed): Move issues through the triage state machine — capture cheaply, reproduce, grill, prioritize, disposition. Also the right skill for "record this for later".
 
-**handoff**: Compact the current conversation into a handoff document for another agent to pick up.
+**to-issues** (managed): Break a plan, spec or PRD into independently-grabbable stories as tracer-bullet vertical slices.
 
-**improve-codebase-architecture**: Find deepening opportunities in a codebase, informed by the domain language in CONTEXT.md and the decisions in docs/adr/.
+**story-reconcile** (managed): Adopt the story workflow in a project that has drifted — reconcile GAP files, embedded AC and offline worklogs against the tracker, and pull the local issue snapshot.
 
-**manage-docs**: Manage the 14-sector documentation hierarchy, perform semantic migrations of legacy documentation, and provide proactive recording of architectural and functional decisions.
+**tdd** (managed): Test-driven development, red-green-refactor.
 
-**manage-persona**: Initialize and manage persona state via a global persona.json file. Adapts agent behavior, technical focus, and output style to match the user's active role (Developer, Designer, BA, etc) and specialty.
+**worklog** (managed): Record working time in a personal cross-project ledger. Experimental.
 
-**manage-skills**: Manage the lifecycle, organization, and synchronization of AI agent skills between local project workspaces and master skill sources.
+## Writing it down
+
+**project-docs** (managed): Decide where a document belongs and keep `docs/knowledge/` in sync with the tracker's knowledge base. Owns filing and sections, not authoring.
+
+**to-adr** (managed): Record a decision — the forces, the choice, and what was rejected and why.
+
+**to-prd** (managed): Turn a plan or discussion into a PRD, with verification living on the tracker stories.
+
+**to-rad** (managed): Log an investigation — options weighed, approaches that failed, what a proof of concept proved. Also the answer when someone asks for a "detailed design document".
+
+**to-ux** (managed): Design screens, components and flows, and record what was designed and why. Accessibility included, not bolted on.
+
+**to-wiring** (managed): Audit and maintain the feature wiring rules in `WIRING.md`.
+
+**regulatory-compliance** (managed): Track regulatory requirements (PIPEDA, GDPR) and audit ADRs and code against them.
+
+## Thinking it through
+
+**grill-with-docs** (managed): Get interviewed relentlessly about a plan until every branch is resolved, challenged against the domain glossary, with decisions recorded as they crystallise.
+
+**improve-codebase-architecture** (managed): Find deepening opportunities, informed by the domain glossary and the recorded decisions.
+
+**zoom-out** (managed): Step back and give the higher-level perspective. Only ever invoked explicitly.
 
 **prototype**: Build a throwaway prototype to flesh out a design before committing to it.
 
-**regulatory-compliance**: Manage and track regulatory requirements (PIPEDA, GDPR, etc.).
+## Session hygiene
 
-**setup-project**: Onboard and configure a project workspace for tracking, sync, and agent interaction.
+**handoff** (managed): Compact the conversation into a handoff document for the next agent or session.
 
-**sync-tracking**: Push local Markdown requirement documents (PRDs and ACs) to a remote issue tracker (YouTrack, GitHub, Jira) using local Python scripts.
+**housekeeping** (managed): End-of-session cleanup audit and commit preparation.
 
-**tdd**: Test-driven development with red-green-refactor loop.
+**caveman**: Ultra-compressed output mode — drops filler and pleasantries, keeps technical accuracy.
 
-**to-ai-skill**: Generates and updates a machine-readable AI skill document bundled within this published library.
+## Guardrails
 
-**to-design**: Formalizes the design-capturing process as a structured agent capability.
+**git-guardrails-claude-code**: Claude Code hooks that block destructive git commands before they execute.
 
-**to-issues**: Break a plan, spec, or PRD into independently-grabbable issues on the project issue tracker using tracer-bullet vertical slices.
+**git-guardrails-gemini**: The same git safety rules, as instructions for Gemini CLI.
 
-**to-prd**: Turn conversation context and codebase understanding into a formal PRD and matching AC spec.
+## Building skills
 
-**to-research**: Manage Technical Research & Development (R&D) logs.
-
-**triage**: Triage issues through a state machine driven by triage roles.
-
-**write-a-skill**: Create new agent skills with proper structure, progressive disclosure, and bundled resources.
-
-**zoom-out**: Tell the agent to zoom out and give broader context or a higher-level perspective.
+**write-a-skill**: Create a new skill with proper structure, progressive disclosure and bundled resources.
