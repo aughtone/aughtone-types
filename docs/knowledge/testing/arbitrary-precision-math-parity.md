@@ -11,8 +11,8 @@ scenarios span stories rather than belonging to one: any change to
 them true. Per-story acceptance criteria live on the tracker issue, never
 here.
 
-Requirement: [Arbitrary-Precision Math Types](../product-requirements/arbitrary-precision-math.md).
-Why it is tested this way: [ADR-0001 Differential Testing](../architecture-decision-records/differential-testing.md).
+Requirement: [Arbitrary-Precision Math Types](../requirements/arbitrary-precision-math.md).
+Why it is tested this way: [ADR-0001 Differential Testing](../decisions/differential-testing.md).
 `BigInt`/`BigDec` below are the drafting shorthand for the shipped
 `BigInteger`/`BigDecimal`.
 

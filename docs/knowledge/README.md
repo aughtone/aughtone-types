@@ -6,11 +6,11 @@ not here — that lives in GitHub Issues.
 
 | Section | What belongs there |
 |---|---|
-| [Architecture Decision Records](architecture-decision-records/) | One hard-to-reverse choice each, and what was rejected |
-| [Product Requirements](product-requirements/) | What a feature must do, and the stories that deliver it |
+| [Architecture Decision Records](decisions/) | One hard-to-reverse choice each, and what was rejected |
+| [Product Requirements](requirements/) | What a feature must do, and the stories that deliver it |
 | [Specifications](specifications/) | How a thing IS — behaviour contracts, publishing, library shape |
-| [Developer Guides](developer-guides/) | How to do something — build, test, release |
-| [Quality Assurance](quality-assurance/) | Durable test protocols that span stories |
+| [Developer Guides](guides/) | How to do something — build, test, release |
+| [Quality Assurance](testing/) | Durable test protocols that span stories |
 
 New here? Start at [docs/README.md](../README.md), which explains how the
 whole documentation system fits together.

@@ -62,7 +62,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "AughtoneTypesKit"
+            baseName = "AOTypesKit"
             isStatic = true
             binaryOption(
                 "bundleId",

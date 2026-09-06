@@ -25,7 +25,7 @@ Aughtone Types is a Kotlin Multiplatform library published to **Maven Central** 
 - **Zero runtime dependencies beyond `kotlinx.serialization`.** A consumer
   adds these types without inheriting a framework. Anything that would drag
   in a UI, networking or persistence dependency does not belong here — see
-  [ADR-0003](../architecture-decision-records/localized-display-names-via-platform-cldr.md)
+  [ADR-0003](../decisions/localized-display-names-via-platform-cldr.md)
   for a decision that turned on exactly this constraint.
 - **`commonMain` first.** Platform code exists only where a capability is
   genuinely platform-owned, expressed as `expect`/`actual`.
@@ -33,4 +33,4 @@ Aughtone Types is a Kotlin Multiplatform library published to **Maven Central** 
   new instances rather than mutating.
 
 The release procedure that goes with this lives in the
-[Developer Guide](../developer-guides/developer-guide.md).
+[Developer Guide](../guides/developer-guide.md).

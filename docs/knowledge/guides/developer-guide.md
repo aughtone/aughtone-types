@@ -45,4 +45,4 @@ The `mavenPublishing` block in `types/build.gradle.kts` is configured with `auto
 
 Agent instructions are not documentation — they live in [`AGENTS.md`](../../../AGENTS.md)
 at the repo root, and how work flows through the tracker is
-[`docs/WORKFLOW.md`](../../WORKFLOW.md).
+[`WORKFLOW.md`](../../../WORKFLOW.md).

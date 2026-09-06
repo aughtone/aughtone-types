@@ -36,9 +36,9 @@ Kotlin Multiplatform lacks a unified, cross-platform standard library equivalent
 
 Acceptance criteria live on the tracker stories below, never in this
 document. The durable parity protocol that spans them is
-[Arbitrary-Precision Math Parity](../quality-assurance/arbitrary-precision-math-parity.md),
+[Arbitrary-Precision Math Parity](../testing/arbitrary-precision-math-parity.md),
 and the reasoning behind it is
-[ADR-0001 Differential Testing](../architecture-decision-records/differential-testing.md).
+[ADR-0001 Differential Testing](../decisions/differential-testing.md).
 
 ## Stories
 

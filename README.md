@@ -6,8 +6,8 @@
 > **v3.0.0 Breaking Change**: All GeoJSON geometry types (e.g., `Point`, `Polygon`) have been renamed with a **`Geo` prefix** (e.g., `GeoPoint`, `GeoPolygon`). `Money` now uses `BigDecimal` for its internal value to support sub-minor units, and `Telemetry` has moved to the `quantitative` package.
 
 ## 📚 Documentation
-- 📖 [Developer Guide](docs/knowledge/developer-guides/developer-guide.md): Building, testing, publishing.
-- ⚖️ [Architecture Decision Records](docs/knowledge/architecture-decision-records/): Why the library is shaped this way, and what was rejected.
+- 📖 [Developer Guide](docs/knowledge/guides/developer-guide.md): Building, testing, publishing.
+- ⚖️ [Architecture Decision Records](docs/knowledge/decisions/): Why the library is shaped this way, and what was rejected.
 - 📜 [Changelog](CHANGELOG.md): History of changes and release notes.
 - 🗺️ [How the docs work](docs/README.md): The whole system — knowledge in `docs/knowledge/`, work in [Issues](https://github.com/aughtone/aughtone-types/issues).
 
@@ -79,7 +79,7 @@ Rather than bundling a full translation matrix (~90 × 90 names) into every app,
 - Browsers need `Intl.DisplayNames` (widely available since ~2020); older environments fall back to English.
 - The function never returns `null` — the worst case is the English `displayName`.
 
-See [ADR-0003](docs/knowledge/architecture-decision-records/localized-display-names-via-platform-cldr.md) for the full rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for the deferred bundled-tables alternative.
+See [ADR-0003](docs/knowledge/decisions/localized-display-names-via-platform-cldr.md) for the full rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for the deferred bundled-tables alternative.
 
 ---
 ## 🧪 Verification & Parity
