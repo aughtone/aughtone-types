@@ -6,9 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-09-06
+
+### ⚠️ Behavior Changes
+
+No APIs were removed or renamed, but eleven locale display names change. Code that renders `Locale.displayName` (or the `displayName` of a `Locale` obtained from `localeFor`/`localeResourceMap`) will show different strings for these tags. Nothing throws and no type changes — but golden-file tests, cached UI strings and snapshot assertions containing the old names will need updating.
+
+The corrections cover countries renamed since the table was written, abbreviated or incomplete country names, dated language exonyms, and one entry that was missing its region entirely.
+
+| Tag | Was | Now |
+| :--- | :--- | :--- |
+| `ar-AE` | Arabic (U.A.E.) | Arabic (United Arab Emirates) |
+| `az` | Azeri (Latin) | Azerbaijani (Latin) |
+| `az-AZ` | Azerbaijani | Azerbaijani (Azerbaijan) |
+| `cs-CZ` | Czech (Czech Republic) | Czech (Czechia) |
+| `en-TT` | English (Trinidad) | English (Trinidad & Tobago) |
+| `fa` | Farsi | Persian |
+| `fa-IR` | Farsi (Iran) | Persian (Iran) |
+| `ko-KR` | Korean (Korea) | Korean (South Korea) |
+| `mk-MK` | Macedonian (Macedonia) | Macedonian (North Macedonia) |
+| `tr-TR` | Turkish (Turkey) | Turkish (Türkiye) |
+| `vi-VN` | Vietnamese (Viet Nam) | Vietnamese (Vietnam) |
+
+Display names that deliberately differ from CLDR are **unchanged** — `Serbian (Latin)`, `Uzbek (Latin)`, `Chinese (Simplified, China)`, `Norwegian (Bokmål, Norway)` and similar carry the script on purpose, which CLDR drops. See `docs/reference/README.md` before altering them.
+
 ### Added
 - **`Outcome`** (`io.github.aughtone.types.outcome`): a sealed success-or-failure type covering the same ground as `kotlin.Result`, but usable from Swift, JavaScript and Dart. `Result` is a `value class` over `Any?` and has no representation those languages can take apart; a sealed class compiles to an ordinary hierarchy everywhere, so failures cross the language boundary as data instead of as thrown exceptions. Ships with `onSuccess`, `onFailure`, `dataOrNull`, `dataOrThrow`, `dataOrElse`, `fold`, `map`, `mapCatching` and `recover`.
 - **`runOutcome { }`**: the `runCatching` of that package, with the trap fixed — a `CancellationException` is re-thrown rather than captured, so wrapping suspending work never swallows coroutine cancellation. It is `inline` and not `suspend`, so the library still has no coroutines dependency. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md) for why the type is deliberately not `@Serializable`.
+- **`NOTICE.md` and `THIRD-PARTY-NOTICES.md`**: the repository now carries an explicit copyright notice and records the terms of the reference data compiled into the artifact. `docs/reference/README.md` documents each dataset's source and version.
 
 ### Changed
 - **iOS framework name**: the Kotlin/Native framework produced for the iOS targets is now `AOTypesKit` (was `AughtoneTypesKit`). This is **not** a breaking change: the name has never been distributed. The library publishes only to Maven Central — there is no Package.swift, podspec or XCFramework — and a downstream Kotlin Multiplatform app links the klib and builds its *own* framework under its *own* `baseName`, so no consumer has ever imported this module name. No shim or deprecation window is needed. If SPM or XCFramework distribution is ever added, that is the point at which the name becomes a public contract.
