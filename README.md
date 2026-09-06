@@ -1,7 +1,38 @@
 # Aughtone Types
 
+A Kotlin Multiplatform library of strongly-typed, shareable data types — money and currency, locales, coordinates and telemetry, GeoJSON geometry, RFC-compliant identifiers, and arbitrary-precision math. It exists because KMP projects kept redefining the same types incompatibly; these are the shared ones, with no platform-specific API leaking through.
+
+Targets: Android, JVM, iOS, JS, Wasm and Linux.
+
+## 📥 Installation
+
+Published to Maven Central as `io.github.aughtone:types`.
+
+```kotlin
+// build.gradle.kts
+implementation("io.github.aughtone:types:3.3.0")
+```
+
+Or through a version catalog:
+
+```toml
+# gradle/libs.versions.toml
+[versions]
+aughtone-types = "3.3.0"
+
+[libraries]
+aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
+```
+
+```kotlin
+// build.gradle.kts
+implementation(libs.aughtone.types)
+```
+
 > [!IMPORTANT]
-> **v3.2.0 Behavioral Fixes**: This release corrects long-standing bugs whose output or validation changes for existing code. `UrlEncoder.encode` is now true RFC 3986 percent-encoding — use `encodeFormData` for the previous `application/x-www-form-urlencoded` behavior. `Url`/`Uri`/`Urn`/`GeoUri` string output is now well-formed, and `Urn`/`GeoUri` construction now rejects invalid input. Critical arbitrary-precision fixes also land in `BigInteger`/`BigDecimal` division and `BankersValue`. See the [changelog](CHANGELOG.md) for the full list.
+> **v3.3.0 Locale Display Names**: Eleven locale `displayName` values are corrected — renamed countries (`Czechia`, `North Macedonia`, `Türkiye`), incomplete or abbreviated country names, and dated language exonyms (`Farsi` → `Persian`, `Azeri` → `Azerbaijani`). No API changed, but snapshot tests and cached UI strings holding the old names will need updating. See the [changelog](CHANGELOG.md) for the full table.
+>
+> **v3.2.0 Behavioral Fixes**: Still worth reading if you are coming from 3.1.x — that release corrected long-standing bugs whose output or validation changes for existing code. `UrlEncoder.encode` is now true RFC 3986 percent-encoding — use `encodeFormData` for the previous `application/x-www-form-urlencoded` behavior. `Url`/`Uri`/`Urn`/`GeoUri` string output is now well-formed, and `Urn`/`GeoUri` construction now rejects invalid input. Critical arbitrary-precision fixes also land in `BigInteger`/`BigDecimal` division and `BankersValue`. See the [changelog](CHANGELOG.md) for the full list.
 >
 > **v3.0.0 Breaking Change**: All GeoJSON geometry types (e.g., `Point`, `Polygon`) have been renamed with a **`Geo` prefix** (e.g., `GeoPoint`, `GeoPolygon`). `Money` now uses `BigDecimal` for its internal value to support sub-minor units, and `Telemetry` has moved to the `quantitative` package.
 
