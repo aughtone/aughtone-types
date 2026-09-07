@@ -66,16 +66,26 @@ read_pointer() {
 if [[ -z "${GH_WIKI_URL:-}" ]]; then
   [[ -z "$REPO" ]] && { echo "usage: gh-wiki-sync.sh [KB_DIR] --repo owner/repo" >&2; exit 1; }
   CONN="$(read_pointer connection || true)"
+  # Four places a token can come from, first one wins. Remember WHICH: every
+  # error below that blames the token has to say which token, or it sends the
+  # reader to the credential they know about rather than the one in use. A
+  # stale PAT in a connection env silently beats a working gh login, and the
+  # message "check the token" then points at the wrong one.
+  TOKEN_SRC=""
+  [[ -n "${GITHUB_TOKEN:-}" ]] && TOKEN_SRC="the GITHUB_TOKEN in your environment"
   if [[ -z "${GITHUB_TOKEN:-}" && -n "$CONN" && -f "$HOME/.agents/story-tools/connections/$CONN.env" ]]; then
     # shellcheck disable=SC1090
     source "$HOME/.agents/story-tools/connections/$CONN.env"
+    [[ -n "${GITHUB_TOKEN:-}" ]] && TOKEN_SRC="the '$CONN' connection (~/.agents/story-tools/connections/$CONN.env)"
   fi
   if [[ -z "${GITHUB_TOKEN:-}" && -f "$HOME/.agents/story-tools/connections/github.env" ]]; then
     # shellcheck disable=SC1091
     source "$HOME/.agents/story-tools/connections/github.env"
+    [[ -n "${GITHUB_TOKEN:-}" ]] && TOKEN_SRC="the 'github' connection (~/.agents/story-tools/connections/github.env)"
   fi
   if [[ -z "${GITHUB_TOKEN:-}" ]] && command -v gh >/dev/null 2>&1; then
     GITHUB_TOKEN="$(gh auth token 2>/dev/null || true)"
+    [[ -n "${GITHUB_TOKEN:-}" ]] && TOKEN_SRC="gh auth token"
   fi
   [[ -z "${GITHUB_TOKEN:-}" ]] && { echo "error: no GitHub token - run the story-tools installer" >&2; exit 1; }
   WIKI_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.wiki.git"
@@ -86,16 +96,22 @@ fi
 # ---- capability check + clone ---------------------------------------------
 if ! git ls-remote "$WIKI_URL" >/dev/null 2>&1; then
   if [[ -n "$REPO" && -n "${GITHUB_TOKEN:-}" ]]; then
-    has_wiki="$(curl -sfS -m 10 -H "Authorization: Bearer $GITHUB_TOKEN" \
+    # No -f: a 401 body and status are more useful than a swallowed failure.
+    probe="$(curl -sS -m 10 -w '\n%{http_code}' -H "Authorization: Bearer $GITHUB_TOKEN" \
       -H "Accept: application/vnd.github+json" \
-      "https://api.github.com/repos/$REPO" 2>/dev/null \
-      | grep -oE '"has_wiki": *(true|false)' | grep -oE 'true|false' || true)"
+      "https://api.github.com/repos/$REPO" 2>/dev/null || true)"
+    status="$(printf '%s' "$probe" | tail -1)"
+    has_wiki="$(printf '%s' "$probe" | grep -oE '"has_wiki": *(true|false)' | grep -oE 'true|false' || true)"
     if [[ "$has_wiki" == "false" ]]; then
       echo "error: the wiki is disabled on $REPO (Settings > Features; private repos need a paid plan)" >&2
     elif [[ "$has_wiki" == "true" ]]; then
       echo "error: the wiki on $REPO is enabled but uninitialized - create the Home page once in the web UI, then re-run" >&2
+    elif [[ "$status" == "401" || "$status" == "403" ]]; then
+      echo "error: GitHub rejected the token (HTTP $status) - it came from ${TOKEN_SRC:-an unknown source}" >&2
+      echo "       Rotate or re-authorise that one; another credential on this machine working does not help." >&2
     else
-      echo "error: cannot reach the wiki repo for $REPO (check the token's Contents permission)" >&2
+      echo "error: could not determine the wiki state of $REPO (API returned ${status:-no response})" >&2
+      echo "       Token source was ${TOKEN_SRC:-unknown}. This is not necessarily a token problem." >&2
     fi
   else
     echo "error: cannot reach the wiki repo at $WIKI_URL" >&2

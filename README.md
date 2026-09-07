@@ -10,7 +10,7 @@ Published to Maven Central as `io.github.aughtone:types`.
 
 ```kotlin
 // build.gradle.kts
-implementation("io.github.aughtone:types:3.3.0")
+implementation("io.github.aughtone:types:3.4.0")
 ```
 
 Or through a version catalog:
@@ -18,7 +18,7 @@ Or through a version catalog:
 ```toml
 # gradle/libs.versions.toml
 [versions]
-aughtone-types = "3.3.0"
+aughtone-types = "3.4.0"
 
 [libraries]
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
@@ -87,7 +87,7 @@ implementation(libs.aughtone.types)
 - **Rounding**: `BigDecimal("1.255").setScale(2, RoundingMode.HALF_EVEN)` -> `1.26`.
 
 ### ✅ Success or Failure
-- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Error`; `when` over the two, or use `fold`, `map`, `recover`, `dataOrElse`.
+- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Failure`; `when` over the two, or use `fold`, `map`, `recover`, `dataOrElse`.
 - Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure as data. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
 
 ### 🗺️ GeoJSON

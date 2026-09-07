@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-06
+
+### ⚠️ Behavior Changes
+
+- **`Outcome.Error` is renamed to `Outcome.Failure`**, and the `Outcome.error(...)` factory to `Outcome.failure(...)`. Both old names remain as **deprecated** aliases, so code written against 3.3.0 still compiles — including `is Outcome.Error` in an exhaustive `when` — and now warns with the replacement. The old names will be removed in 4.0.0.
+
+  The name was wrong on two counts: every callback in the API already said *failure* (`onFailure`, and `fold`'s second parameter), so the type disagreed with its own callbacks; and `Outcome.Error` reads as a relative of `kotlin.Error`, a specific severe-throwable type it has nothing to do with.
+
+  This is a binary break — `Outcome$Error` no longer exists as a class — so a consumer upgrading from 3.3.0 needs a clean and rebuild rather than a code change. It ships as a minor because 3.3.0 was hours old and nothing had compiled against it. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
+
 ## [3.3.0] - 2026-09-06
 
 ### ⚠️ Behavior Changes
