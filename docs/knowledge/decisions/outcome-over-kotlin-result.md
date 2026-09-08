@@ -17,11 +17,11 @@ A second, quieter problem: any `runCatching`-shaped builder that catches `Throwa
 The same sealed-class pattern had been written by hand in more than one downstream project, each time with a project-specific error type welded into it, which is what prompted moving one general version into this library.
 
 ## Decision
-Add `io.github.aughtone.types.outcome.Outcome<T>` — a `sealed class` with two cases, `Success<T>(data)` and `Error(exception: Throwable)` — plus a `runOutcome { }` builder.
+Add `io.github.aughtone.types.outcome.Outcome<T>` — a `sealed class` with two cases, `Success<T>(data)` and `Failure(exception: Throwable)` — plus a `runOutcome { }` builder.
 
 1. **Sealed class, not value class.** A sealed hierarchy compiles to ordinary classes on every target. Kotlin callers exhaust it with `when`; Swift and JavaScript callers branch on the concrete type and read the payload as data. Failures cross the language boundary as values rather than as thrown exceptions.
-2. **`Error` carries a plain `Throwable`, and the type has one parameter.** The error is not parameterized (`Outcome<T, E>`) and no error hierarchy ships with it. A second type parameter appears in every signature in every consuming project to buy flexibility most call sites never use, and a library-supplied error enum could only be generic enough to be useless. Callers who want typed errors throw their own sealed exception and `when` on `error.exception`.
-3. **`Error` is `Outcome<Nothing>`.** One failure value is assignable to an `Outcome` of any type, so `map` can pass it through unchanged under covariance rather than rebuilding it.
+2. **`Failure` carries a plain `Throwable`, and the type has one parameter.** The error is not parameterized (`Outcome<T, E>`) and no error hierarchy ships with it. A second type parameter appears in every signature in every consuming project to buy flexibility most call sites never use, and a library-supplied error enum could only be generic enough to be useless. Callers who want typed errors throw their own sealed exception and `when` on `error.exception`.
+3. **`Failure` is `Outcome<Nothing>`.** One failure value is assignable to an `Outcome` of any type, so `map` can pass it through unchanged under covariance rather than rebuilding it.
 4. **`runOutcome` re-throws `CancellationException`** before its `catch (e: Throwable)`, so cancellation is never swallowed. It is `inline` and carries no `suspend` modifier, so it wraps suspending work without the library depending on coroutines — `kotlin.coroutines.cancellation.CancellationException` is a stdlib alias and pulls in no artifact.
 5. **The type is not `@Serializable`,** departing from the house rule that every type here carries `@Serializable` and `@SerialName`. It holds a live `Throwable`, which has no multiplatform serializer and would lose its type and stack trace in transit regardless. `fold` is the documented way to collapse an outcome into something that *is* serializable, and the class KDoc says so.
 6. **Naming follows this type, not `Result`.** `dataOrNull` / `dataOrThrow` / `dataOrElse`, not `getOrNull` / `getOrElse`. Matching half of `Result`'s vocabulary would suggest the rest of it is there too.
@@ -35,5 +35,13 @@ Add `io.github.aughtone.types.outcome.Outcome<T>` — a `sealed class` with two 
 ## Consequences
 - Consumers get one shared type instead of a hand-written copy per project, and the cancellation trap is handled once rather than re-litigated each time.
 - `Outcome` and `kotlin.Result` now both exist in scope for consumers. No conversion helpers ship in this version; if migration pressure appears, `toResult` / `toOutcome` can be added without a breaking change.
-- Because `Error` is a `data class` wrapping a `Throwable`, and `Throwable` does not override `equals`, two `Error` values are equal only when they hold the same exception instance. That is the useful behaviour for tests and the only one available, but it is worth knowing before writing an equality assertion.
+- Because `Failure` is a `data class` wrapping a `Throwable`, and `Throwable` does not override `equals`, two `Failure` values are equal only when they hold the same exception instance. That is the useful behaviour for tests and the only one available, but it is worth knowing before writing an equality assertion.
 - The type cannot be persisted or sent over a wire directly. That is a deliberate constraint, not an oversight — see decision 5.
+
+## Amendment — 2026-09-06, after 3.3.0
+
+3.3.0 shipped the failure case as `Outcome.Error`. It is renamed to `Outcome.Failure` in 3.4.0, with `Outcome.Error` kept as a deprecated nested type alias and `Outcome.error(...)` as a deprecated factory, so code written against 3.3.0 still compiles and is told where to go.
+
+The name was wrong on two counts. Every callback in the API already said *failure* — `onFailure`, and `fold`'s second parameter — so the type and the callbacks disagreed with each other in the same file. And `Outcome.Error` reads as a relative of `kotlin.Error`, which is a specific severe-throwable type it has nothing to do with; a case holding an ordinary `Throwable` should not borrow that name.
+
+The rename is a binary break — `Outcome$Error` no longer exists as a class — which strictly argues for a major version. It ships as a minor anyway: 3.3.0 was hours old with no consumer compiled against it, the alias preserves source compatibility, and for a consumer the remedy is a clean and rebuild rather than a code change. The alias goes at 4.0.0.

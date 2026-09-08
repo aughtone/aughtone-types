@@ -46,22 +46,8 @@ discovered work, not an edit. See [MANAGED.md](MANAGED.md).
 
 **zoom-out** (managed): Step back and give the higher-level perspective. Only ever invoked explicitly.
 
-**prototype**: Build a throwaway prototype to flesh out a design before committing to it.
-
 ## Session hygiene
 
 **handoff** (managed): Compact the conversation into a handoff document for the next agent or session.
 
 **housekeeping** (managed): End-of-session cleanup audit and commit preparation.
-
-**caveman**: Ultra-compressed output mode — drops filler and pleasantries, keeps technical accuracy.
-
-## Guardrails
-
-**git-guardrails-claude-code**: Claude Code hooks that block destructive git commands before they execute.
-
-**git-guardrails-gemini**: The same git safety rules, as instructions for Gemini CLI.
-
-## Building skills
-
-**write-a-skill**: Create a new skill with proper structure, progressive disclosure and bundled resources.

@@ -1,7 +1,7 @@
 [versions]
 namespace = "io.github.aughtone.types"
 group = "io.github.aughtone"
-versionName = "3.3.0"
+versionName = "3.4.0"
 android-minSdk = "17"
 android-compileSdk = "37"
 
