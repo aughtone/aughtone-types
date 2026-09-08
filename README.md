@@ -30,6 +30,8 @@ implementation(libs.aughtone.types)
 ```
 
 > [!IMPORTANT]
+> **v3.4.0 `Outcome.Error` renamed**: The failure case of `Outcome` is now `Outcome.Failure`, and the factory is `Outcome.failure(...)`. The old names still compile as deprecated aliases and will be removed in 4.0.0. `Outcome$Error` no longer exists as a class, so upgrading from 3.3.0 needs a clean and rebuild rather than a code change.
+>
 > **v3.3.0 Locale Display Names**: Eleven locale `displayName` values are corrected — renamed countries (`Czechia`, `North Macedonia`, `Türkiye`), incomplete or abbreviated country names, and dated language exonyms (`Farsi` → `Persian`, `Azeri` → `Azerbaijani`). No API changed, but snapshot tests and cached UI strings holding the old names will need updating. See the [changelog](CHANGELOG.md) for the full table.
 >
 > **v3.2.0 Behavioral Fixes**: Still worth reading if you are coming from 3.1.x — that release corrected long-standing bugs whose output or validation changes for existing code. `UrlEncoder.encode` is now true RFC 3986 percent-encoding — use `encodeFormData` for the previous `application/x-www-form-urlencoded` behavior. `Url`/`Uri`/`Urn`/`GeoUri` string output is now well-formed, and `Urn`/`GeoUri` construction now rejects invalid input. Critical arbitrary-precision fixes also land in `BigInteger`/`BigDecimal` division and `BankersValue`. See the [changelog](CHANGELOG.md) for the full list.
