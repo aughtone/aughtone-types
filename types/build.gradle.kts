@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -118,6 +119,15 @@ kotlin {
             }
         }
     }
+}
+
+// The locale-snapshot parity test reads docs/reference/supported_languages.json through file I/O,
+// so Gradle cannot see it. Without this the task stays UP-TO-DATE when only the snapshot changes and
+// the drift it exists to catch goes unreported.
+tasks.named<Test>("jvmTest") {
+    inputs.file(rootProject.file("docs/reference/supported_languages.json"))
+        .withPropertyName("localeSnapshot")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 mavenPublishing {
