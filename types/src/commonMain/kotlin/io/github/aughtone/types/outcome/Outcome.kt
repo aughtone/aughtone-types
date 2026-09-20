@@ -43,6 +43,11 @@ sealed class Outcome<out T> {
      * This is an `Outcome<Nothing>` rather than an `Outcome<T>`, so a single failure value is
      * assignable to an [Outcome] of any type and passes through [map] unchanged.
      *
+     * **Two `Failure` values are equal only when they hold the same exception instance.** This is a
+     * `data class` over a [Throwable], and [Throwable] does not override `equals`, so equality is
+     * reference equality on the exception. In a test, assert on the exception's type or message
+     * rather than comparing two separately constructed failures.
+     *
      * @property exception The throwable that ended the operation.
      */
     data class Failure(val exception: Throwable) : Outcome<Nothing>() {
