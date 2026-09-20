@@ -59,20 +59,6 @@ sealed class Outcome<out T> {
     }
 
     /**
-     * The previous name of [Failure], kept so code written against 3.3.0 still compiles.
-     *
-     * It was renamed because every callback in this API already said *failure* — `onFailure`, and
-     * `fold`'s second parameter — while the type said *error*, and because `Outcome.Error` reads as
-     * a relative of [kotlin.Error], which is a specific severe-throwable type it has nothing to do
-     * with.
-     */
-    @Deprecated(
-        "Renamed to Failure, to match the onFailure/fold callbacks and to avoid reading as kotlin.Error.",
-        ReplaceWith("Failure"),
-    )
-    typealias Error = Failure
-
-    /**
      * Runs [block] with the value if this is a [Success], and does nothing otherwise.
      *
      * @param block Called with the value of a [Success].
@@ -164,12 +150,6 @@ sealed class Outcome<out T> {
          * @return A [Failure] carrying [exception].
          */
         fun failure(exception: Throwable): Outcome<Nothing> = Failure(exception)
-
-        @Deprecated(
-            "Renamed to failure, to match Outcome.Failure and the onFailure/fold callbacks.",
-            ReplaceWith("Outcome.failure(exception)"),
-        )
-        fun error(exception: Throwable): Outcome<Nothing> = Failure(exception)
     }
 }
 

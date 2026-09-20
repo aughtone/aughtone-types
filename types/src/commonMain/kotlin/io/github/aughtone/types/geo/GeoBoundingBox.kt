@@ -1,5 +1,6 @@
 package io.github.aughtone.types.geo
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -8,6 +9,14 @@ import kotlinx.serialization.Serializable
  * A bounding box (bbox) is an array of length 2*n where n is the number of dimensions.
  * It contains all axes of the most southwesterly point followed by all axes of the
  * more northeasterly point.
+ *
+ * This is **not** a [GeoGeometry]. RFC 7946 makes a bounding box a `bbox` *member* of a geometry or
+ * feature — a flat array of numbers — not a geometry in its own right. It previously extended
+ * [GeoGeometry], which meant it serialized as a geometry object that no conformant GeoJSON reader
+ * accepts, and allowed a bounding box to be passed anywhere a geometry was expected.
+ *
+ * Use [toDoubleArray] to obtain the RFC form, and assign it to the `bbox` property of the geometry
+ * or feature it bounds.
  *
  * @property west The westernmost longitude in decimal degrees.
  * @property south The southernmost latitude in decimal degrees.
@@ -18,13 +27,19 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class GeoBoundingBox(
+    @SerialName("west")
     val west: Double,
+    @SerialName("south")
     val south: Double,
+    @SerialName("east")
     val east: Double,
+    @SerialName("north")
     val north: Double,
+    @SerialName("minAltitude")
     val minAltitude: Double? = null,
+    @SerialName("maxAltitude")
     val maxAltitude: Double? = null
-): GeoGeometry() {
+) {
     /**
      * Secondary constructor for creating a [GeoBoundingBox] from a list of coordinates.
      * The list must have either 4 elements [west, south, east, north] or 6 elements
@@ -66,6 +81,9 @@ data class GeoBoundingBox(
         }
     }
 
-    override val bbox: List<Double>?
-        get() = toDoubleArray().toList()
+    /**
+     * This bounding box in the RFC 7946 flat-array form, ready to assign to a geometry's or
+     * feature's `bbox` member.
+     */
+    fun toBbox(): List<Double> = toDoubleArray().toList()
 }

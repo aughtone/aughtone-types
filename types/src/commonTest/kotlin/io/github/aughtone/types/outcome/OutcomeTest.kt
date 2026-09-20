@@ -124,22 +124,4 @@ class OutcomeTest {
         assertEquals(-1, failed.dataOrElse { -1 })
         assertEquals(5, runOutcome { 5 }.dataOrElse { -1 })
     }
-
-    @Suppress("DEPRECATION")
-    @Test
-    fun `the deprecated Error alias and error factory still behave as Failure`() {
-        val boom = IllegalStateException("x")
-        val viaOldFactory: Outcome<Int> = Outcome.error(boom)
-        assertIs<Outcome.Failure>(viaOldFactory)
-
-        val viaOldName: Outcome.Error = Outcome.Error(boom)
-        assertSame(boom, viaOldName.exception)
-        assertEquals(Outcome.Failure(boom), viaOldName)
-
-        val branched = when (viaOldFactory) {
-            is Outcome.Success<*> -> "success"
-            is Outcome.Error -> "failure"
-        }
-        assertEquals("failure", branched)
-    }
 }

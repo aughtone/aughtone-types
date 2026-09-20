@@ -8,4 +8,6 @@ import kotlinx.serialization.Serializable
 data class GeoMultiPoint(
     val coordinates: List<List<Double>>,
     override val bbox: List<Double>? = null
-) : GeoGeometry()
+) : GeoGeometry() {
+    init { GeoValidation.positions(coordinates, "MultiPoint") }
+}

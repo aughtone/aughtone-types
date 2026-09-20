@@ -35,7 +35,6 @@ class UnitOfMeasureTest {
         "Fahrenheit",
         "Fathom",
         "FluidOunce",
-        "FoodCalorie",
         "Foot",
         "Furlong",
         "Gallon",

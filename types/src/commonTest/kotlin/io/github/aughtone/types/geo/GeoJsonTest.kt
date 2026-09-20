@@ -1,6 +1,9 @@
 package io.github.aughtone.types.geo
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -41,7 +44,7 @@ class GeoJsonTest {
 
         // Test serialization
         val encodedJson = json.encodeToString<GeoJson>(point)
-        assertEquals(pointJsonString, encodedJson)
+        assertJsonEquals(pointJsonString, encodedJson)
 
         // Test deserialization
         val decodedPoint = json.decodeFromString<GeoJson>(pointJsonString)
@@ -64,7 +67,7 @@ class GeoJsonTest {
 
         // Test serialization
         val encodedJson = json.encodeToString<GeoJson>(point)
-        assertEquals(pointJsonString, encodedJson)
+        assertJsonEquals(pointJsonString, encodedJson)
 
         // Test deserialization
         val decodedPoint = json.decodeFromString<GeoJson>(pointJsonString)
@@ -122,7 +125,7 @@ class GeoJsonTest {
 
         // Test serialization
         val encodedJson = json.encodeToString<GeoJson>(polygon)
-        assertEquals(polygonJsonString, encodedJson)
+        assertJsonEquals(polygonJsonString, encodedJson)
 
         // Test deserialization
         val decodedPolygon = json.decodeFromString<GeoJson>(polygonJsonString)
@@ -133,8 +136,8 @@ class GeoJsonTest {
     fun `Feature with properties and geometry serializes and deserializes`() {
         val feature = GeoFeature(
             geometry = GeoPoint(coordinates = listOf(1.0, 2.0)), // bbox is null here
-            properties = mapOf("name" to "Test Point"),
-            id = "feature1",
+            properties = buildJsonObject { put("name", "Test Point") },
+            id = JsonPrimitive("feature1"),
             bbox = listOf(1.0, 2.0, 1.0, 2.0)
         )
 
@@ -165,7 +168,7 @@ class GeoJsonTest {
 
         // Test serialization
         val encodedJson = json.encodeToString<GeoJson>(feature)
-        assertEquals(featureJsonString, encodedJson)
+        assertJsonEquals(featureJsonString, encodedJson)
 
         // Test deserialization
         val decodedFeature = json.decodeFromString<GeoJson>(featureJsonString)
@@ -176,7 +179,7 @@ class GeoJsonTest {
     fun `Feature with null geometry serializes without geometry key`() {
         val featureWithNullGeom = GeoFeature(
             geometry = null,
-            properties = mapOf("status" to "No location"),
+            properties = buildJsonObject { put("status", "No location") },
             id = null, // also test null id
             bbox = null // also test null bbox
         )
@@ -192,7 +195,7 @@ class GeoJsonTest {
 
         // Serialization
         val encoded = json.encodeToString<GeoJson>(featureWithNullGeom)
-        assertEquals(jsonString, encoded)
+        assertJsonEquals(jsonString, encoded)
 
         // Deserialization from a string that is also missing the keys should work
         val decoded = json.decodeFromString<GeoJson>(jsonString)
@@ -261,11 +264,11 @@ class GeoJsonTest {
         val secondFeature = decodedCollection.features[1]
         assertNotNull(secondFeature.geometry)
         assertIs<GeoLineString>(secondFeature.geometry)
-        assertEquals(mapOf("prop0" to "value0", "prop1" to "value1"), secondFeature.properties)
+        assertEquals(buildJsonObject { put("prop0", "value0"); put("prop1", "value1") }, secondFeature.properties)
 
         val thirdFeature = decodedCollection.features[2]
         assertNull(thirdFeature.geometry)
-        assertEquals(mapOf("name" to "Null Island"), thirdFeature.properties)
+        assertEquals(buildJsonObject { put("name", "Null Island") }, thirdFeature.properties)
     }
 
     @Test
@@ -298,11 +301,11 @@ class GeoJsonTest {
             ),
             GeoFeature(
                 geometry = GeoPoint(1.0, 2.0),
-                properties = mapOf("name" to "Test"),
-                id = "f1",
+                properties = buildJsonObject { put("name", "Test") },
+                id = JsonPrimitive("f1"),
                 bbox = listOf(1.0, 2.0, 1.0, 2.0)
             ),
-            GeoFeature(geometry = null, properties = mapOf("status" to "no geometry")),
+            GeoFeature(geometry = null, properties = buildJsonObject { put("status", "no geometry") }),
             GeoFeatureCollection(
                 features = listOf(GeoFeature(geometry = GeoPoint(5.0, 6.0))),
                 bbox = listOf(5.0, 6.0, 5.0, 6.0)

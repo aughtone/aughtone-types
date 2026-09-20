@@ -62,7 +62,10 @@ data class Speed(
      * @return A new Speed representing the difference, floored at zero.
      */
     operator fun minus(other: Speed): Speed {
-        val newMps = (mps - other.mps).coerceAtLeast(0.0)
+        require(mps >= other.mps) {
+            "Cannot subtract ${other.mps} mps from $mps mps: a Speed cannot be negative."
+        }
+        val newMps = mps - other.mps
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * mps
             val absoluteError2 = other.accuracy * other.mps
@@ -87,7 +90,8 @@ data class Speed(
      * @return A new Speed representing the product, floored at zero.
      */
     operator fun times(other: Double): Speed {
-        return Speed((mps * other).coerceAtLeast(0.0), accuracy = accuracy)
+        require(other >= 0.0) { "Cannot multiply a Speed by $other: a Speed cannot be negative." }
+        return Speed(mps * other, accuracy = accuracy)
     }
 
     /**
@@ -102,7 +106,8 @@ data class Speed(
      */
     operator fun div(other: Double): Speed {
         if (other == 0.0) throw ArithmeticException("Division by zero")
-        return Speed((mps / other).coerceAtLeast(0.0), accuracy = accuracy)
+        require(other > 0.0) { "Cannot divide a Speed by $other: a Speed cannot be negative." }
+        return Speed(mps / other, accuracy = accuracy)
     }
 }
 

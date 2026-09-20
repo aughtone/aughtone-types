@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.multiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.atomicfu)
 }
 
 group = libs.versions.group.get()
@@ -91,6 +92,9 @@ kotlin {
             dependencies {
                 api(libs.kotlinx.datetime)
                 api(libs.kotlinx.serialization.json)
+                // Compile-only on JVM and JS, where atomicfu transforms the atomics away and strips
+                // itself from the metadata. A runtime dependency only on Wasm. See LazyMap.
+                implementation(libs.atomicfu)
             }
         }
         val commonTest by getting {
@@ -128,6 +132,14 @@ tasks.named<Test>("jvmTest") {
     inputs.file(rootProject.file("docs/reference/supported_languages.json"))
         .withPropertyName("localeSnapshot")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// atomicfu 0.29.0 — the newest release — cannot read Kotlin 2.4.0 class metadata; its JVM bytecode
+// transformer caps at 2.3.0 and fails the build. Disabling the JVM transform keeps the atomics
+// working, at the cost of atomicfu remaining a runtime dependency on JVM instead of being compiled
+// away. Re-enable when atomicfu catches up with the Kotlin metadata version.
+atomicfu {
+    transformJvm = false
 }
 
 mavenPublishing {

@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-09-20
+
+A breaking release. It removes names deprecated across the 2.x and 3.x lines, corrects operators and symbol lookups that returned confident wrong answers, and brings the GeoJSON types into line with RFC 7946.
+
+### ⚠️ Breaking Changes
+
+- **`Outcome.Error` and `Outcome.error(...)` are removed.** Renamed to `Outcome.Failure` and `Outcome.failure(...)` in 3.4.0, where the old names survived as deprecated aliases. (#29)
+- **`Locale.toLanguageTag()` is removed.** Deprecated since 2.2.0 in favour of the `Locale.languageTag` property. (#18)
+- **`Money` equality is now numeric.** `Money(5.1, usd) == Money(5.10, usd)` is `true` where it was `false`. Scale is still preserved in storage and serialization — `5.0100000` is stored and serialized unchanged — but takes no part in equality, because no arithmetic in this library can make two spellings of one amount differ in value. Code relying on equality distinguishing `12.50` from `12.5` changes meaning **silently, with no compiler error**. A consequence: two equal amounts can serialize differently. Compare `value.scale` explicitly to ask whether two amounts were *written* the same way. `BigDecimal` is unchanged and keeps JDK-style scale-sensitive equality. (#21)
+- **`Distance` and `Speed` throw instead of clamping to zero.** `Distance(3m) - Distance(5m)` returned `0m`; it now throws. The same applies to a negative divisor on `Distance`, and to negative scalars in `Speed.times` and `Speed.div`. The constructors already rejected negative values, so the operators now enforce the same invariant rather than inventing one. (#25)
+- **`Distance.times(Distance)` is removed.** Metres times metres is an area, and there is no area type; returning a `Distance` labelled with square metres type-checked and was wrong. (#25)
+- **`Distance.div(Distance)` now returns `Double`.** A ratio of two lengths is dimensionless. This one breaks at call sites that did not change — anything storing the result in a `Distance` stops compiling. (#25)
+- **`GeoBoundingBox` is no longer a `GeoGeometry`.** RFC 7946 makes a bounding box a `bbox` member, not a geometry, and the old modelling serialized to invalid GeoJSON while allowing a bounding box anywhere a geometry was expected. The type remains, with `toBbox()` for the RFC form. Exhaustive `when` expressions over `GeoGeometry` will fail to compile — at the `when`, not at the line that changed. (#23)
+- **`GeoFeature.properties` is now `JsonObject?`**, was `Map<String, String>?`, and **`GeoFeature.id` is now `JsonPrimitive?`**, was `String?`. RFC 7946 permits any JSON value in properties and a string or number for id, so the library could not previously round-trip GeoJSON it did not produce itself. Read values with the new accessors: `feature.stringProperty("name")`. (#22)
+- **Invalid GeoJSON geometries are rejected on construction and on deserialization.** RFC 7946 §3.1 structural rules are enforced: minimum position counts, positions of at least two elements, and linear rings closed and at least four positions long. Payloads that previously decoded into structurally invalid values now throw. Winding order is deliberately **not** enforced on parse — §3.1.6 instructs parsers not to reject polygons breaking the right-hand rule — so a clockwise exterior ring round-trips unchanged. (#24)
+- **`UnitOfMeasure.FoodCalorie` is removed.** A food calorie *is* a kilocalorie; two enum entries modelled one unit. Use `UnitOfMeasure.Kilocalorie`. Symbol lookups are unaffected. (#28)
+- **`UnitOfMeasure.findFirst` refuses ambiguous symbols.** `findFirst("gal")` returned `Gallon` by declaration order with nothing to signal that `GallonImperial` also claimed the symbol — a silent 20% error in an imperial market. It now returns `null`; use `findAll` to discover the candidates. `findAll` returns an empty list for an unknown symbol and more than one entry for an ambiguous one, so the two cases stay distinguishable. (#28)
+- **`Gallon.symbol` is now `"US gal"`**, was `"gal"`. Anything rendering `.symbol` produces different output, and this is not a compile error. `Calorie.symbol` is now `"cal"` and `Kilocalorie.symbol` is `"kcal"`, matching the standard casings. (#28)
+- **`LazyMap`'s `cache` constructor parameter is removed.** The cache is now internal and atomic. (#27)
+
+### Added
+
+- **`Money` ordering**: `Money` implements `Comparable<Money>`. Comparing amounts in different currencies throws, since that ordering is not meaningful. (#21)
+- **GeoJSON winding tools**: `Winding`, `GeoPolygon.windingOf(ringIndex)`, `GeoPolygon.rewound()`, and the `geoPolygon(...)` / `geoPolygonRewinding(...)` factories. The first rejects rings breaking the right-hand rule; the second accepts any winding and returns it corrected — the function to reach for after reading a foreign document. (#24)
+- **`GeoFeature` property accessors**: `stringProperty`, `intProperty`, `doubleProperty`, `booleanProperty`, `objectProperty`, `arrayProperty`. None throws. `stringProperty` renders objects and arrays as their JSON text rather than returning `null`, so a property that is set never looks unset; it returns `null` only for an absent key or a JSON null, which `properties?.containsKey(key)` tells apart. (#22)
+- **`GeoBoundingBox.toBbox()`**, giving the RFC 7946 flat-array form to assign to a geometry's or feature's `bbox`. (#23)
+
+### Fixed
+
+- **`LazyMap` is safe for concurrent access.** Its cache was an unsynchronized `LinkedHashMap` reachable from `currencyFor(...)` and `localeFor(...)`, so two coroutines on a multi-threaded dispatcher could drop an entry or catch the map mid-resize — after which a later read returned a wrong value on a key that had been written correctly. The cache is now an immutable map in an atomic reference, replaced by compare-and-set. A cache hit costs one atomic read. Under contention a value function may run more than once, so value functions must be pure; every caller still observes the same value. (#27)
+- **GeoJSON serialization tests compare structure rather than text.** A `Double` renders as `100.0` on the JVM and `100` on JS and Wasm, so the same correct payload passed on one target and failed on another. (#17)
+
+### Changed
+
+- **New dependency: `kotlinx-atomicfu`**, the first beyond `kotlinx-serialization` and `kotlinx-datetime`. It backs `LazyMap`'s atomic cache. The JVM bytecode transform is **disabled**, because atomicfu 0.29.0 — its newest release — cannot read Kotlin 2.4.0 class metadata and fails the build; atomicfu therefore remains a runtime dependency on JVM rather than being compiled away. Re-enable `transformJvm` when atomicfu catches up.
+
 ## [3.4.0] - 2026-09-07
 
 ### ⚠️ Behavior Changes

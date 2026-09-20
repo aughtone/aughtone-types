@@ -8,4 +8,6 @@ import kotlinx.serialization.Serializable
 data class GeoLineString(
     val coordinates: List<List<Double>>,
     override val bbox: List<Double>? = null
-) : GeoGeometry()
+) : GeoGeometry() {
+    init { GeoValidation.lineString(coordinates, "LineString") }
+}

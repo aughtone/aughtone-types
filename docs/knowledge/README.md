@@ -11,6 +11,7 @@ not here — that lives in GitHub Issues.
 | [Specifications](specifications/) | How a thing IS — behaviour contracts, publishing, library shape |
 | [Developer Guides](guides/) | How to do something — build, test, release |
 | [Quality Assurance](testing/) | Durable test protocols that span stories |
+| [Research \& Development Logs](research/) | A question worked out — options, dead ends, and a recommendation |
 
 New here? Start at [docs/README.md](../README.md), which explains how the
 whole documentation system fits together.
