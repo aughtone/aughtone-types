@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.multiplatformLibrary) apply false
     alias(libs.plugins.kotlinMultiplatform) apply  false
     alias(libs.plugins.vanniktech.mavenPublish) apply false
+    alias(libs.plugins.kotlinJvm) apply false
+    alias(libs.plugins.kotlinAllOpen) apply false
+    alias(libs.plugins.kotlinxBenchmark) apply false
 }
 
 rootProject.plugins.withType<YarnPlugin> {

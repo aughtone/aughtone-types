@@ -43,6 +43,11 @@ sealed class Outcome<out T> {
      * This is an `Outcome<Nothing>` rather than an `Outcome<T>`, so a single failure value is
      * assignable to an [Outcome] of any type and passes through [map] unchanged.
      *
+     * **Two `Failure` values are equal only when they hold the same exception instance.** This is a
+     * `data class` over a [Throwable], and [Throwable] does not override `equals`, so equality is
+     * reference equality on the exception. In a test, assert on the exception's type or message
+     * rather than comparing two separately constructed failures.
+     *
      * @property exception The throwable that ended the operation.
      */
     data class Failure(val exception: Throwable) : Outcome<Nothing>() {
@@ -52,20 +57,6 @@ sealed class Outcome<out T> {
          */
         val message: String get() = exception.message ?: exception.toString()
     }
-
-    /**
-     * The previous name of [Failure], kept so code written against 3.3.0 still compiles.
-     *
-     * It was renamed because every callback in this API already said *failure* — `onFailure`, and
-     * `fold`'s second parameter — while the type said *error*, and because `Outcome.Error` reads as
-     * a relative of [kotlin.Error], which is a specific severe-throwable type it has nothing to do
-     * with.
-     */
-    @Deprecated(
-        "Renamed to Failure, to match the onFailure/fold callbacks and to avoid reading as kotlin.Error.",
-        ReplaceWith("Failure"),
-    )
-    typealias Error = Failure
 
     /**
      * Runs [block] with the value if this is a [Success], and does nothing otherwise.
@@ -159,12 +150,6 @@ sealed class Outcome<out T> {
          * @return A [Failure] carrying [exception].
          */
         fun failure(exception: Throwable): Outcome<Nothing> = Failure(exception)
-
-        @Deprecated(
-            "Renamed to failure, to match Outcome.Failure and the onFailure/fold callbacks.",
-            ReplaceWith("Outcome.failure(exception)"),
-        )
-        fun error(exception: Throwable): Outcome<Nothing> = Failure(exception)
     }
 }
 

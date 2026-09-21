@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.multiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.atomicfu)
 }
 
 group = libs.versions.group.get()
@@ -120,10 +122,34 @@ kotlin {
     }
 }
 
+// The locale-snapshot parity test reads docs/reference/supported_languages.json through file I/O,
+// so Gradle cannot see it. Without this the task stays UP-TO-DATE when only the snapshot changes and
+// the drift it exists to catch goes unreported.
+tasks.named<Test>("jvmTest") {
+    inputs.file(rootProject.file("docs/reference/supported_languages.json"))
+        .withPropertyName("localeSnapshot")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// The atomicfu plugin supplies the dependency itself and, on JVM, transforms the atomics into
+// AtomicReferenceFieldUpdater calls and strips itself from the metadata — so nothing atomicfu
+// reaches a JVM consumer. Native links it as an ordinary klib dependency. See LazyMap.
+//
+// The atomicfu/Kotlin version pairing is load-bearing: the JVM transformer bundles kotlin-metadata-jvm
+// and refuses class metadata newer than it supports. atomicfu 0.29.0 cannot read Kotlin 2.4.0 metadata
+// and fails the build outright. Bump atomicfu alongside Kotlin, not after it.
+atomicfu {
+    transformJvm = true
+}
+
 mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
 
-    if (!project.hasProperty("skip-signing")) {
+    val hasInMemoryKey = project.hasProperty("signingInMemoryKey") ||
+            project.hasProperty("signingInMemoryKeyId") ||
+            project.hasProperty("signing.gnupg.keyName")
+
+    if (hasInMemoryKey && !project.hasProperty("skip-signing")) {
         signAllPublications()
     }
 
@@ -144,7 +170,7 @@ mavenPublishing {
         developers {
             developer {
                 id = "bpappin"
-                name = "Brill pappin"
+                name = "bpappin"
                 url = "https://github.com/bpappin"
             }
         }

@@ -53,16 +53,24 @@ data class Speed(
     /**
      * Subtracts another Speed from this Speed.
      *
-     * Since a `Speed` cannot be negative, a difference below zero is floored at zero mps.
+     * A `Speed` cannot be negative, so subtracting a larger speed is rejected rather than clamped:
+     * `3mps - 5mps` throws. Silently returning zero would turn an arithmetic mistake into a
+     * plausible-looking measurement that no later check can distinguish from a real one. Guard the
+     * call, or compare first, if the operands may be in either order.
      *
      * The accuracy of the resulting `Speed` is calculated by adding the absolute uncertainties of the two operands.
-     * If either operand has a null accuracy, the resulting accuracy will also be null.
+     * If either operand has a null accuracy, the resulting accuracy will also be null. A result of
+     * exactly zero carries a null accuracy, there being no measurement for a fraction to be of.
      *
      * @param other The Speed to subtract.
-     * @return A new Speed representing the difference, floored at zero.
+     * @return A new Speed representing the difference, which may be zero.
+     * @throws IllegalArgumentException if [other] is faster than this speed.
      */
     operator fun minus(other: Speed): Speed {
-        val newMps = (mps - other.mps).coerceAtLeast(0.0)
+        require(mps >= other.mps) {
+            "Cannot subtract ${other.mps} mps from $mps mps: a Speed cannot be negative."
+        }
+        val newMps = mps - other.mps
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * mps
             val absoluteError2 = other.accuracy * other.mps
@@ -80,29 +88,40 @@ data class Speed(
     /**
      * Multiplies this Speed by a scalar value.
      *
-     * Since a `Speed` cannot be negative, a product below zero (a negative scalar)
-     * is floored at zero mps.
+     * A `Speed` cannot be negative, so a negative scalar is rejected rather than clamped to zero.
+     * A scalar of zero is accepted and yields a speed of zero, which is a real speed rather than an
+     * error.
      *
-     * @param other The scalar value to multiply by.
-     * @return A new Speed representing the product, floored at zero.
+     * The accuracy is carried through unchanged, being a fraction of the measurement rather than an
+     * absolute quantity, so scaling the speed scales the implied error with it.
+     *
+     * @param other The scalar value to multiply by. Must not be negative.
+     * @return A new Speed representing the product.
+     * @throws IllegalArgumentException if [other] is negative.
      */
     operator fun times(other: Double): Speed {
-        return Speed((mps * other).coerceAtLeast(0.0), accuracy = accuracy)
+        require(other >= 0.0) { "Cannot multiply a Speed by $other: a Speed cannot be negative." }
+        return Speed(mps * other, accuracy = accuracy)
     }
 
     /**
      * Divides this Speed by a scalar value.
      *
-     * Since a `Speed` cannot be negative, a quotient below zero (a negative scalar)
-     * is floored at zero mps.
+     * A `Speed` cannot be negative, so a negative scalar is rejected rather than clamped to zero.
+     * Dividing by zero throws separately, as it does for any number.
      *
-     * @param other The scalar value to divide by.
-     * @return A new Speed representing the quotient, floored at zero.
-     * @throws ArithmeticException if dividing by zero.
+     * The accuracy is carried through unchanged, being a fraction of the measurement rather than an
+     * absolute quantity, so scaling the speed scales the implied error with it.
+     *
+     * @param other The scalar value to divide by. Must be positive.
+     * @return A new Speed representing the quotient.
+     * @throws ArithmeticException if [other] is zero.
+     * @throws IllegalArgumentException if [other] is negative.
      */
     operator fun div(other: Double): Speed {
         if (other == 0.0) throw ArithmeticException("Division by zero")
-        return Speed((mps / other).coerceAtLeast(0.0), accuracy = accuracy)
+        require(other > 0.0) { "Cannot divide a Speed by $other: a Speed cannot be negative." }
+        return Speed(mps / other, accuracy = accuracy)
     }
 }
 

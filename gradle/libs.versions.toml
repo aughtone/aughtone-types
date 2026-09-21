@@ -1,17 +1,19 @@
 [versions]
 namespace = "io.github.aughtone.types"
 group = "io.github.aughtone"
-versionName = "3.4.0"
+versionName = "4.0.0"
 android-minSdk = "17"
 android-compileSdk = "37"
 
-agp = "9.2.1"
-kotlin = "2.4.0"
+agp = "9.4.1"
+kotlin = "2.4.20"
 kotlinx-serialization = "1.11.0"
 kotlinx-datetime = "0.8.0"
 vanniktech = "0.37.0"
-kotlinBrowser = "2026.7.1"
+kotlinBrowser = "2026.9.2"
 ionspin-bignum ="0.3.10"
+atomicfu = "0.33.0"
+kotlinx-benchmark = "0.5.0"
 
 [libraries]
 kotlin-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlinBrowser" }
@@ -20,9 +22,14 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "ionspin-bignum" }
+kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinx-benchmark" }
 
 [plugins]
 multiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech" }
+atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinAllOpen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+kotlinxBenchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }

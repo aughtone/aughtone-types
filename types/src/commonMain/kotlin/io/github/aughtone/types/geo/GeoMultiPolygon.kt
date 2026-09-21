@@ -8,4 +8,8 @@ import kotlinx.serialization.Serializable
 data class GeoMultiPolygon(
     val coordinates: List<List<List<List<Double>>>>,
     override val bbox: List<Double>? = null
-) : GeoGeometry()
+) : GeoGeometry() {
+    init {
+        coordinates.forEachIndexed { i, poly -> GeoValidation.polygon(poly, "MultiPolygon polygon $i") }
+    }
+}

@@ -102,24 +102,26 @@ data class Urn(
     }
 
     /**
-     * Equality per RFC 8141 NID rules: the [namespace] is compared case-insensitively,
-     * all other components are compared exactly.
+     * URN-equivalence per RFC 8141 §3.1, which is not structural equality on the members.
+     *
+     * The [namespace] (NID) is compared case-insensitively, since §3.1 normalizes "the NID, by
+     * conversion to lower case". The [identity] (NSS) stays case-sensitive, since §3.1 treats
+     * "characters in the NSS other than percent-encoded sequences in a case-sensitive manner".
+     *
+     * The [rComponent], [qComponent] and [fComponent] take no part. §3.1 is emphatic: "If an
+     * r-component, q-component, or f-component (or any combination thereof) is included in a URN, it
+     * MUST be ignored for purposes of determining URN-equivalence." Those components locate or
+     * qualify a resource; they do not identify a different one. Comparing them would report
+     * `urn:isbn:0451450523#page1` and `urn:isbn:0451450523` as different books.
+     *
+     * All five values are still preserved and still serialized; only the comparison is normalized.
      */
     override fun equals(other: Any?): Boolean = other is Urn &&
             namespace.equals(other.namespace, ignoreCase = true) &&
-            identity == other.identity &&
-            rComponent == other.rComponent &&
-            qComponent == other.qComponent &&
-            fComponent == other.fComponent
+            identity == other.identity
 
-    override fun hashCode(): Int {
-        var result = namespace.lowercase().hashCode()
-        result = 31 * result + identity.hashCode()
-        result = 31 * result + (rComponent?.hashCode() ?: 0)
-        result = 31 * result + (qComponent?.hashCode() ?: 0)
-        result = 31 * result + (fComponent?.hashCode() ?: 0)
-        return result
-    }
+    /** Hashes only what [equals] compares, so URN-equivalent values share a bucket. */
+    override fun hashCode(): Int = 31 * namespace.lowercase().hashCode() + identity.hashCode()
 
     companion object {
         // RFC 8141: NID = (alphanum) 0*30(ldh) (alphanum)
@@ -139,12 +141,14 @@ data class Urn(
  * @throws IllegalArgumentException if the string is not a valid URN.
  */
 fun urn(urnString: String): Urn {
-    require(urnString.length > 4 && urnString.regionMatches(0, "urn:", 0, 4, ignoreCase = true)) {
-        "URN must start with 'urn:'"
+    if (!(urnString.length > 4 && urnString.regionMatches(0, "urn:", 0, 4, ignoreCase = true))) {
+        throw UriParseException(urnString, "Cannot parse \"$urnString\": a URN must start with \"urn:\".")
     }
     val rest = urnString.substring(4)
     val colon = rest.indexOf(':')
-    require(colon >= 0) { "URN must have namespace and identity" }
+    if (colon < 0) {
+        throw UriParseException(urnString, "Cannot parse \"$urnString\": a URN must have a namespace and an identity.")
+    }
     val namespace = rest.substring(0, colon)
     var tail = rest.substring(colon + 1)
 

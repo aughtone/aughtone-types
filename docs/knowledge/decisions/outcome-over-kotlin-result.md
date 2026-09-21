@@ -40,8 +40,8 @@ Add `io.github.aughtone.types.outcome.Outcome<T>` — a `sealed class` with two 
 
 ## Amendment — 2026-09-06, after 3.3.0
 
-3.3.0 shipped the failure case as `Outcome.Error`. It is renamed to `Outcome.Failure` in 3.4.0, with `Outcome.Error` kept as a deprecated nested type alias and `Outcome.error(...)` as a deprecated factory, so code written against 3.3.0 still compiles and is told where to go.
+3.3.0 shipped the failure case as `Outcome.Error`. It was renamed to `Outcome.Failure` in 3.4.0, with `Outcome.Error` kept as a deprecated nested type alias and `Outcome.error(...)` as a deprecated factory so code written against 3.3.0 still compiled. Both were removed in 4.0.0.
 
 The name was wrong on two counts. Every callback in the API already said *failure* — `onFailure`, and `fold`'s second parameter — so the type and the callbacks disagreed with each other in the same file. And `Outcome.Error` reads as a relative of `kotlin.Error`, which is a specific severe-throwable type it has nothing to do with; a case holding an ordinary `Throwable` should not borrow that name.
 
-The rename is a binary break — `Outcome$Error` no longer exists as a class — which strictly argues for a major version. It ships as a minor anyway: 3.3.0 was hours old with no consumer compiled against it, the alias preserves source compatibility, and for a consumer the remedy is a clean and rebuild rather than a code change. The alias goes at 4.0.0.
+The rename is a binary break — `Outcome$Error` no longer exists as a class — which strictly argues for a major version. It ships as a minor anyway: 3.3.0 was hours old with no consumer compiled against it, the alias preserves source compatibility, and for a consumer the remedy is a clean and rebuild rather than a code change. The alias was removed in 4.0.0.

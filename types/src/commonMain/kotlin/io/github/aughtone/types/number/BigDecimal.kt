@@ -42,10 +42,32 @@ data class BigDecimal(
      */
     constructor(value: Long) : this(BigInteger.valueOf(value), 0)
 
+    /**
+     * Compares this value to [other] by numeric value, ignoring scale, so `2.0` and `2.00` compare
+     * equal even though they are not [equals].
+     *
+     * Most comparisons are settled without aligning the two scales. Aligning means multiplying one
+     * side up to the other's scale, which costs work proportional to the operands for a question
+     * that is usually decided by the sign or by sheer size — `0.5` is smaller than `1000.00`, and
+     * nothing needs to be multiplied to know it. Only when the two are close enough that their
+     * decimal magnitudes overlap does this fall through to the exact alignment.
+     *
+     * @param other The value to compare against.
+     * @return A negative number, zero, or a positive number as this value is less than, equal to,
+     *   or greater than [other].
+     */
     override fun compareTo(other: BigDecimal): Int {
         if (this.scale == other.scale) {
             return this.unscaledValue.compareTo(other.unscaledValue)
         }
+
+        val thisSign = this.unscaledValue.signum
+        val otherSign = other.unscaledValue.signum
+        if (thisSign != otherSign) return thisSign.compareTo(otherSign)
+        if (thisSign == 0) return 0
+
+        decideByMagnitude(other, thisSign)?.let { return it }
+
         val diff = this.scale - other.scale
         return if (diff < 0) {
             val scaledThis = this.unscaledValue.multiply(powerOfTen(-diff))
@@ -54,6 +76,34 @@ data class BigDecimal(
             val scaledOther = other.unscaledValue.multiply(powerOfTen(diff))
             this.unscaledValue.compareTo(scaledOther)
         }
+    }
+
+    /**
+     * Attempts to decide the comparison from decimal magnitude alone, returning `null` when the two
+     * are close enough that only exact alignment can separate them.
+     *
+     * The magnitude of a value is the position of its leading digit — its unscaled digit count less
+     * its scale. Digit counts are bracketed from the bit length rather than computed exactly,
+     * because an exact count costs about as much as the alignment being avoided. When the brackets
+     * are disjoint the answer is certain; when they touch, this gives up rather than guessing.
+     *
+     * @param other The value being compared against.
+     * @param sign The shared sign of both values, which is never zero here.
+     * @return The comparison result, or `null` if it could not be decided cheaply.
+     */
+    private fun decideByMagnitude(other: BigDecimal, sign: Int): Int? {
+        val thisBits = this.unscaledValue.bitLength()
+        val otherBits = other.unscaledValue.bitLength()
+
+        val thisLow = minimumDecimalDigits(thisBits) - this.scale
+        val thisHigh = maximumDecimalDigits(thisBits) - this.scale
+        val otherLow = minimumDecimalDigits(otherBits) - other.scale
+        val otherHigh = maximumDecimalDigits(otherBits) - other.scale
+
+        // A larger magnitude means a larger absolute value, which for two negatives means smaller.
+        if (thisLow > otherHigh) return sign
+        if (otherLow > thisHigh) return -sign
+        return null
     }
 
     override fun equals(other: Any?): Boolean {
@@ -324,18 +374,81 @@ data class BigDecimal(
             return BigDecimal(unscaledValue, totalScale)
         }
 
-        private fun powerOfTen(k: Int): BigInteger {
-            var result = BigInteger.ONE
-            var base = BigInteger.TEN
-            var exp = k
-            while (exp > 0) {
-                if (exp % 2 == 1) {
-                    result = result.multiply(base)
-                }
-                base = base.multiply(base)
-                exp /= 2
+        /**
+         * The largest power of ten held in [CACHED_POWERS_OF_TEN].
+         *
+         * Scale differences in practice are small — a currency amount against a rate, a value
+         * against a rounding target — so a table this size answers essentially every alignment the
+         * arithmetic performs, at a cost of a few kilobytes held once for the life of the process.
+         */
+        /**
+         * The number of decimal digits a value of [bitLength] bits is guaranteed to have at least.
+         *
+         * The smallest value with this many bits is `2^(bitLength - 1)`, and multiplying by
+         * `log10(2)` in integer arithmetic — deliberately rounding the constant down — keeps this a
+         * true lower bound rather than an estimate that is occasionally one too high.
+         */
+        private fun minimumDecimalDigits(bitLength: Int): Int {
+            if (bitLength <= 1) return 1
+            return ((bitLength - 1) * 301_029L / 1_000_000L).toInt() + 1
+        }
+
+        /**
+         * The number of decimal digits a value of [bitLength] bits can have at most.
+         *
+         * The largest value with this many bits is `2^bitLength - 1`, and the constant is rounded
+         * up here for the same reason it is rounded down in [minimumDecimalDigits]: the pair has to
+         * bracket the true count from both sides for a comparison between brackets to be sound.
+         */
+        private fun maximumDecimalDigits(bitLength: Int): Int {
+            if (bitLength <= 1) return 1
+            return (bitLength * 301_030L / 1_000_000L).toInt() + 1
+        }
+
+        private const val MAX_CACHED_POWER_OF_TEN = 64
+
+        /**
+         * Powers of ten from `10^0` up to `10^`[MAX_CACHED_POWER_OF_TEN], indexed by exponent.
+         *
+         * Every operation that has to bring two scales together multiplies through a power of ten,
+         * and before this table existed each of those calls rebuilt the value from scratch. That is
+         * why the table is built eagerly and in one pass: each entry is the previous entry times
+         * ten, so the whole thing costs sixty-four small multiplications once, rather than a
+         * logarithmic number of increasingly large ones on every call.
+         */
+        private val CACHED_POWERS_OF_TEN: Array<BigInteger> = run {
+            val powers = arrayOfNulls<BigInteger>(MAX_CACHED_POWER_OF_TEN + 1)
+            var current = BigInteger.ONE
+            powers[0] = current
+            for (exponent in 1..MAX_CACHED_POWER_OF_TEN) {
+                current = current.multiply(BigInteger.TEN)
+                powers[exponent] = current
             }
-            return result
+            @Suppress("UNCHECKED_CAST")
+            powers as Array<BigInteger>
+        }
+
+        /**
+         * Returns `10^`[k], from [CACHED_POWERS_OF_TEN] where possible.
+         *
+         * Exponents past the table are computed by binary exponentiation, seeded from the largest
+         * cached power so the table still does most of the work. They are rare: an exponent above
+         * [MAX_CACHED_POWER_OF_TEN] means a scale difference of more than sixty-four decimal
+         * places.
+         *
+         * @param k The exponent, which must not be negative.
+         * @return Ten raised to [k].
+         */
+        private fun powerOfTen(k: Int): BigInteger {
+            if (k <= MAX_CACHED_POWER_OF_TEN) return CACHED_POWERS_OF_TEN[k]
+
+            var result = CACHED_POWERS_OF_TEN[MAX_CACHED_POWER_OF_TEN]
+            var remaining = k - MAX_CACHED_POWER_OF_TEN
+            while (remaining > MAX_CACHED_POWER_OF_TEN) {
+                result = result.multiply(CACHED_POWERS_OF_TEN[MAX_CACHED_POWER_OF_TEN])
+                remaining -= MAX_CACHED_POWER_OF_TEN
+            }
+            return result.multiply(CACHED_POWERS_OF_TEN[remaining])
         }
 
         private fun powerOfFive(k: Int): BigInteger {

@@ -35,6 +35,42 @@ data class Url(
     @SerialName("fragment")
     val fragment: String,
 ) {
+
+    /**
+     * Two URLs are equal when RFC 3986 §6.2.2.1 says they are the same. The scheme and host are
+     * case-insensitive and are compared lowercased; user information, path, query and fragment are
+     * case-sensitive and are compared as given.
+     *
+     * Without this, equality would depend on how the value was obtained — [url] lowercases the
+     * scheme and host while the constructor does not — so a parsed and a constructed URL for the
+     * same address would disagree.
+     *
+     * The value supplied is still preserved and still serialized; only the comparison is normalized.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Url) return false
+        return scheme.lowercase() == other.scheme.lowercase() &&
+            host.lowercase() == other.host.lowercase() &&
+            userInfo == other.userInfo &&
+            port == other.port &&
+            path == other.path &&
+            query == other.query &&
+            fragment == other.fragment
+    }
+
+    /** Hashes the case-normalized form, so values equal under [equals] share a bucket. */
+    override fun hashCode(): Int {
+        var result = scheme.lowercase().hashCode()
+        result = 31 * result + host.lowercase().hashCode()
+        result = 31 * result + userInfo.hashCode()
+        result = 31 * result + (port ?: 0)
+        result = 31 * result + path.hashCode()
+        result = 31 * result + query.hashCode()
+        result = 31 * result + fragment.hashCode()
+        return result
+    }
+
     /**
      * The authority part of the URL, in the form `[userInfo "@"] host [":" port]`.
      * The [userInfo] and [port] parts are omitted when empty or null.

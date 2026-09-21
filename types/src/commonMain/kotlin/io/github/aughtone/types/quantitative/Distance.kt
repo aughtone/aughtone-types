@@ -53,16 +53,24 @@ data class Distance(
     /**
      * Subtracts another Distance from this Distance.
      *
-     * Since a `Distance` cannot be negative, a difference below zero is floored at zero meters.
+     * A `Distance` cannot be negative, so subtracting a larger distance is rejected rather than
+     * clamped: `3m - 5m` throws. Silently returning zero would turn an arithmetic mistake into a
+     * plausible-looking measurement that no later check can distinguish from a real one. Guard the
+     * call, or compare first, if the operands may be in either order.
      *
      * The accuracy of the resulting `Distance` is calculated by adding the absolute uncertainties of the two operands.
-     * If either operand has a null accuracy, the resulting accuracy will also be null.
+     * If either operand has a null accuracy, the resulting accuracy will also be null. A result of
+     * exactly zero carries a null accuracy, there being no measurement for a fraction to be of.
      *
      * @param other The Distance to subtract.
-     * @return A new Distance representing the difference, floored at zero.
+     * @return A new Distance representing the difference, which may be zero.
+     * @throws IllegalArgumentException if [other] is larger than this distance.
      */
     operator fun minus(other: Distance): Distance {
-        val newMeters = (meters - other.meters).coerceAtLeast(0.0)
+        require(meters >= other.meters) {
+            "Cannot subtract ${other.meters}m from ${meters}m: a Distance cannot be negative."
+        }
+        val newMeters = meters - other.meters
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * meters
             val absoluteError2 = other.accuracy * other.meters
@@ -78,59 +86,40 @@ data class Distance(
     }
 
     /**
-     * Multiplies this Distance by another Distance.
+     * Divides this Distance by another, yielding the dimensionless ratio between them — how many
+     * times [other] fits into this distance.
      *
-     * The accuracy of the resulting `Distance` is calculated by adding the relative accuracies of the two operands.
-     * If either operand has a null accuracy, the resulting accuracy will also be null.
-     *
-     * @param other The Distance to multiply by.
-     * @return A new Distance representing the product.
-     */
-    operator fun times(other: Distance): Distance {
-        val newAccuracy = if (accuracy != null && other.accuracy != null) {
-            accuracy + other.accuracy
-        } else {
-            null
-        }
-        return Distance(meters * other.meters, accuracy = newAccuracy)
-    }
-
-    /**
-     * Divides this Distance by another Distance.
-     *
-     * The accuracy of the resulting `Distance` is calculated by adding the relative accuracies of the two operands.
-     * If either operand has a null accuracy, the resulting accuracy will also be null.
+     * The result is a [Double] rather than a [Distance], because metres divided by metres has no
+     * unit. Returning a `Distance` here would label a bare number as a length.
      *
      * @param other The Distance to divide by.
-     * @return A new Distance representing the quotient.
-     * @throws ArithmeticException if dividing by zero.
+     * @return The ratio of the two distances.
+     * @throws ArithmeticException if [other] is zero.
      */
-    operator fun div(other: Distance): Distance {
+    operator fun div(other: Distance): Double {
         if (other.meters == 0.0) throw ArithmeticException("Division by zero")
-        val newAccuracy = if (accuracy != null && other.accuracy != null) {
-            accuracy + other.accuracy
-        } else {
-            null
-        }
-        return Distance(meters / other.meters, accuracy = newAccuracy)
+        return meters / other.meters
     }
 
     /**
      * Divides this Distance by an Integer.
      *
-     * Since a `Distance` cannot be negative, a quotient below zero (a negative divisor)
-     * is floored at zero meters.
+     * A `Distance` cannot be negative, so a negative divisor is rejected rather than clamped to
+     * zero. Dividing by zero throws separately, as it does for any number.
      *
      * The accuracy of the resulting `Distance` is the same as the original `Distance`,
-     * as the integer is assumed to be an exact value with no uncertainty.
+     * as the integer is assumed to be an exact value with no uncertainty. Accuracy is carried as a
+     * fraction of the measurement, so scaling the distance leaves it unchanged.
      *
-     * @param other The Integer to divide by.
-     * @return A new Distance representing the quotient, floored at zero.
-     * @throws ArithmeticException if dividing by zero.
+     * @param other The Integer to divide by. Must be positive.
+     * @return A new Distance representing the quotient.
+     * @throws ArithmeticException if [other] is zero.
+     * @throws IllegalArgumentException if [other] is negative.
      */
     operator fun div(other: Int): Distance {
         if (other == 0) throw ArithmeticException("Division by zero")
-        return Distance((meters / other.toDouble()).coerceAtLeast(0.0), accuracy = accuracy)
+        require(other > 0) { "Cannot divide a Distance by $other: a Distance cannot be negative." }
+        return Distance(meters / other.toDouble(), accuracy = accuracy)
     }
 
     /**
@@ -147,7 +136,6 @@ data class Distance(
         return Distance(meters % other.meters, accuracy = null)
     }
 }
-
 
 /**
  * Converts this [Int] to a [Distance] object, treating the value as meters.
