@@ -26,10 +26,19 @@ dependencies {
 
 benchmark {
     configurations {
-        // A targeted re-run, for when one operation's setup changes and re-measuring the whole
-        // suite would cost half an hour to refresh a handful of rows.
+        // A targeted re-run, for when one operation changes and re-measuring the whole suite would
+        // cost half an hour to refresh a handful of rows. Pass a regular expression matched against
+        // the fully qualified benchmark name:
+        //
+        //   ./gradlew :benchmarks:spotBenchmark -Pbenchmark.spot='.*\.(toString|parse)(Kotlin|Jdk)$'
+        //
+        // Note that a comparison is only meaningful against numbers measured the same way, so
+        // re-measure both sides of any before/after with the same filter.
         register("spot") {
-            include(".*\\.(mod|toString|toDouble)(Kotlin|Jdk)$")
+            include(
+                (findProperty("benchmark.spot") as String?)
+                    ?: ".*\\.(toString|parse)(Kotlin|Jdk)$"
+            )
         }
     }
     targets {

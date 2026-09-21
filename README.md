@@ -124,3 +124,19 @@ To ensure mathematical precision and behavior consistency, this library employs 
 - **JVM Baseline**: Parity verified against standard JDK types (`java.math.BigInteger` and `java.math.BigDecimal`).
 - **KMP Baseline**: Parity verified against the official Multiplatform [Ionspin BigNum](https://github.com/ionspin/kotlin-multiplatform-bignum) library.
 
+### ⚡ Performance
+
+`BigInteger` and `BigDecimal` are benchmarked against the JDK types. Figures are relative to `java.math`, so **1.0x is parity and below 1.0x is faster than the JDK**.
+
+| Values of 40 digits or more | vs `java.math` |
+|---|---|
+| Division, remainder, modulo | **0.5x – 0.8x** |
+| Bitwise operations | **0.5x – 0.8x** |
+| Text conversion (`toString`, parsing) | **0.8x** – 3.4x |
+| Scaling, rounding, `BigDecimal` division | **0.9x** – 1.2x |
+| Add, subtract, multiply, shifts | 1.2x – 2.9x |
+
+Small values are the exception, and deliberately so: the JDK keeps any `BigDecimal` under 19 digits in a `long`, so it answers `toDouble` on one by reading a field. There is no equivalent fast path here, and short-value operations run from several times to two orders of magnitude slower as a result. Two other costs are worth knowing: `modPow` is around 5x, lacking Montgomery reduction, and comparing two `BigDecimal` values of *different* scale is quick only when their magnitudes differ enough to settle it without aligning them — equal scales, the common case, beat the JDK.
+
+Run them yourself with `./gradlew :benchmarks:benchmark`. Ratios hold reasonably across machines; absolute throughput does not, so the benchmarks report both.
+

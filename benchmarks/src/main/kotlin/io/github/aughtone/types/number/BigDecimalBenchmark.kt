@@ -48,6 +48,9 @@ class BigDecimalBenchmark {
     private lateinit var jdkRight: JdkBigDecimal
     private lateinit var jdkTrailingZeros: JdkBigDecimal
 
+    private lateinit var sameScale: BigDecimal
+    private lateinit var jdkSameScale: JdkBigDecimal
+
     private var scale: Int = 0
     private lateinit var unscaled: BigInteger
     private lateinit var jdkUnscaled: java.math.BigInteger
@@ -83,6 +86,11 @@ class BigDecimalBenchmark {
         jdkLeft = JdkBigDecimal(leftText)
         jdkRight = JdkBigDecimal(rightText)
         jdkTrailingZeros = JdkBigDecimal(leftText + "000000000000")
+
+        // Same scale as `left`, so operations against it never align scales and never build a
+        // power of ten. Differencing this against the unequal-scale case isolates that cost.
+        sameScale = BigDecimal(right.unscaledValue, left.scale)
+        jdkSameScale = JdkBigDecimal(jdkRight.unscaledValue(), jdkLeft.scale())
 
         unscaled = left.unscaledValue
         jdkUnscaled = jdkLeft.unscaledValue()
@@ -129,6 +137,24 @@ class BigDecimalBenchmark {
 
     @Benchmark
     fun stripTrailingZerosJdk(): JdkBigDecimal = jdkTrailingZeros.stripTrailingZeros()
+
+    /**
+     * The same operations against an operand that shares [left]'s scale. `add`, `subtract`,
+     * `compareTo`, `divide` and `setScale` all align differing scales by multiplying through a
+     * power of ten that is rebuilt from scratch on every call, so the gap between each of these and
+     * its unequal-scale twin above is the cost of that rebuild.
+     */
+    @Benchmark
+    fun addSameScaleKotlin(): BigDecimal = left.add(sameScale)
+
+    @Benchmark
+    fun addSameScaleJdk(): JdkBigDecimal = jdkLeft.add(jdkSameScale)
+
+    @Benchmark
+    fun compareSameScaleKotlin(): Int = left.compareTo(sameScale)
+
+    @Benchmark
+    fun compareSameScaleJdk(): Int = jdkLeft.compareTo(jdkSameScale)
 
     @Benchmark
     fun compareKotlin(): Int = left.compareTo(right)

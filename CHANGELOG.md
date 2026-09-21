@@ -36,6 +36,16 @@ A breaking release. It removes names deprecated across the 2.x and 3.x lines, co
 - **GeoJSON winding tools**: `Winding`, `GeoPolygon.windingOf(ringIndex)`, `GeoPolygon.rewound()`, and the `geoPolygon(...)` / `geoPolygonRewinding(...)` factories. The first rejects rings breaking the right-hand rule; the second accepts any winding and returns it corrected — the function to reach for after reading a foreign document. (#24)
 - **`GeoFeature` property accessors**: `stringProperty`, `intProperty`, `doubleProperty`, `booleanProperty`, `objectProperty`, `arrayProperty`. None throws. `stringProperty` renders objects and arrays as their JSON text rather than returning `null`, so a property that is set never looks unset; it returns `null` only for an absent key or a JSON null, which `properties?.containsKey(key)` tells apart. (#22)
 - **`GeoBoundingBox.toBbox()`**, giving the RFC 7946 flat-array form to assign to a geometry's or feature's `bbox`. (#23)
+- **`BigInteger.bitLength()`**, matching `java.math.BigInteger.bitLength` including the two's-complement rule that makes a negative power of two one bit shorter than its magnitude. It answers "how large is this, roughly" in constant time, which is what lets comparisons avoid work. (#30)
+- **Benchmarks**: a `:benchmarks` module measuring `BigInteger` and `BigDecimal` against `java.math`, run on demand with `./gradlew :benchmarks:benchmark`. It is a separate Gradle module so its JMH dependencies cannot reach the published artifact. Performance had no coverage at all before this, so a change could be correct and an order of magnitude slower and nothing would say so. (#19)
+
+### Performance
+
+Benchmarking found three costs, all fixed here. None changes an observable result — only the time taken to produce one. Figures are relative to `java.math`, where 1.0x is parity and below 1.0x is faster than the JDK. (#30)
+
+- **Text conversion is no longer quadratic.** `BigInteger.toString` and string parsing peeled or accumulated one digit at a time, costing a full-width division or multiplication per digit; both now split the work in half recursively, and small values are handled in `Long`-sized chunks rather than one digit at a time. `toString` went from 16.1x to **0.8x** at 4096 bits, and parsing from 18.2x to **1.0x**. `BigDecimal.toString` and `toDouble` inherit the improvement, reaching **0.9x** at 400 digits from 9.0x and 7.2x.
+- **Powers of ten are cached.** Every operation that brings two scales together multiplies through a power of ten, and each call rebuilt that value from scratch — across `compareTo`, `add`, `subtract`, both `divide` overloads and both `setScale` overloads. `setScale` improved from 7.9x to **1.0x** at 8 digits, and scaled division from 3.8x to **1.2x**.
+- **`BigDecimal.compareTo` decides most comparisons without aligning scales.** It multiplied one side up to the other's scale before comparing, even when the sign or the sheer difference in magnitude already settled it. Where magnitudes are separable this went from 67.5x to **1.7x** at 400 digits; where they are within a digit of each other it still aligns, which is the only case that can need it.
 
 ### Fixed
 
