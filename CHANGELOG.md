@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [4.0.0] - 2026-09-20
+## [4.0.0] - 2026-09-21
 
 A breaking release. It removes names deprecated across the 2.x and 3.x lines, corrects operators and symbol lookups that returned confident wrong answers, and brings the GeoJSON types into line with RFC 7946.
 
@@ -15,7 +15,7 @@ A breaking release. It removes names deprecated across the 2.x and 3.x lines, co
 - **`Outcome.Error` and `Outcome.error(...)` are removed.** Renamed to `Outcome.Failure` and `Outcome.failure(...)` in 3.4.0, where the old names survived as deprecated aliases. (#29)
 - **`Locale.toLanguageTag()` is removed.** Deprecated since 2.2.0 in favour of the `Locale.languageTag` property. (#18)
 - **`Money` equality is now numeric.** `Money(5.1, usd) == Money(5.10, usd)` is `true` where it was `false`. Scale is still preserved in storage and serialization — `5.0100000` is stored and serialized unchanged — but takes no part in equality, because no arithmetic in this library can make two spellings of one amount differ in value. Code relying on equality distinguishing `12.50` from `12.5` changes meaning **silently, with no compiler error**. A consequence: two equal amounts can serialize differently. Compare `value.scale` explicitly to ask whether two amounts were *written* the same way. `BigDecimal` is unchanged and keeps JDK-style scale-sensitive equality. (#21)
-- **`Distance` and `Speed` throw instead of clamping to zero.** `Distance(3m) - Distance(5m)` returned `0m`; it now throws. The same applies to a negative divisor on `Distance`, and to negative scalars in `Speed.times` and `Speed.div`. The constructors already rejected negative values, so the operators now enforce the same invariant rather than inventing one. (#25)
+- **`Distance` and `Speed` throw instead of clamping to zero.** `Distance(3m) - Distance(5m)` returned `0m`; it now throws. The same applies to a negative divisor on `Distance`, and to negative scalars in `Speed.times` and `Speed.div`. The constructors already rejected negative values, so the operators now enforce the same invariant rather than inventing one. This reverses the change made in 3.4.0, which replaced the throwing behaviour with clamping: clamping turns an arithmetic mistake into a plausible measurement that nothing downstream can tell from a real one, which is the harder failure to find. (#25)
 - **`Distance.times(Distance)` is removed.** Metres times metres is an area, and there is no area type; returning a `Distance` labelled with square metres type-checked and was wrong. (#25)
 - **`Distance.div(Distance)` now returns `Double`.** A ratio of two lengths is dimensionless. This one breaks at call sites that did not change — anything storing the result in a `Distance` stops compiling. (#25)
 - **`GeoBoundingBox` is no longer a `GeoGeometry`.** RFC 7946 makes a bounding box a `bbox` member, not a geometry, and the old modelling serialized to invalid GeoJSON while allowing a bounding box anywhere a geometry was expected. The type remains, with `toBbox()` for the RFC form. Exhaustive `when` expressions over `GeoGeometry` will fail to compile — at the `when`, not at the line that changed. (#23)
