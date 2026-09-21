@@ -46,6 +46,38 @@ data class Uri(
     @SerialName("fragment")
     val fragment: String,
 ) {
+
+    /**
+     * Two URIs are equal when RFC 3986 §6.2.2.1 says they are the same, which requires case
+     * normalization: "the scheme and host are case-insensitive and therefore should be normalized to
+     * lowercase". Everything else — path, query and fragment — is case-sensitive.
+     *
+     * Comparing the raw members instead would make equality depend on how the value was obtained: a
+     * parsed URI has its scheme lowercased, a directly constructed one does not, and the two would
+     * disagree about the same address.
+     *
+     * The value supplied is still preserved and still serialized; only the comparison is normalized.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Uri) return false
+        return scheme.lowercase() == other.scheme.lowercase() &&
+            authority.lowercase() == other.authority.lowercase() &&
+            path == other.path &&
+            query == other.query &&
+            fragment == other.fragment
+    }
+
+    /** Hashes the case-normalized form, so values equal under [equals] share a bucket. */
+    override fun hashCode(): Int {
+        var result = scheme.lowercase().hashCode()
+        result = 31 * result + authority.lowercase().hashCode()
+        result = 31 * result + path.hashCode()
+        result = 31 * result + query.hashCode()
+        result = 31 * result + fragment.hashCode()
+        return result
+    }
+
     // URI = scheme ":" ["//" authority] path ["?" query] ["#" fragment]
     // See: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
     // See: https://auth0.com/blog/url-uri-urn-differences/
