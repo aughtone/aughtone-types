@@ -139,12 +139,14 @@ data class Urn(
  * @throws IllegalArgumentException if the string is not a valid URN.
  */
 fun urn(urnString: String): Urn {
-    require(urnString.length > 4 && urnString.regionMatches(0, "urn:", 0, 4, ignoreCase = true)) {
-        "URN must start with 'urn:'"
+    if (!(urnString.length > 4 && urnString.regionMatches(0, "urn:", 0, 4, ignoreCase = true))) {
+        throw UriParseException(urnString, "Cannot parse \"$urnString\": a URN must start with \"urn:\".")
     }
     val rest = urnString.substring(4)
     val colon = rest.indexOf(':')
-    require(colon >= 0) { "URN must have namespace and identity" }
+    if (colon < 0) {
+        throw UriParseException(urnString, "Cannot parse \"$urnString\": a URN must have a namespace and an identity.")
+    }
     val namespace = rest.substring(0, colon)
     var tail = rest.substring(colon + 1)
 

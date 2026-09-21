@@ -41,6 +41,54 @@ data class GeoUri(
     }
 
     /**
+     * The coordinate reference system this URI actually uses, in the lowercase form RFC 5870 §3.3
+     * prefers.
+     *
+     * RFC 5870 §3.4.1: a URI uses the default WGS-84 CRS "if the 'crs' parameter is either missing or
+     * contains the value of 'wgs84'". So an absent [crs] and an explicit `"wgs84"` denote the same
+     * thing, and this reports `"wgs84"` for both.
+     */
+    val effectiveCrs: String get() = crs?.lowercase() ?: DEFAULT_CRS
+
+    /**
+     * Two `geo` URIs are equal when RFC 5870 §3.4.4 says they identify the same location.
+     *
+     * That rule is not structural equality on the members. It states that two URIs use the same CRS
+     * when "either both have the 'crs' parameter omitted, or both have the same <crslabel> value, or
+     * one has the 'crs' parameter omitted while the other URI specifies the default CRS explicitly
+     * with a <crslabel> value of 'wgs84'" — and §3.3 makes the label case-insensitive. Comparing the
+     * raw [crs] strings would report `geo:1,2` and `geo:1,2;crs=wgs84` as different locations, which
+     * the specification explicitly denies.
+     *
+     * The value you supplied is still preserved and still serialized; only the comparison is
+     * normalized.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is GeoUri) return false
+        return latitude == other.latitude &&
+            longitude == other.longitude &&
+            altitude == other.altitude &&
+            uncertainty == other.uncertainty &&
+            effectiveCrs == other.effectiveCrs
+    }
+
+    /** Hashes the effective CRS, so values equal under [equals] share a bucket. */
+    override fun hashCode(): Int {
+        var result = latitude.hashCode()
+        result = 31 * result + longitude.hashCode()
+        result = 31 * result + (altitude?.hashCode() ?: 0)
+        result = 31 * result + (uncertainty ?: 0)
+        result = 31 * result + effectiveCrs.hashCode()
+        return result
+    }
+
+    companion object {
+        /** The CRS a `geo` URI uses when the `crs` parameter is absent. RFC 5870 §3.4.1. */
+        const val DEFAULT_CRS: String = "wgs84"
+    }
+
+    /**
      * The URI scheme for Geographic Reference Identifiers (GRI).
      *
      * This is always "geo" as defined by [RFC 5870](https://datatracker.ietf.org/doc/html/rfc5870).
