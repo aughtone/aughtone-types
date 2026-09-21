@@ -53,13 +53,18 @@ data class Distance(
     /**
      * Subtracts another Distance from this Distance.
      *
-     * Since a `Distance` cannot be negative, a difference below zero is floored at zero meters.
+     * A `Distance` cannot be negative, so subtracting a larger distance is rejected rather than
+     * clamped: `3m - 5m` throws. Silently returning zero would turn an arithmetic mistake into a
+     * plausible-looking measurement that no later check can distinguish from a real one. Guard the
+     * call, or compare first, if the operands may be in either order.
      *
      * The accuracy of the resulting `Distance` is calculated by adding the absolute uncertainties of the two operands.
-     * If either operand has a null accuracy, the resulting accuracy will also be null.
+     * If either operand has a null accuracy, the resulting accuracy will also be null. A result of
+     * exactly zero carries a null accuracy, there being no measurement for a fraction to be of.
      *
      * @param other The Distance to subtract.
-     * @return A new Distance representing the difference, floored at zero.
+     * @return A new Distance representing the difference, which may be zero.
+     * @throws IllegalArgumentException if [other] is larger than this distance.
      */
     operator fun minus(other: Distance): Distance {
         require(meters >= other.meters) {
@@ -99,15 +104,17 @@ data class Distance(
     /**
      * Divides this Distance by an Integer.
      *
-     * Since a `Distance` cannot be negative, a quotient below zero (a negative divisor)
-     * is floored at zero meters.
+     * A `Distance` cannot be negative, so a negative divisor is rejected rather than clamped to
+     * zero. Dividing by zero throws separately, as it does for any number.
      *
      * The accuracy of the resulting `Distance` is the same as the original `Distance`,
-     * as the integer is assumed to be an exact value with no uncertainty.
+     * as the integer is assumed to be an exact value with no uncertainty. Accuracy is carried as a
+     * fraction of the measurement, so scaling the distance leaves it unchanged.
      *
-     * @param other The Integer to divide by.
-     * @return A new Distance representing the quotient, floored at zero.
-     * @throws ArithmeticException if dividing by zero.
+     * @param other The Integer to divide by. Must be positive.
+     * @return A new Distance representing the quotient.
+     * @throws ArithmeticException if [other] is zero.
+     * @throws IllegalArgumentException if [other] is negative.
      */
     operator fun div(other: Int): Distance {
         if (other == 0) throw ArithmeticException("Division by zero")
