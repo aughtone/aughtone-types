@@ -1,6 +1,7 @@
 package io.github.aughtone.types.util
 
-import kotlinx.atomicfu.atomic
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 
 /**
@@ -32,12 +33,16 @@ import kotlinx.atomicfu.atomic
  * @param V The type of the values in the map.
  * @param lazyVals A map of keys to functions that return values. These functions will be called to produce the value on first access.
  */
+@OptIn(ExperimentalAtomicApi::class)
 class LazyMap<K, V>(val lazyVals: Map<K, () -> V>) : Map<K, V> {
 
-    private val cacheRef = atomic<Map<K, V>>(emptyMap())
+    // The standard library's atomics rather than a compiler plugin: the cache is private, so the
+    // experimental opt-in stops here and never reaches a consumer, and the library keeps a build
+    // that needs no plugin kept in step with the Kotlin version.
+    private val cacheRef = AtomicReference<Map<K, V>>(emptyMap())
 
     /** The values evaluated so far. A snapshot; later evaluations do not appear in it. */
-    val cache: Map<K, V> get() = cacheRef.value
+    val cache: Map<K, V> get() = cacheRef.load()
     override fun containsKey(key: K): Boolean = lazyVals.containsKey(key)
     override fun isEmpty(): Boolean = lazyVals.isEmpty()
     override val keys: Set<K>
@@ -46,14 +51,14 @@ class LazyMap<K, V>(val lazyVals: Map<K, () -> V>) : Map<K, V> {
         get() = lazyVals.size
 
     override fun get(key: K): V? {
-        val snapshot = cacheRef.value
+        val snapshot = cacheRef.load()
         if (snapshot.containsKey(key)) return snapshot[key]
 
         val supplier = lazyVals[key] ?: return null
         val evaluated = supplier()
 
         while (true) {
-            val current = cacheRef.value
+            val current = cacheRef.load()
             // Another caller evaluated this key first; take their value so every caller agrees.
             if (current.containsKey(key)) return current[key]
             if (cacheRef.compareAndSet(current, current + (key to evaluated))) return evaluated

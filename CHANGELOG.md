@@ -54,7 +54,7 @@ Benchmarking found three costs, all fixed here. None changes an observable resul
 
 ### Changed
 
-- **`kotlinx-atomicfu` is used internally by `LazyMap`, and adds nothing to the published JVM artifact.** Its Gradle plugin transforms the atomics into `AtomicReferenceFieldUpdater` calls and strips itself from the class metadata, so the JVM POM is unchanged — still only `kotlinx-datetime`, `kotlinx-serialization-json` and the Kotlin standard library — and no atomicfu reference survives in the shipped bytecode. Native targets link it as an ordinary klib dependency, as they must.
+- **`LazyMap` uses the standard library's atomics, and the dependency list is unchanged.** The cache is held in a `kotlin.concurrent.atomics.AtomicReference`, so every POM still lists only `kotlinx-datetime`, `kotlinx-serialization-json` and the Kotlin standard library, on every target. The atomic is a private field and the experimental opt-in does not reach callers. An earlier approach used the `kotlinx-atomicfu` compiler plugin, which achieved the same clean POM by transforming the atomics away; it was dropped because the plugin has to be kept in step with both the Kotlin version and the Android Gradle plugin, and a published library gains nothing from that coupling.
 
 ## [3.4.0] - 2026-09-07
 
