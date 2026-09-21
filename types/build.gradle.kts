@@ -92,9 +92,6 @@ kotlin {
             dependencies {
                 api(libs.kotlinx.datetime)
                 api(libs.kotlinx.serialization.json)
-                // Compile-only on JVM and JS, where atomicfu transforms the atomics away and strips
-                // itself from the metadata. A runtime dependency only on Wasm. See LazyMap.
-                implementation(libs.atomicfu)
             }
         }
         val commonTest by getting {
@@ -134,18 +131,25 @@ tasks.named<Test>("jvmTest") {
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-// atomicfu 0.29.0 — the newest release — cannot read Kotlin 2.4.0 class metadata; its JVM bytecode
-// transformer caps at 2.3.0 and fails the build. Disabling the JVM transform keeps the atomics
-// working, at the cost of atomicfu remaining a runtime dependency on JVM instead of being compiled
-// away. Re-enable when atomicfu catches up with the Kotlin metadata version.
+// The atomicfu plugin supplies the dependency itself and, on JVM, transforms the atomics into
+// AtomicReferenceFieldUpdater calls and strips itself from the metadata — so nothing atomicfu
+// reaches a JVM consumer. Native links it as an ordinary klib dependency. See LazyMap.
+//
+// The atomicfu/Kotlin version pairing is load-bearing: the JVM transformer bundles kotlin-metadata-jvm
+// and refuses class metadata newer than it supports. atomicfu 0.29.0 cannot read Kotlin 2.4.0 metadata
+// and fails the build outright. Bump atomicfu alongside Kotlin, not after it.
 atomicfu {
-    transformJvm = false
+    transformJvm = true
 }
 
 mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
 
-    if (!project.hasProperty("skip-signing")) {
+    val hasInMemoryKey = project.hasProperty("signingInMemoryKey") ||
+            project.hasProperty("signingInMemoryKeyId") ||
+            project.hasProperty("signing.gnupg.keyName")
+
+    if (hasInMemoryKey && !project.hasProperty("skip-signing")) {
         signAllPublications()
     }
 

@@ -5,14 +5,14 @@ versionName = "4.0.0"
 android-minSdk = "17"
 android-compileSdk = "37"
 
-agp = "9.2.1"
-kotlin = "2.4.0"
+agp = "9.4.1"
+kotlin = "2.4.20"
 kotlinx-serialization = "1.11.0"
 kotlinx-datetime = "0.8.0"
 vanniktech = "0.37.0"
-kotlinBrowser = "2026.7.1"
+kotlinBrowser = "2026.9.2"
 ionspin-bignum ="0.3.10"
-atomicfu = "0.29.0"
+atomicfu = "0.33.0"
 
 [libraries]
 kotlin-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlinBrowser" }
@@ -21,7 +21,6 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "ionspin-bignum" }
-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 
 [plugins]
 multiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

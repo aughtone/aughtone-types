@@ -40,7 +40,7 @@ A breaking release. It removes names deprecated across the 2.x and 3.x lines, co
 
 ### Changed
 
-- **New dependency: `kotlinx-atomicfu`**, the first beyond `kotlinx-serialization` and `kotlinx-datetime`. It backs `LazyMap`'s atomic cache. The JVM bytecode transform is **disabled**, because atomicfu 0.29.0 — its newest release — cannot read Kotlin 2.4.0 class metadata and fails the build; atomicfu therefore remains a runtime dependency on JVM rather than being compiled away. Re-enable `transformJvm` when atomicfu catches up.
+- **`kotlinx-atomicfu` is used internally by `LazyMap`, and adds nothing to the published JVM artifact.** Its Gradle plugin transforms the atomics into `AtomicReferenceFieldUpdater` calls and strips itself from the class metadata, so the JVM POM is unchanged — still only `kotlinx-datetime`, `kotlinx-serialization-json` and the Kotlin standard library — and no atomicfu reference survives in the shipped bytecode. Native targets link it as an ordinary klib dependency, as they must.
 
 ## [3.4.0] - 2026-09-07
 
