@@ -1,5 +1,7 @@
 package io.github.aughtone.types.util
 
+import kotlinx.atomicfu.atomic
+
 
 /**
  * A map that lazily evaluates its values.
@@ -18,17 +20,24 @@ package io.github.aughtone.types.util
  * [equals] and [hashCode] follow the [Map] contract (structural equality, symmetric with maps
  * built by `mapOf`). Note that both may force evaluation of every value in this map.
  *
- * This class is not thread-safe. Concurrent access must be synchronized externally, otherwise
- * a value function may be invoked more than once or the cache may be corrupted.
+ * **Safe for concurrent access.** The cache is an immutable map held in an atomic reference and
+ * replaced by compare-and-set, so readers always see a coherent snapshot and no amount of
+ * simultaneous access can corrupt it. A cache hit costs one atomic read and allocates nothing.
+ *
+ * Under contention a value function may run **more than once** for the same key — the losing caller
+ * discards its own result and returns the winner's, so every caller still observes the same value.
+ * Value functions must therefore be pure; a function with side effects is not safe here.
  *
  * @param K The type of the keys in the map.
  * @param V The type of the values in the map.
  * @param lazyVals A map of keys to functions that return values. These functions will be called to produce the value on first access.
- * @param cache A mutable map that is used to cache the values that have been evaluated.
- *              Defaults to a new, empty [mutableMapOf].
  */
-class LazyMap<K, V>(val lazyVals: Map<K, () -> V>, val cache: MutableMap<K, V> = mutableMapOf()) :
-    Map<K, V> {
+class LazyMap<K, V>(val lazyVals: Map<K, () -> V>) : Map<K, V> {
+
+    private val cacheRef = atomic<Map<K, V>>(emptyMap())
+
+    /** The values evaluated so far. A snapshot; later evaluations do not appear in it. */
+    val cache: Map<K, V> get() = cacheRef.value
     override fun containsKey(key: K): Boolean = lazyVals.containsKey(key)
     override fun isEmpty(): Boolean = lazyVals.isEmpty()
     override val keys: Set<K>
@@ -37,11 +46,18 @@ class LazyMap<K, V>(val lazyVals: Map<K, () -> V>, val cache: MutableMap<K, V> =
         get() = lazyVals.size
 
     override fun get(key: K): V? {
-        if (cache.containsKey(key)) return cache[key]
+        val snapshot = cacheRef.value
+        if (snapshot.containsKey(key)) return snapshot[key]
+
         val supplier = lazyVals[key] ?: return null
         val evaluated = supplier()
-        cache[key] = evaluated
-        return evaluated
+
+        while (true) {
+            val current = cacheRef.value
+            // Another caller evaluated this key first; take their value so every caller agrees.
+            if (current.containsKey(key)) return current[key]
+            if (cacheRef.compareAndSet(current, current + (key to evaluated))) return evaluated
+        }
     }
 
     // Evaluates the value for a key known to exist in lazyVals; V itself may be nullable.

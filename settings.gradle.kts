@@ -29,3 +29,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "AOTypes"
 include(":types")
+
+include(":benchmarks")

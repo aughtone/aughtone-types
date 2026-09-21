@@ -49,31 +49,6 @@ class SpeedTest {
     }
 
     @Test
-    fun `minus operator floors at zero`() {
-        val s1 = Speed(5.0, 0.1f)
-        val s2 = Speed(10.0, 0.2f)
-        val result = s1 - s2
-        assertEquals(0.0, result.mps)
-        assertNull(result.accuracy)
-    }
-
-    @Test
-    fun `times operator with negative scalar floors at zero`() {
-        val s1 = Speed(10.0, 0.1f)
-        val result = s1 * -2.0
-        assertEquals(0.0, result.mps)
-        assertEquals(0.1f, result.accuracy)
-    }
-
-    @Test
-    fun `div operator with negative scalar floors at zero`() {
-        val s1 = Speed(10.0, 0.1f)
-        val result = s1 / -2.0
-        assertEquals(0.0, result.mps)
-        assertEquals(0.1f, result.accuracy)
-    }
-
-    @Test
     fun `times operator`() {
         val s1 = Speed(10.0, 0.1f)
         val result = s1 * 2.0
@@ -95,5 +70,20 @@ class SpeedTest {
         assertFailsWith<ArithmeticException> {
             s1 / 0.0
         }
+    }
+
+    @Test
+    fun `subtracting a larger speed throws rather than clamping`() {
+        assertFailsWith<IllegalArgumentException> { Speed(5.0, 0.1f) - Speed(10.0, 0.2f) }
+    }
+
+    @Test
+    fun `multiplying by a negative scalar throws rather than clamping`() {
+        assertFailsWith<IllegalArgumentException> { Speed(10.0, 0.1f) * -2.0 }
+    }
+
+    @Test
+    fun `dividing by a negative scalar throws rather than clamping`() {
+        assertFailsWith<IllegalArgumentException> { Speed(10.0, 0.1f) / -2.0 }
     }
 }

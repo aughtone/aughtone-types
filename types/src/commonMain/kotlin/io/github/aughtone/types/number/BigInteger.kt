@@ -1,5 +1,7 @@
 package io.github.aughtone.types.number
 
+import kotlin.math.ln
+import kotlin.math.roundToInt
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -76,25 +78,35 @@ data class BigInteger internal constructor(
         return toString(10)
     }
 
+    /**
+     * Renders this value in the given radix.
+     *
+     * Large values are converted by recursive splitting rather than by peeling off one digit at a
+     * time: the value is divided by a power of the radix near its own half-length, and the two
+     * halves are converted independently. Peeling digits costs a division per digit, which is
+     * quadratic in the length of the result; splitting turns it into a shallow recursion over
+     * halves. Below [SCHOENHAGE_THRESHOLD_WORDS] the split costs more than it saves and the direct
+     * method is used instead.
+     *
+     * @param radix The radix, which must be in `2..36`.
+     * @return The value in [radix], lowercase for digits above nine, with a leading `-` when negative.
+     * @throws IllegalArgumentException If [radix] is out of range.
+     */
     fun toString(radix: Int): String {
         require(radix in 2..36) { "Radix out of range" }
         if (signum == 0) return "0"
-        
-        val radixBig = valueOf(radix.toLong())
-        var current = this.abs()
+
+        val magnitudeValue = this.abs()
         val sb = StringBuilder()
-        
-        while (current.signum != 0) {
-            val (q, r) = current.divideAndRemainder(radixBig)
-            val digit = if (r.magnitude.isEmpty()) 0 else r.magnitude[0]
-            sb.append(digitToChar(digit))
-            current = q
+        if (signum < 0) sb.append('-')
+
+        if (magnitudeValue.magnitude.size <= SCHOENHAGE_THRESHOLD_WORDS) {
+            sb.append(smallMagnitudeToString(magnitudeValue, radix))
+        } else {
+            val powers = buildRadixPowers(radix, magnitudeValue.magnitudeBitLength())
+            appendMagnitude(magnitudeValue, sb, radix, 0, powers)
         }
-        
-        if (signum < 0) {
-            sb.append('-')
-        }
-        return sb.reverse().toString()
+        return sb.toString()
     }
 
     private fun abs(): BigInteger {
@@ -167,6 +179,55 @@ data class BigInteger internal constructor(
     operator fun minus(other: BigInteger): BigInteger = subtract(other)
     operator fun times(other: BigInteger): BigInteger = multiply(other)
     operator fun unaryMinus(): BigInteger = if (this.signum == 0) this else BigInteger(-this.signum, this.magnitude)
+
+    /**
+     * Returns the number of bits in the minimal two's-complement representation of this value,
+     * excluding the sign bit.
+     *
+     * For a positive value this is the position of its highest set bit, so it answers "how big is
+     * this, roughly" in constant time without converting anything. For zero it is `0`. For a
+     * negative value it is the length of the two's-complement form, which is one less than the
+     * magnitude's bit length exactly when the magnitude is a power of two — `-8` needs three bits,
+     * `-9` needs four.
+     *
+     * This matches `java.math.BigInteger.bitLength`, so the two can be compared directly in
+     * parity testing.
+     *
+     * @return The bit length, which is never negative.
+     */
+    fun bitLength(): Int {
+        if (signum == 0) return 0
+        val magnitudeBits = magnitudeBitLength()
+        if (signum > 0) return magnitudeBits
+        return if (isMagnitudePowerOfTwo()) magnitudeBits - 1 else magnitudeBits
+    }
+
+    /**
+     * Returns the bit length of the magnitude, ignoring the sign. Zero has a length of `0`.
+     */
+    private fun magnitudeBitLength(): Int {
+        if (magnitude.isEmpty()) return 0
+        val highestIndex = magnitude.size - 1
+        val highestWord = magnitude[highestIndex].toUInt()
+        if (highestWord == 0u) return 0
+        return highestIndex * 32 + (32 - highestWord.countLeadingZeroBits())
+    }
+
+    /**
+     * Returns whether the magnitude is exactly a power of two, meaning a single bit is set across
+     * the whole of it.
+     */
+    private fun isMagnitudePowerOfTwo(): Boolean {
+        var seenSetBit = false
+        for (word in magnitude) {
+            val bits = word.toUInt()
+            if (bits == 0u) continue
+            if (seenSetBit) return false
+            if (bits and (bits - 1u) != 0u) return false
+            seenSetBit = true
+        }
+        return seenSetBit
+    }
 
     /**
      * Converts this BigInteger to an Int.
@@ -444,14 +505,14 @@ data class BigInteger internal constructor(
             
             if (start == cleanValue.length) throw NumberFormatException("Zero-length numeric string")
             
-            val radixBig = valueOf(radix.toLong())
-            var result = ZERO
             for (i in start until cleanValue.length) {
-                val digit = digitVal(cleanValue[i], radix)
-                if (digit < 0) throw NumberFormatException("Invalid character: ${cleanValue[i]}")
-                result = result.multiply(radixBig).add(valueOf(digit.toLong()))
+                if (digitVal(cleanValue[i], radix) < 0) {
+                    throw NumberFormatException("Invalid character: ${cleanValue[i]}")
+                }
             }
-            
+
+            val result = parseMagnitude(cleanValue, start, cleanValue.length, radix, mutableMapOf())
+
             if (result.signum == 0) return ZERO
             return BigInteger(sign * result.signum, result.magnitude)
         }
@@ -741,6 +802,165 @@ data class BigInteger internal constructor(
                 else -> -1
             }
             return if (d in 0 until radix) d else -1
+        }
+
+        /**
+         * The magnitude size, in 32-bit words, below which recursive base conversion is not worth
+         * its overhead and the direct chunked method is used instead.
+         *
+         * Measured on JVM only — the benchmarks in `:benchmarks` are JVM-only today, so this
+         * threshold has not been checked on Native, JS or Wasm, where relative division and
+         * allocation costs differ. Revisit it if those targets are added to the suite.
+         */
+        private const val SCHOENHAGE_THRESHOLD_WORDS = 20
+
+        /** The natural logarithm of two, used to convert bit lengths into digit counts. */
+        private val LOG_TWO = ln(2.0)
+
+        /**
+         * Returns how many digits of [radix] always fit in a [Long], so a chunk that size can be
+         * converted by the platform rather than by big-number arithmetic.
+         */
+        /**
+         * Parses `text[start until end]` by splitting it in half, parsing each half and
+         * recombining, which mirrors [appendMagnitude] in the other direction.
+         *
+         * Reading digits one at a time costs a full-width multiply per digit, so the total is
+         * quadratic in the length of the input. Splitting makes each level of the recursion cost
+         * one multiply against a power of the radix, and there are only logarithmically many
+         * levels.
+         *
+         * @param powerMemo Powers of the radix already computed during this parse. Every branch at
+         *   the same depth needs the same power, so without memoisation the ladder would be
+         *   rebuilt once per branch.
+         */
+        private fun parseMagnitude(
+            text: String,
+            start: Int,
+            end: Int,
+            radix: Int,
+            powerMemo: MutableMap<Int, BigInteger>,
+        ): BigInteger {
+            val length = end - start
+            if (length <= digitsPerLong(radix)) {
+                return valueOf(text.substring(start, end).toLong(radix))
+            }
+
+            val lowerLength = length / 2
+            val splitIndex = end - lowerLength
+            val upper = parseMagnitude(text, start, splitIndex, radix, powerMemo)
+            val lower = parseMagnitude(text, splitIndex, end, radix, powerMemo)
+            val shift = powerMemo.getOrPut(lowerLength) { radixPower(radix, lowerLength) }
+            return upper.multiply(shift).add(lower)
+        }
+
+        private fun digitsPerLong(radix: Int): Int {
+            var digits = 0
+            var limit = 1L
+            while (limit <= Long.MAX_VALUE / radix) {
+                limit *= radix
+                digits++
+            }
+            return digits
+        }
+
+        /**
+         * Returns `radix^exponent`, by binary exponentiation.
+         */
+        private fun radixPower(radix: Int, exponent: Int): BigInteger {
+            var result = ONE
+            var base = valueOf(radix.toLong())
+            var remaining = exponent
+            while (remaining > 0) {
+                if (remaining and 1 == 1) result = result.multiply(base)
+                base = base.multiply(base)
+                remaining = remaining shr 1
+            }
+            return result
+        }
+
+        /**
+         * Builds the repeated-squaring ladder `radix^(2^0)`, `radix^(2^1)`, … far enough to split a
+         * value of [bitLength] bits.
+         *
+         * The ladder is built once per conversion and handed down through the recursion, rather
+         * than being cached across calls. Each level reuses the level below it, so building it
+         * costs about one full-width multiplication — small beside the conversion it serves, and it
+         * keeps this free of shared mutable state that every target would have to make safe.
+         */
+        private fun buildRadixPowers(radix: Int, bitLength: Int): List<BigInteger> {
+            val estimatedDigits = bitLength * LOG_TWO / ln(radix.toDouble())
+            val powers = mutableListOf(valueOf(radix.toLong()))
+            var reach = 1.0
+            while (reach * 2 <= estimatedDigits) {
+                powers.add(powers.last().multiply(powers.last()))
+                reach *= 2
+            }
+            return powers
+        }
+
+        /**
+         * Appends [value] in [radix] to [sb], padded on the left with zeros to at least
+         * [minDigits] characters.
+         *
+         * The padding is what makes the split sound: a lower half that happens to be short still
+         * has to occupy its full width in the result, or the halves run together and the digits
+         * shift.
+         */
+        private fun appendMagnitude(
+            value: BigInteger,
+            sb: StringBuilder,
+            radix: Int,
+            minDigits: Int,
+            powers: List<BigInteger>,
+        ) {
+            if (value.magnitude.size <= SCHOENHAGE_THRESHOLD_WORDS) {
+                val text = smallMagnitudeToString(value, radix)
+                repeat(minDigits - text.length) { sb.append('0') }
+                sb.append(text)
+                return
+            }
+
+            // Split near the half-length of the value, stepping down if the chosen power is too
+            // large to divide it, which would otherwise recurse forever on an unchanged value.
+            var level = ((ln(value.magnitudeBitLength() * LOG_TWO / ln(radix.toDouble())) / LOG_TWO) - 1.0)
+                .roundToInt()
+                .coerceIn(0, powers.size - 1)
+            while (level > 0 && compareMagnitude(powers[level].magnitude, value.magnitude) > 0) {
+                level--
+            }
+
+            val (quotient, remainder) = value.divideAndRemainder(powers[level])
+            val lowerDigits = 1 shl level
+            appendMagnitude(quotient, sb, radix, (minDigits - lowerDigits).coerceAtLeast(0), powers)
+            appendMagnitude(remainder, sb, radix, lowerDigits, powers)
+        }
+
+        /**
+         * Converts a value already known to be small, taking [digitsPerLong] digits at a time so
+         * the per-digit work happens in [Long] arithmetic rather than in big-number division.
+         */
+        private fun smallMagnitudeToString(value: BigInteger, radix: Int): String {
+            if (value.signum == 0) return "0"
+
+            val chunkDigits = digitsPerLong(radix)
+            val chunkDivisor = radixPower(radix, chunkDigits)
+            val chunks = mutableListOf<Long>()
+            var current = value
+            while (current.signum != 0) {
+                val (quotient, remainder) = current.divideAndRemainder(chunkDivisor)
+                chunks.add(remainder.toLong())
+                current = quotient
+            }
+
+            val sb = StringBuilder()
+            sb.append(chunks.last().toString(radix))
+            for (index in chunks.size - 2 downTo 0) {
+                val text = chunks[index].toString(radix)
+                repeat(chunkDigits - text.length) { sb.append('0') }
+                sb.append(text)
+            }
+            return sb.toString()
         }
 
         private fun digitToChar(digit: Int): Char {

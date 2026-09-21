@@ -36,7 +36,7 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Bit("bit", "b"),
     Bushel("bsh"),
     Byte("B"),
-    Calorie("Cal"),
+    Calorie("cal", "Cal"),
     Carat("ct"), // don't confuse the carat (ct) with the karat (K or kt)
     Celsius("°C", "C"),
     Centiliter("cl"),
@@ -56,11 +56,10 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Fahrenheit("°F", "F"),
     Fathom("fth", "fm"),
     FluidOunce("fl⋅oz", "fl. oz."),
-    FoodCalorie("kcal"), // The term "food calorie" is a common name for the kilocalorie, which has the symbol kcal.
     Foot("ft", "′", "'"),
     Furlong("fur"),
-    Gallon("gal"),
-    GallonImperial("imp gal", "gal", "imp. gal.", "imp⋅gal"),
+    Gallon("US gal", "gal", "gal (US)", "US gallon"),
+    GallonImperial("imp gal", "gal", "imperial gal", "UK gal", "imp. gal.", "imp⋅gal"),
     Gigabit("Gb"),
     Gigabyte("GB"),
     Gigahertz("GHz"),
@@ -79,7 +78,7 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Kelvin("K"),
     Kilobit("kbit", "kb"),
     Kilobyte("KiB", "kB"),
-    Kilocalorie("kCal"),
+    Kilocalorie("kcal", "kCal"),
     Kilogram("kg"),
     Kilohertz("kHz"),
     Kilojoule("kJ"),
@@ -151,21 +150,33 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Month("mo", "month"), // english only, i18n should be reviewed
     Week("wk", "week"), // english only, i18n should be reviewed
     Year("a", "y", "yr", "year"), // english only, i18n should be reviewed
-    YearJulian("aj", "a"); // english only, i18n should be reviewed
+    YearJulian("aj", "a", "a_j"); // english only, i18n should be reviewed
 
     companion object {
         /**
          * Finds the first `UnitOfMeasure` enum constant that matches the given symbol.
          *
-         * This method prioritizes an exact match on the primary `symbol` before searching
-         * through the `altSymbols`. The search is case-sensitive.
+         * An exact match on a primary `symbol` wins outright. Failing that, the alternate symbols
+         * are searched — and if more than one unit claims the symbol, this **refuses** and returns
+         * `null` rather than picking one by declaration order.
+         *
+         * That refusal is deliberate. `"gal"` is claimed by both [Gallon] and [GallonImperial],
+         * which differ by about 20 percent, and each market qualifies the other one: a reader in
+         * the United States writes `"imp gal"`, a reader in Canada or the United Kingdom writes
+         * `"US gal"`. Returning either for a bare `"gal"` would be a confident wrong answer.
+         *
+         * Use [findAll] to discover the candidates and choose. The search is case-sensitive.
          *
          * @param symbol The string symbol to search for (e.g., "kg", "m", "ft").
-         * @return The matching `UnitOfMeasure` constant, or `null` if no match is found.
+         * @return The matching `UnitOfMeasure`, or `null` if nothing matches **or** if the symbol is
+         *         ambiguous. Call [findAll] to tell those two cases apart: it returns an empty list
+         *         for an unknown symbol and more than one entry for an ambiguous one.
          */
         fun findFirst(symbol: String?): UnitOfMeasure? {
             if (symbol == null) return null
-            return entries.find { it.symbol == symbol } ?: entries.find { symbol in it.altSymbols }
+            entries.find { it.symbol == symbol }?.let { return it }
+            val matches = entries.filter { symbol in it.altSymbols }
+            return matches.singleOrNull()
         }
 
         /**

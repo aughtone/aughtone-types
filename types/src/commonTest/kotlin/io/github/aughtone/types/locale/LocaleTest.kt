@@ -140,12 +140,6 @@ class LocaleTest {
     }
 
     @Test
-    @Suppress("DEPRECATION")
-    fun `test Locale toLanguageTag compatibility`() {
-        assertEquals("en-US", Locale("en", "US", displayName = "").toLanguageTag())
-    }
-
-    @Test
     fun `test availableLocales returns a non-empty list`() {
         val locales = availableLocales()
         assertTrue(locales.isNotEmpty(), "availableLocales() should not return an empty list")

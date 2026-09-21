@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.multiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.atomicfu)
 }
 
 group = libs.versions.group.get()
@@ -130,10 +131,25 @@ tasks.named<Test>("jvmTest") {
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+// The atomicfu plugin supplies the dependency itself and, on JVM, transforms the atomics into
+// AtomicReferenceFieldUpdater calls and strips itself from the metadata — so nothing atomicfu
+// reaches a JVM consumer. Native links it as an ordinary klib dependency. See LazyMap.
+//
+// The atomicfu/Kotlin version pairing is load-bearing: the JVM transformer bundles kotlin-metadata-jvm
+// and refuses class metadata newer than it supports. atomicfu 0.29.0 cannot read Kotlin 2.4.0 metadata
+// and fails the build outright. Bump atomicfu alongside Kotlin, not after it.
+atomicfu {
+    transformJvm = true
+}
+
 mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
 
-    if (!project.hasProperty("skip-signing")) {
+    val hasInMemoryKey = project.hasProperty("signingInMemoryKey") ||
+            project.hasProperty("signingInMemoryKeyId") ||
+            project.hasProperty("signing.gnupg.keyName")
+
+    if (hasInMemoryKey && !project.hasProperty("skip-signing")) {
         signAllPublications()
     }
 

@@ -10,7 +10,7 @@ Published to Maven Central as `io.github.aughtone:types`.
 
 ```kotlin
 // build.gradle.kts
-implementation("io.github.aughtone:types:3.4.0")
+implementation("io.github.aughtone:types:4.0.0")
 ```
 
 Or through a version catalog:
@@ -18,7 +18,7 @@ Or through a version catalog:
 ```toml
 # gradle/libs.versions.toml
 [versions]
-aughtone-types = "3.4.0"
+aughtone-types = "4.0.0"
 
 [libraries]
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
@@ -30,6 +30,8 @@ implementation(libs.aughtone.types)
 ```
 
 > [!IMPORTANT]
+> **v4.0.0 Breaking Changes**: A breaking release. `Outcome.Error` and `Locale.toLanguageTag()` are removed; `Money` equality is now numeric so `5.1` equals `5.10`; `Distance` and `Speed` throw instead of clamping to zero; `GeoBoundingBox` leaves the geometry hierarchy; `GeoFeature.properties` becomes `JsonObject`; invalid GeoJSON is now rejected; and `UnitOfMeasure.findFirst` refuses ambiguous symbols rather than guessing. Several change behaviour **without a compile error** — see the [changelog](CHANGELOG.md) before upgrading.
+>
 > **v3.4.0 `Outcome.Error` renamed**: The failure case of `Outcome` is now `Outcome.Failure`, and the factory is `Outcome.failure(...)`. The old names still compile as deprecated aliases and will be removed in 4.0.0. `Outcome$Error` no longer exists as a class, so upgrading from 3.3.0 needs a clean and rebuild rather than a code change.
 >
 > **v3.3.0 Locale Display Names**: Eleven locale `displayName` values are corrected — renamed countries (`Czechia`, `North Macedonia`, `Türkiye`), incomplete or abbreviated country names, and dated language exonyms (`Farsi` → `Persian`, `Azeri` → `Azerbaijani`). No API changed, but snapshot tests and cached UI strings holding the old names will need updating. See the [changelog](CHANGELOG.md) for the full table.
@@ -121,4 +123,20 @@ To ensure mathematical precision and behavior consistency, this library employs 
 
 - **JVM Baseline**: Parity verified against standard JDK types (`java.math.BigInteger` and `java.math.BigDecimal`).
 - **KMP Baseline**: Parity verified against the official Multiplatform [Ionspin BigNum](https://github.com/ionspin/kotlin-multiplatform-bignum) library.
+
+### ⚡ Performance
+
+`BigInteger` and `BigDecimal` are benchmarked against the JDK types. Figures are relative to `java.math`, so **1.0x is parity and below 1.0x is faster than the JDK**.
+
+| Values of 40 digits or more | vs `java.math` |
+|---|---|
+| Division, remainder, modulo | **0.5x – 0.8x** |
+| Bitwise operations | **0.5x – 0.8x** |
+| Text conversion (`toString`, parsing) | **0.8x** – 3.4x |
+| Scaling, rounding, `BigDecimal` division | **0.9x** – 1.2x |
+| Add, subtract, multiply, shifts | 1.2x – 2.9x |
+
+Small values are the exception, and deliberately so: the JDK keeps any `BigDecimal` under 19 digits in a `long`, so it answers `toDouble` on one by reading a field. There is no equivalent fast path here, and short-value operations run from several times to two orders of magnitude slower as a result. Two other costs are worth knowing: `modPow` is around 5x, lacking Montgomery reduction, and comparing two `BigDecimal` values of *different* scale is quick only when their magnitudes differ enough to settle it without aligning them — equal scales, the common case, beat the JDK.
+
+Run them yourself with `./gradlew :benchmarks:benchmark`. Ratios hold reasonably across machines; absolute throughput does not, so the benchmarks report both.
 

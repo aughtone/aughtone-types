@@ -11,6 +11,18 @@ import kotlinx.serialization.Serializable
  * This allows tracking of sub-minor units (fractions of a cent) while maintaining
  * currency-aware rounding rules.
  *
+ * Two `Money` values are equal when they are the same currency and the same **amount**, regardless
+ * of how that amount was written: `Money(5.1, usd)` equals `Money(5.10, usd)`. The scale a value was
+ * given is preserved in storage and in serialization — `5.0100000` is stored and serialized as
+ * `5.0100000` — but it takes no part in equality, because no arithmetic in this library can make two
+ * spellings of one amount differ in value.
+ *
+ * A consequence worth knowing: two equal amounts can serialize differently. Fidelity to the value you
+ * were given is preferred here over one wire form per amount. A caller who needs to know whether two
+ * amounts were *written* the same way compares `value.scale` explicitly.
+ *
+ * [BigDecimal] itself is unaffected and keeps scale-sensitive equality, matching the JDK.
+ *
  * @property value The monetary value as an arbitrary-precision decimal.
  * @property currency The currency of the money. Defaults to [Currency.current].
  */
@@ -20,7 +32,39 @@ data class Money(
     val value: BigDecimal = BigDecimal.ZERO,
     @SerialName("currency")
     val currency: Currency = Currency.current
-) {
+) : Comparable<Money> {
+
+    /**
+     * Two amounts are equal when they share a currency and the same numeric value, irrespective of
+     * scale. `Money(5.1, usd) == Money(5.10, usd)`.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Money) return false
+        return currency == other.currency && value.compareTo(other.value) == 0
+    }
+
+    /**
+     * Hashes the amount rather than its representation, so that values equal under [equals] land in
+     * the same bucket. Without stripping the scale here, `5.1` and `5.10` would be equal yet hash
+     * differently, and every hash-based collection would misbehave.
+     */
+    override fun hashCode(): Int =
+        31 * value.stripTrailingZeros().hashCode() + currency.hashCode()
+
+    /**
+     * Orders two amounts of the same currency numerically.
+     *
+     * @throws IllegalArgumentException if the currencies differ — comparing USD to EUR is not a
+     *         meaningful ordering, and silently producing one would be worse than refusing.
+     */
+    override fun compareTo(other: Money): Int {
+        require(currency == other.currency) {
+            "Cannot compare ${currency.code} to ${other.currency.code}: amounts in different currencies have no ordering."
+        }
+        return value.compareTo(other.value)
+    }
+
     /**
      * Returns the value in minor units (e.g., cents for USD), rounded to the currency's standard digits
      * using Banker's Rounding (HALF_EVEN).
