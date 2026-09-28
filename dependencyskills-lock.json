@@ -1,0 +1,27 @@
+{
+    "version": "0.0.1",
+    "changes": [
+        {
+            "kind": "skill",
+            "path": ".agents/skills/to-library-skill",
+            "files": {
+                "SKILL.md": "86a4c24cc1c5bb1d09068825cb0caea905a3ec1ed4a9d2135fa55e7a38a3db21",
+                "assets/SKILL.template.md": "55ec2ffa212aeeca94829bcb8ed0d1925954658d126587df224dcdfe5e14ab0b",
+                "references/per-language.md": "63da4569b725ed43b0d5087acaf14495eeb6d3823cb9e36556d1729dbb55b74c",
+                "references/writing-each-section.md": "981231a67b9631652f7d938d2b114d12b63fc426c87303af6d1973cad812c9d4"
+            },
+            "by": "gradle-plugin"
+        },
+        {
+            "kind": "skill",
+            "path": ".claude/skills/to-library-skill",
+            "files": {
+                "SKILL.md": "86a4c24cc1c5bb1d09068825cb0caea905a3ec1ed4a9d2135fa55e7a38a3db21",
+                "assets/SKILL.template.md": "55ec2ffa212aeeca94829bcb8ed0d1925954658d126587df224dcdfe5e14ab0b",
+                "references/per-language.md": "63da4569b725ed43b0d5087acaf14495eeb6d3823cb9e36556d1729dbb55b74c",
+                "references/writing-each-section.md": "981231a67b9631652f7d938d2b114d12b63fc426c87303af6d1973cad812c9d4"
+            },
+            "by": "gradle-plugin"
+        }
+    ]
+}

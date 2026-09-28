@@ -45,6 +45,8 @@ locale.localizedDisplayName(displayIn: Locale.Companion.shared.current)
 
 There is no overload with fewer parameters. Supply `nil` for the optional ones.
 
+Note what the last line costs you: `Locale.Companion.shared.current` **throws** when the platform cannot resolve a locale, and in Swift you are forced to write it explicitly wherever Kotlin would have defaulted it. `Locale.Companion.shared.currentOrNull` returns `nil` instead, which is usually what you want at a call site you did not choose to make.
+
 ## Overloads that differ only by number type gain a trailing underscore
 
 `Money.div` takes a `Double` in one overload and a `Long` in another. Objective-C cannot express that, so the second is renamed:
@@ -82,4 +84,6 @@ A nullable or generic numeric becomes a boxed class: `accuracy` on `Coordinates`
 
 ## If you received this as an XCFramework
 
-You are reading this file, so you have the sources jar. A Swift developer given only a binary XCFramework never receives it, and the only guidance that reaches them is the doc comment Kotlin writes into the framework header. The traps above are in `SKILL.md` and in this file; whether they are also in the exported doc comments is a decision for the library's maintainer.
+You are reading this file, so you have the sources jar. A Swift developer given only a binary XCFramework never receives it, and the only guidance that reaches them is the doc comment Kotlin writes into the framework header.
+
+The two traps that exist nowhere else — the trailing-underscore overloads on `Money`, and the opposing argument orders of `GeoPoint` and `Coordinates` — are now in those doc comments as well, so they reach a binary consumer. The rest of this file is about the export itself and has no declaration to hang on.

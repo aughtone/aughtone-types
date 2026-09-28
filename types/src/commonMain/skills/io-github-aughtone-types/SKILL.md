@@ -70,7 +70,7 @@ when (val result = runOutcome { url(userInput) }) {
 
 **`Distance` and `Speed` reject negative results instead of clamping them.** `Distance(3.0) - Distance(5.0)` throws; it does not return zero. The same applies to negative scalars in `Speed.times` and `Speed.div`, and to a negative divisor on `Distance`. Guard the call, or compare first, when operands may arrive in either order. A zero distance or speed is perfectly valid — only going below zero is refused.
 
-**`Locale.current` and `Currency.current` throw when the platform cannot say.** Both are `requireNotNull` over a platform lookup, so they raise `IllegalArgumentException` rather than defaulting to English or USD. There is no `currentOrNull`; if you need a fallback, call `currentNativeLocale(fallbackTag)` directly, or resolve a known tag with `Locale.getLocale("en-CA")`.
+**`Locale.current` and `Currency.current` throw when the platform cannot say.** Both are `requireNotNull` over a platform lookup, so they raise `IllegalArgumentException` rather than defaulting to English or USD. That makes them a poor default argument, a poor property initialiser and a poor thing to read during composition. Use `Locale.currentOrNull` and `Currency.currentOrNull` where a sensible fallback exists, and keep the throwing form where none does — failing loudly beats silently rendering someone else's language.
 
 **`UnitOfMeasure.findFirst` returns `null` for an ambiguous symbol** rather than guessing by declaration order. `findFirst("gal")` is `null`, because `Gallon` and `GallonImperial` both claim it and picking one silently is a twenty-percent error. Use `findAll(symbol)`, which returns every candidate — empty for unknown, more than one for ambiguous, so the two cases stay distinguishable.
 
@@ -78,7 +78,9 @@ when (val result = runOutcome { url(userInput) }) {
 
 **URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. In every case the value you supplied is preserved and serialized unchanged — only the comparison is normalized.
 
-**`localizedDisplayName` falls back to English, silently.** It delegates to whatever CLDR the platform ships, so wording varies between platforms and OS versions, and roughly one pair in twenty has no data at all and returns the English name instead. On Linux there is no platform CLDR, so it always returns English. Do not rely on it for strings that must match across platforms.
+**`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not, but when neither can supply one the English name comes back with nothing to mark it. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
+
+**Never depend on the exact name.** Platforms disagree about wording on a large share of the names they all know — a browser and a native platform differ on roughly 40% — so `nl-BE` may be "Nederlands (België)" or "Vlaams" depending on where your code runs. Compare locales, never their rendered names, and keep them out of cache keys and snapshot tests.
 
 **A `LazyMap` value function must be pure.** The cache is an immutable map behind an atomic reference, and under contention a value function may run more than once for the same key — the losing caller discards its own result and returns the winner's. Every caller observes the same value, but a function with side effects will perform them more than once.
 
@@ -102,6 +104,11 @@ when (val result = runOutcome { url(userInput) }) {
 - `Gallon.symbol` is `"US gal"`, was `"gal"`; `Calorie.symbol` is `"cal"` and `Kilocalorie.symbol` is `"kcal"`. Anything rendering `.symbol` produces different output, with no compile error.
 - `UnitOfMeasure.findFirst` returns `null` on an ambiguous symbol, where it previously returned the first match by declaration order.
 
+**Changed behaviour in 4.1.0-alpha1**, with no signature change:
+
+- **`localizedDisplayName` was returning English for every locale on the JS target**, in 3.4.0 and 4.0.0, and now returns real translations. Anything rendering locale names on web will change output. The other targets are unaffected in kind, though a few names change where the JVM had been discarding script subtags.
+- **`localizedDisplayNameOrNull`, `Locale.currentOrNull` and `Currency.currentOrNull`** are new. Nothing is removed and nothing is renamed.
+
 **Earlier renames still worth knowing**, because code and training data predate them:
 
 - GeoJSON types gained a `Geo` prefix in 3.0.0: `Point` is `GeoPoint`, `Polygon` is `GeoPolygon`, `Feature` is `GeoFeature`, and so on.
@@ -115,7 +122,7 @@ This library models values. It does not format them for display, and it has no o
 
 It is not a datetime library. `kotlinx-datetime` is an `api` dependency and is exposed deliberately; instants, durations and time zones come from there.
 
-It is not an internationalization framework. It carries locale and currency identity, and one English name per entry as a fallback, but translated display names come from the platform rather than from bundled tables.
+It is not an internationalization framework. It carries locale and currency identity and can name a locale in the reader's language, but it does not translate anything else, and it does not promise the same wording on every platform.
 
 It does no I/O, has no networking, and reads no files or resources at runtime.
 

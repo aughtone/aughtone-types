@@ -205,6 +205,11 @@ data class Money(
      * Multiplies this `Money` object by a **dimensionless** [Long] multiplier:
      * `Money(1000L, usd) * 2L` is $20.00. Note that this differs from [plus]/[minus],
      * where a [Long] is a minor-unit amount.
+     *
+     * **Swift callers:** this arrives as `times(scalar_:)`, with a trailing underscore, because
+     * Objective-C cannot express two overloads that differ only by number type. `times(scalar:)`
+     * without the underscore is the [Double] overload. The underscore is the only thing telling
+     * them apart, and choosing the wrong one silently changes which arithmetic runs.
      */
     operator fun times(scalar: Long): Money {
         return Money(this.value * BigDecimal(scalar), this.currency)
@@ -213,6 +218,11 @@ data class Money(
     /**
      * Divides this `Money` object by a **dimensionless** [Long] divisor. Note that this
      * differs from [plus]/[minus], where a [Long] is a minor-unit amount.
+     *
+     * **Swift callers:** this arrives as `div(scalar_:)`, with a trailing underscore, because
+     * Objective-C cannot express two overloads that differ only by number type. `div(scalar:)`
+     * without the underscore is the [Double] overload, and `div(other:)` is division by another
+     * `Money`, which returns a ratio rather than an amount.
      *
      * The result is exact when the quotient terminates; otherwise it is rounded with
      * Banker's Rounding (HALF_EVEN) at a scale of `max(value.scale, currency.digits) + 2`,
