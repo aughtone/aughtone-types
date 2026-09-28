@@ -1,7 +1,7 @@
 [versions]
 namespace = "io.github.aughtone.types"
 group = "io.github.aughtone"
-versionName = "4.0.0"
+versionName = "4.1.0-alpha1"
 android-minSdk = "17"
 android-compileSdk = "37"
 
@@ -13,6 +13,8 @@ vanniktech = "0.37.0"
 kotlinBrowser = "2026.9.2"
 ionspin-bignum ="0.3.10"
 kotlinx-benchmark = "0.5.0"
+# Dependency skills trial: ships each module's skill in its sources jar. Local publish only, until released.
+dependencyskills = "0.0.1"
 
 [libraries]
 kotlin-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlinBrowser" }
@@ -31,3 +33,4 @@ vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinAllOpen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
 kotlinxBenchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }
+dependencySkills = { id = "org.dependencyskills.plugin", version.ref = "dependencyskills" }

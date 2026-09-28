@@ -1,5 +1,3 @@
-import org.gradle.api.tasks.PathSensitivity
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -10,6 +8,12 @@ plugins {
     alias(libs.plugins.multiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.dependencySkills)
+}
+
+// Dependency skills trial: write the skill an agent uses to write this library's guide.
+dependencySkills {
+    author { }
 }
 
 group = libs.versions.group.get()
@@ -144,7 +148,7 @@ mavenPublishing {
     coordinates(group.toString(), "types", version.toString())
 
     pom {
-        name = "Aughtone Types"
+        name = "Aught One Types"
         description = "A library of reusable types."
         inceptionYear = "2025"
         url = "https://github.com/aughtone/aughtone-types"

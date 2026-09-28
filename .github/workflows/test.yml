@@ -34,6 +34,15 @@ jobs:
       - name: Run all tests
         run: ./gradlew check
 
+      # `check` never builds the publications, so a fault in the publishing task graph — a plugin
+      # that assumes a task the Android target does not create, a broken POM, a missing artifact —
+      # passes here and fails during release, after the tag has been cut. Assembling every
+      # publication locally reproduces that in seconds and costs a couple of minutes here.
+      # Signing is skipped: there are no signing keys on this workflow, and it is the task graph
+      # and the artifacts being checked, not the credentials.
+      - name: Verify the publications assemble
+        run: ./gradlew publishToMavenLocal -Pskip-signing --no-configuration-cache
+
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
         if: always()

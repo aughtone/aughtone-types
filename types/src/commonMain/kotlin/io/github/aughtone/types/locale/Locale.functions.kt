@@ -195,7 +195,9 @@ fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
  * to the English [Locale.displayName].
  *
  * **Warning:** Because names come from the underlying OS, the exact wording may vary
- * slightly between platforms and OS versions. See ADR 0003 for the rationale and tradeoffs.
+ * slightly between platforms and OS versions, and the English fallback is silent — a returned
+ * name may be the English one rather than a translation. Use [localizedDisplayNameOrNull] to tell
+ * those apart. See ADR 0003 for the rationale and tradeoffs.
  *
  * @param displayIn The locale whose language the name should be rendered in.
  * Defaults to [Locale.current].
@@ -203,7 +205,31 @@ fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
  * @see localizedDisplayNameForNative
  */
 fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
-    localizedDisplayNameForNative(this, displayIn) ?: displayName
+    localizedDisplayNameOrNull(displayIn) ?: displayName
+
+/**
+ * Returns the name of this locale in the language of [displayIn], or `null` when the platform has
+ * no localized name for that pairing.
+ *
+ * The same lookup as [localizedDisplayName], without the English fallback. That fallback is the
+ * reason this exists: it returns a real English name, so a caller cannot tell a genuine French name
+ * from a silent miss, and the miss is not rare. Coverage depends on the platform's own CLDR data,
+ * a small fraction of pairings have none, and Linux ships no data at all — so every name is a miss
+ * there and the fallback hides it completely.
+ *
+ * Use this wherever showing the wrong language matters more than showing nothing: to fall back to
+ * something of your own, to mark the entry, or to leave it out. Use [localizedDisplayName] when any
+ * readable name will do.
+ *
+ * @param displayIn The locale whose language the name should be rendered in.
+ *   Defaults to [Locale.current], which throws if the platform cannot resolve one — pass a locale
+ *   explicitly, or [Locale.currentOrNull], if that is not acceptable here.
+ * @return The localized name, or `null` if the platform could not provide one.
+ * @see localizedDisplayName
+ */
+fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): String? =
+    localizedDisplayNameForNative(this, displayIn)
+        ?: LocaleDisplayNameSupplement.nameFor(displayIn.languageCode, languageTag)
 
 /**
  * Retrieves the display name of [locale], localized for the language of [displayIn],

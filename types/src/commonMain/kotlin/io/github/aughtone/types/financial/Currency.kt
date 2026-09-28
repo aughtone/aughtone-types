@@ -61,11 +61,27 @@ data class Currency(
          * current region. It relies on the [Locale.current] mapping to determine the
          * correct ISO 4217 code.
          *
-         * @throws IllegalStateException if the current locale or its associated currency cannot be determined.
+         * @throws IllegalArgumentException if the current locale or its associated currency
+         *   cannot be determined. Use [currentOrNull] to receive `null` instead.
+         * @see currentOrNull
          * @see Locale.current
          */
         val current: Currency
             get() = requireNotNull(getCurrency(Locale.current)) { "Your locale could not be found, or there was no currency mapped to it. Try getCurrency(Locale) or construct your own." }
+
+        /**
+         * Returns the currency for the user's current region, or `null` when it cannot be
+         * determined.
+         *
+         * The same lookup as [current], reported rather than thrown, and `null` covers both ways it
+         * can fail: the platform could not resolve a locale at all, or it resolved one that no
+         * currency is mapped to. Those are different problems, so use [Locale.currentOrNull] first
+         * if you need to tell them apart.
+         *
+         * @return The current [Currency], or `null` if it could not be determined.
+         */
+        val currentOrNull: Currency?
+            get() = Locale.currentOrNull?.let { getCurrency(it) }
 
         /**
          * Retrieves the currency associated with the specified locale.

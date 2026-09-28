@@ -19,8 +19,8 @@ actual fun localeForNative(languageTag: String): Locale? {
     return localeFor(languageTag)
 }
 
-actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? {
-    // Linux does not provide native CLDR display-name data.
-    // Returning null lets callers fall back to the English displayName.
-    return null
-}
+actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? =
+    // Linux ships no CLDR, so there is no platform answer to prefer and nothing to supplement:
+    // the bundled table IS the platform here. It carries the whole matrix rather than the gaps,
+    // and it ships only in this target's artifact.
+    LocaleDisplayNameTable.nameFor(displayIn.languageCode, locale.languageTag)
