@@ -4,6 +4,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -15,8 +16,8 @@ class OutcomeTest {
     fun `a normal return is a Success carrying the value`() {
         val outcome = runOutcome { 42 }
         assertEquals(42, assertIs<Outcome.Success<Int>>(outcome).data)
-        assertEquals(42, outcome.dataOrNull())
-        assertEquals(42, outcome.dataOrThrow())
+        assertEquals(42, outcome.getOrNull())
+        assertEquals(42, outcome.getOrThrow())
     }
 
     @Test
@@ -34,11 +35,29 @@ class OutcomeTest {
     }
 
     @Test
-    fun `a Failure has no data and re-throws on dataOrThrow`() {
+    fun `a Failure has no data and re-throws on getOrThrow`() {
         val boom = IllegalArgumentException("bad")
         val outcome: Outcome<Int> = Outcome.failure(boom)
-        assertNull(outcome.dataOrNull())
-        assertSame(boom, assertFailsWith<IllegalArgumentException> { outcome.dataOrThrow() })
+        assertNull(outcome.getOrNull())
+        assertSame(boom, assertFailsWith<IllegalArgumentException> { outcome.getOrThrow() })
+    }
+
+    @Test
+    fun `isSuccess and isFailure report the case`() {
+        val ok = runOutcome { 1 }
+        assertTrue(ok.isSuccess)
+        assertFalse(ok.isFailure)
+
+        val failed: Outcome<Int> = Outcome.failure(IllegalStateException("x"))
+        assertTrue(failed.isFailure)
+        assertFalse(failed.isSuccess)
+    }
+
+    @Test
+    fun `exceptionOrNull returns the exception of a Failure and null for a Success`() {
+        val boom = IllegalStateException("x")
+        assertSame(boom, Outcome.failure(boom).exceptionOrNull())
+        assertNull(runOutcome { 1 }.exceptionOrNull())
     }
 
     @Test
@@ -48,9 +67,13 @@ class OutcomeTest {
     }
 
     @Test
-    fun `fold collapses both cases to one value`() {
+    fun `fold collapses both cases to one value and hands the failure branch the exception`() {
         assertEquals("ok", runOutcome { 1 }.fold(onSuccess = { "ok" }, onFailure = { "err" }))
-        assertEquals("err", Outcome.failure(IllegalStateException("x")).fold({ "ok" }, { "err" }))
+
+        val boom = IllegalStateException("x")
+        var seen: Throwable? = null
+        assertEquals("err", Outcome.failure(boom).fold({ "ok" }, { seen = it; "err" }))
+        assertSame(boom, seen)
     }
 
     @Test
@@ -67,21 +90,21 @@ class OutcomeTest {
     }
 
     @Test
-    fun `onFailure fires only on a Failure and returns the same outcome`() {
+    fun `onFailure fires only on a Failure and is handed the exception itself`() {
         val boom = IllegalStateException("x")
         val failed: Outcome<Int> = Outcome.failure(boom)
         var seen: Throwable? = null
-        assertSame(failed, failed.onFailure { seen = it.exception })
+        assertSame(failed, failed.onFailure { seen = it })
         assertSame(boom, seen)
 
         var neverSeen: Throwable? = null
-        runOutcome { 1 }.onFailure { neverSeen = it.exception }
+        runOutcome { 1 }.onFailure { neverSeen = it }
         assertNull(neverSeen)
     }
 
     @Test
     fun `map transforms a Success`() {
-        assertEquals(4, runOutcome { 2 }.map { it * 2 }.dataOrNull())
+        assertEquals(4, runOutcome { 2 }.map { it * 2 }.getOrNull())
     }
 
     @Test
@@ -114,14 +137,32 @@ class OutcomeTest {
 
     @Test
     fun `recover replaces a Failure with a value and leaves a Success alone`() {
-        assertEquals(-1, Outcome.failure(IllegalStateException("x")).recover { -1 }.dataOrNull())
-        assertEquals(5, runOutcome { 5 }.recover { -1 }.dataOrNull())
+        assertEquals(-1, Outcome.failure(IllegalStateException("x")).recover { -1 }.getOrNull())
+        assertEquals(5, runOutcome { 5 }.recover { -1 }.getOrNull())
     }
 
     @Test
-    fun `dataOrElse returns the fallback on a Failure and the value on a Success`() {
+    fun `recover is handed the exception itself`() {
+        val boom = IllegalStateException("x")
+        var seen: Throwable? = null
+        Outcome.failure(boom).recover { seen = it; -1 }
+        assertSame(boom, seen)
+    }
+
+    @Test
+    fun `getOrElse returns the fallback on a Failure and the value on a Success`() {
+        val boom = IllegalStateException("x")
+        val failed: Outcome<Int> = Outcome.failure(boom)
+        var seen: Throwable? = null
+        assertEquals(-1, failed.getOrElse { seen = it; -1 })
+        assertSame(boom, seen)
+        assertEquals(5, runOutcome { 5 }.getOrElse { -1 })
+    }
+
+    @Test
+    fun `getOrDefault returns the default on a Failure and the value on a Success`() {
         val failed: Outcome<Int> = Outcome.failure(IllegalStateException("x"))
-        assertEquals(-1, failed.dataOrElse { -1 })
-        assertEquals(5, runOutcome { 5 }.dataOrElse { -1 })
+        assertEquals(-1, failed.getOrDefault(-1))
+        assertEquals(5, runOutcome { 5 }.getOrDefault(-1))
     }
 }

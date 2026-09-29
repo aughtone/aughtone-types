@@ -91,8 +91,8 @@ implementation(libs.aughtone.types)
 - **Rounding**: `BigDecimal("1.255").setScale(2, RoundingMode.HALF_EVEN)` -> `1.26`.
 
 ### ✅ Success or Failure
-- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Failure`; `when` over the two, or use `fold`, `map`, `recover`, `dataOrElse`.
-- Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure as data. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
+- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Failure`; `when` over the two, or use `fold`, `map`, `recover`, `getOrNull`, `getOrElse`.
+- Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure as data. It otherwise reads as `Result` does — same members, same callback arguments — so it stands in for one where `Result` cannot cross the language boundary. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
 
 ### 🗺️ GeoJSON
 - **GeoJSON**: `GeoPoint(45.5, -122.6, 100.0).toGeoJson()` (**RFC 7946**).

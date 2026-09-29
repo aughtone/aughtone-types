@@ -2,7 +2,7 @@
 
 What the Kotlin API looks like after export, where it differs from the Kotlin form, and which differences are silent. Everything here was read from the generated Objective-C header rather than inferred.
 
-Measured against: Kotlin 2.4.20, `iosSimulatorArm64` debug framework, 2026-09-27.
+Measured against: Kotlin 2.4.20, `iosSimulatorArm64` debug framework, 2026-09-29.
 
 ## The framework and the prefix
 
@@ -71,6 +71,10 @@ else if let failure = result as? OutcomeFailure { report(failure.message) }
 ```
 
 Adding a case to the sealed class in a future version will not produce a Swift compile error anywhere. That is the reason `Outcome` exists rather than `kotlin.Result` — a `Result` cannot cross into Swift as data at all — but it does not make the check exhaustive.
+
+The whole API arrives on the class, including the parts that are Kotlin extensions — `getOrElse(onFailure:)`, `getOrDefault(defaultValue:)` and `recover(transform:)` export as an Objective-C category, so they read as ordinary methods and need no `OutcomeKt`. Only `runOutcome(block:)` lives on `OutcomeKt`, being a top-level function.
+
+`isSuccess` and `isFailure` are properties; `getOrNull()`, `getOrThrow()` and `exceptionOrNull()` are methods, with the parentheses Kotlin lets you omit. Every failure callback is handed a **`KotlinThrowable`**, not a Swift `Error`: `outcome.onFailure { throwable in … }`, `outcome.fold(onSuccess:onFailure:)`, `getOrElse(onFailure:)` and `recover(transform:)` all take one. Read `throwable.message`, which is optional, or branch to `OutcomeFailure` for the non-optional `message`.
 
 ## Nullable and generic numbers arrive boxed
 

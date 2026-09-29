@@ -6,13 +6,20 @@ import kotlin.coroutines.cancellation.CancellationException
  * The result of an operation that can fail: [Success] carrying a value, or [Failure] carrying the
  * [Throwable] that ended it.
  *
- * This covers the same ground as [kotlin.Result], but as a **sealed class** rather than a `value
- * class` over `Any?`. That difference is the whole reason the type exists. A `value class` has no
- * stable representation outside Kotlin, so a `Result` returned from shared code arrives in Swift,
- * JavaScript or Dart as an opaque box that the calling language cannot take apart. A sealed class
- * compiles to an ordinary class hierarchy on every target: Kotlin callers exhaust it with `when`,
- * and callers in other languages branch on the concrete type and read the payload as data. Failures
- * cross the language boundary as values instead of as thrown exceptions.
+ * This covers the same ground as [kotlin.Result], and is deliberately shaped to be read as a
+ * near drop-in replacement for it — `isSuccess`, `isFailure`, [getOrNull], [getOrThrow],
+ * [exceptionOrNull], [fold], [map], [mapCatching], [onSuccess], [onFailure], and [recover],
+ * [getOrElse] and [getOrDefault] as extensions, all taking what `Result` takes and returning what
+ * `Result` returns. The one difference in vocabulary is the payload: a [Success] carries `data`
+ * rather than `value`.
+ *
+ * What differs is the representation, and that difference is the whole reason the type exists.
+ * `Result` is a **`value class`** over `Any?`, which has no stable representation outside Kotlin, so
+ * a `Result` returned from shared code arrives in Swift, JavaScript or Dart as an opaque box the
+ * calling language cannot take apart. `Outcome` is a **sealed class**, which compiles to an ordinary
+ * class hierarchy on every target: Kotlin callers exhaust it with `when`, and callers in other
+ * languages branch on the concrete type and read the payload as data. Failures cross the language
+ * boundary as values instead of as thrown exceptions.
  *
  * ```
  * when (val outcome = runOutcome { parse(input) }) {
@@ -33,7 +40,8 @@ sealed class Outcome<out T> {
     /**
      * An operation that completed, carrying its value.
      *
-     * @property data The value the operation produced.
+     * @property data The value the operation produced. Note the name: [kotlin.Result] calls the
+     *           equivalent `value`.
      */
     data class Success<out T>(val data: T) : Outcome<T>()
 
@@ -54,9 +62,23 @@ sealed class Outcome<out T> {
         /**
          * A message that is always safe to surface: the exception's own message, or its string
          * representation when it has none.
+         *
+         * This has no counterpart on [kotlin.Result], and it is not nullable, which
+         * [Throwable.message] is. It exists for callers in Swift and JavaScript, where reaching
+         * through an exported [Throwable] for a nullable field is awkward.
          */
         val message: String get() = exception.message ?: exception.toString()
     }
+
+    /**
+     * `true` when this is a [Success].
+     */
+    val isSuccess: Boolean get() = this is Success
+
+    /**
+     * `true` when this is a [Failure].
+     */
+    val isFailure: Boolean get() = this is Failure
 
     /**
      * Runs [block] with the value if this is a [Success], and does nothing otherwise.
@@ -70,27 +92,32 @@ sealed class Outcome<out T> {
     }
 
     /**
-     * Runs [block] with the failure if this is an [Failure], and does nothing otherwise.
+     * Runs [block] with the exception if this is a [Failure], and does nothing otherwise.
      *
-     * @param block Called with the [Failure] itself, so both the exception and its [Failure.message] are
-     *              reachable.
+     * @param block Called with the [Failure.exception] itself, matching [kotlin.Result.onFailure].
+     *              A caller that wants the non-null [Failure.message] branches on the type instead.
      * @return This same outcome, so calls can be chained.
      */
-    inline fun onFailure(block: (Failure) -> Unit): Outcome<T> {
-        if (this is Failure) block(this)
+    inline fun onFailure(block: (Throwable) -> Unit): Outcome<T> {
+        if (this is Failure) block(exception)
         return this
     }
 
     /**
-     * @return The value of a [Success], or `null` for an [Failure].
+     * @return The value of a [Success], or `null` for a [Failure].
      */
-    fun dataOrNull(): T? = (this as? Success)?.data
+    fun getOrNull(): T? = (this as? Success)?.data
+
+    /**
+     * @return The [Failure.exception] of a failure, or `null` for a [Success].
+     */
+    fun exceptionOrNull(): Throwable? = (this as? Failure)?.exception
 
     /**
      * @return The value of a [Success].
-     * @throws Throwable the [Failure.exception] itself, unwrapped, if this is an [Failure].
+     * @throws Throwable the [Failure.exception] itself, unwrapped, if this is a [Failure].
      */
-    fun dataOrThrow(): T = when (this) {
+    fun getOrThrow(): T = when (this) {
         is Success -> data
         is Failure -> throw exception
     }
@@ -100,16 +127,16 @@ sealed class Outcome<out T> {
      * serialized, rendered, or returned to a caller that has no notion of an outcome.
      *
      * @param onSuccess Called with the value of a [Success].
-     * @param onFailure Called with the [Failure] of a failure.
+     * @param onFailure Called with the exception of a [Failure].
      * @return Whatever the branch that ran returned.
      */
-    inline fun <R> fold(onSuccess: (T) -> R, onFailure: (Failure) -> R): R = when (this) {
+    inline fun <R> fold(onSuccess: (T) -> R, onFailure: (Throwable) -> R): R = when (this) {
         is Success -> onSuccess(data)
-        is Failure -> onFailure(this)
+        is Failure -> onFailure(exception)
     }
 
     /**
-     * Transforms the value of a [Success], passing an [Failure] through untouched.
+     * Transforms the value of a [Success], passing a [Failure] through untouched.
      *
      * [transform] is **not** guarded: an exception it throws propagates to the caller. Use
      * [mapCatching] when the transform can fail and that failure belongs in the outcome.
@@ -123,14 +150,14 @@ sealed class Outcome<out T> {
     }
 
     /**
-     * Transforms the value of a [Success], capturing anything [transform] throws as an [Failure], and
+     * Transforms the value of a [Success], capturing anything [transform] throws as a [Failure], and
      * passing an existing [Failure] through untouched.
      *
      * A [CancellationException] is still re-thrown rather than captured, on the same reasoning as
      * [runOutcome].
      *
      * @param transform Applied to the value of a [Success].
-     * @return A [Success] holding the transformed value, an [Failure] holding whatever [transform]
+     * @return A [Success] holding the transformed value, a [Failure] holding whatever [transform]
      *         threw, or this same [Failure].
      */
     inline fun <R> mapCatching(transform: (T) -> R): Outcome<R> = when (this) {
@@ -183,34 +210,50 @@ inline fun <T> runOutcome(block: () -> T): Outcome<T> =
     }
 
 /**
- * Turns an [Outcome.Failure] into a [Outcome.Success] carrying a fallback value, leaving an existing
+ * Turns an [Outcome.Failure] into an [Outcome.Success] carrying a fallback value, leaving an existing
  * success alone.
  *
  * This is an extension rather than a member because it widens the value type — the `T : R` bound
  * cannot be expressed on a member function — which is why [kotlin.Result] declares its equivalent
  * the same way.
  *
- * @param transform Called with the [Outcome.Failure] to produce a replacement value.
- * @return This outcome if it is a [Outcome.Success], otherwise a [Outcome.Success] holding the
+ * @param transform Called with the exception of the failure to produce a replacement value.
+ * @return This outcome if it is an [Outcome.Success], otherwise an [Outcome.Success] holding the
  *         result of [transform].
  */
-inline fun <R, T : R> Outcome<T>.recover(transform: (Outcome.Failure) -> R): Outcome<R> =
+inline fun <R, T : R> Outcome<T>.recover(transform: (Throwable) -> R): Outcome<R> =
     when (this) {
         is Outcome.Success -> this
-        is Outcome.Failure -> Outcome.success(transform(this))
+        is Outcome.Failure -> Outcome.success(transform(exception))
     }
 
 /**
- * Unwraps the value of a [Outcome.Success], or produces a fallback from the [Outcome.Failure].
+ * Unwraps the value of an [Outcome.Success], or produces a fallback from the exception.
  *
- * The counterpart to [Outcome.dataOrNull] and [Outcome.dataOrThrow] for callers that have a sensible
+ * The counterpart to [Outcome.getOrNull] and [Outcome.getOrThrow] for callers that have a sensible
  * default. It is an extension for the same reason as [recover].
  *
- * @param onFailure Called with the [Outcome.Failure] to produce a fallback value.
- * @return The value of a [Outcome.Success], or the result of [onFailure].
+ * @param onFailure Called with the exception of the failure to produce a fallback value.
+ * @return The value of an [Outcome.Success], or the result of [onFailure].
  */
-inline fun <R, T : R> Outcome<T>.dataOrElse(onFailure: (Outcome.Failure) -> R): R =
+inline fun <R, T : R> Outcome<T>.getOrElse(onFailure: (Throwable) -> R): R =
     when (this) {
         is Outcome.Success -> data
-        is Outcome.Failure -> onFailure(this)
+        is Outcome.Failure -> onFailure(exception)
+    }
+
+/**
+ * Unwraps the value of an [Outcome.Success], or returns [defaultValue] for a failure, ignoring its
+ * exception. [getOrElse] is the form that can see why it failed.
+ *
+ * [defaultValue] is evaluated whether or not it is needed, so keep it a value rather than a call
+ * that does work; that is also true of [kotlin.Result.getOrDefault].
+ *
+ * @param defaultValue Returned in place of the value when this is an [Outcome.Failure].
+ * @return The value of an [Outcome.Success], or [defaultValue].
+ */
+fun <R, T : R> Outcome<T>.getOrDefault(defaultValue: R): R =
+    when (this) {
+        is Outcome.Success -> data
+        is Outcome.Failure -> defaultValue
     }

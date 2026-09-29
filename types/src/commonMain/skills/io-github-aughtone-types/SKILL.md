@@ -3,11 +3,15 @@ name: io-github-aughtone-types
 description: >-
   Shared value types for Kotlin Multiplatform: money and currency, distances,
   speeds and GPS coordinates, GeoJSON geometry, URLs, URNs and geo URIs,
-  locales, units of measure, and arbitrary-precision integers and decimals.
-  Reach for it instead of hand-rolling a money class that loses cents through
-  Double, a latitude/longitude pair nothing validates, a URL compared with ==,
-  or a BigDecimal that only exists on the JVM. Every type is @Serializable and
-  behaves identically on JVM, Android, iOS, JS, Wasm and Linux. It models
+  locales, units of measure, arbitrary-precision integers and decimals, and
+  Outcome — a sealed success-or-failure result type that stands in for
+  kotlin.Result, which is a value class and cannot carry a failure out to
+  Swift, JavaScript or Dart. Reach for it instead of hand-rolling a money class
+  that loses cents through Double, a latitude/longitude pair nothing validates,
+  a URL compared with ==, a BigDecimal that only exists on the JVM, or your own
+  sealed Result for multiplatform error handling. Every value type is
+  @Serializable and behaves identically on JVM, Android, iOS, JS, Wasm and
+  Linux. It models
   values; it does not render them — for display formatting such as "3 days
   ago", "1.5 km" or a masked card number, use a formatting library instead.
 license: Apache-2.0
@@ -49,7 +53,7 @@ val maybe = urlOrNull(userInput)                 // null instead
 val geo = geoUri("geo:48.2,16.3")
 ```
 
-**Carry failure as data rather than as an exception**, which is what `Outcome` is for. Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure.
+**Carry failure as data rather than as an exception**, which is what `Outcome` is for. It is the stand-in for `kotlin.Result` in multiplatform code: `Result` is a `value class` over `Any?` with no representation Swift, JavaScript or Dart can take apart, so a failure returned from shared code arrives as an opaque box. `Outcome` is a sealed class and compiles to an ordinary hierarchy everywhere.
 
 ```kotlin
 when (val result = runOutcome { url(userInput) }) {
@@ -58,7 +62,11 @@ when (val result = runOutcome { url(userInput) }) {
 }
 ```
 
-`fold`, `map`, `mapCatching`, `recover`, `dataOrNull`, `dataOrElse` and `dataOrThrow` are all available. `runOutcome` re-throws `CancellationException` rather than capturing it, so coroutine cancellation still works.
+**Write it as you would write `Result`.** `isSuccess`, `isFailure`, `getOrNull()`, `getOrThrow()`, `exceptionOrNull()`, `fold`, `map`, `mapCatching`, `onSuccess`, `onFailure`, `recover`, `getOrElse` and `getOrDefault` all take what `Result`'s take and return what `Result`'s return, and every failure callback receives the `Throwable` itself. Two deliberate differences: a `Success` carries **`data`**, not `value`; and `Outcome.Failure.message` is a non-null convenience that `Result` has no counterpart for.
+
+`runOutcome` is the `runCatching` of this package, with the trap fixed: it re-throws `CancellationException` rather than capturing it, so wrapping suspending work never swallows coroutine cancellation. It is `inline` and not `suspend`, so it carries no coroutines dependency. `mapCatching` behaves the same way.
+
+`Outcome` is the one type here that is **not** `@Serializable` — it holds a live `Throwable`. Collapse it with `fold` before persisting or sending it.
 
 ## Invariants and traps
 
@@ -103,6 +111,12 @@ when (val result = runOutcome { url(userInput) }) {
 - `GeoFeature.properties` is `JsonObject?`, was `Map<String, String>?`; `GeoFeature.id` is `JsonPrimitive?`, was `String?`. Read values with the accessors: `feature.stringProperty("name")`, and the `intProperty`, `doubleProperty`, `booleanProperty`, `objectProperty` and `arrayProperty` beside it.
 - `Gallon.symbol` is `"US gal"`, was `"gal"`; `Calorie.symbol` is `"cal"` and `Kilocalorie.symbol` is `"kcal"`. Anything rendering `.symbol` produces different output, with no compile error.
 - `UnitOfMeasure.findFirst` returns `null` on an ambiguous symbol, where it previously returned the first match by declaration order.
+
+**Changed shape in 4.1.0-alpha1**, breaking source compatibility:
+
+- **`Outcome`'s accessors are renamed to `kotlin.Result`'s.** `dataOrNull` is now `getOrNull`, `dataOrThrow` is `getOrThrow`, and `dataOrElse` is `getOrElse`. There are no deprecated aliases — the old names are gone. `Success.data` is unchanged and is still `data`, not `value`.
+- **`Outcome`'s failure callbacks receive the `Throwable`, not the `Outcome.Failure`.** This covers `onFailure`, `fold`'s second parameter, `recover` and `getOrElse`. A body reading `it.exception` becomes `it`; a body reading `it.message` still compiles but now gets the **nullable** `Throwable.message`, so assigning it to a `String` stops compiling. Branch on the type when the non-null `Outcome.Failure.message` is wanted.
+- **`Outcome.isSuccess`, `Outcome.isFailure`, `exceptionOrNull()` and `getOrDefault(default)`** are new, and match `kotlin.Result`.
 
 **Changed behaviour in 4.1.0-alpha1**, with no signature change:
 

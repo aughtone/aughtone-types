@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### ⚠️ Breaking Changes
+
+- **`Outcome`'s accessors are renamed to match `kotlin.Result`.** `dataOrNull` is now `getOrNull`, `dataOrThrow` is `getOrThrow`, and `dataOrElse` is `getOrElse`. The old names are gone rather than deprecated, because the whole point of the change is that a caller reaching for `Outcome` is reaching for the type they cannot use across the language boundary and expects its vocabulary. (#35)
+- **`Outcome`'s failure callbacks now receive the `Throwable`, not the `Outcome.Failure`.** This applies to `onFailure`, `fold`'s second parameter, `recover` and `getOrElse`, again matching `kotlin.Result`. A callback body reading `it.exception` becomes `it`; a body reading `it.message` still compiles, but the type is now the nullable `Throwable.message` rather than the non-null `Outcome.Failure.message`, so a value assigned to a `String` stops compiling. `Outcome.Failure.message` is unchanged and still non-null for callers that branch on the type. (#35)
+
+  `Success.data` is deliberately **not** renamed to `value`: it is the accessor every existing `when` branch already reads. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md) for why the rest of the vocabulary moved.
+
+### ⚠️ Behavior Changes
+
+- **`localizedDisplayName` returns real translations on `js` and `wasmJs`, where it had returned English for every locale.** Every lookup on those targets had been failing since the feature shipped in 3.4.0, and 4.0.0 shipped the same defect. Anything rendering locale names on web changes output, with no compile error and no deprecation to warn you — a French UI that has been showing "German" starts showing "allemand". Snapshot tests over rendered names on those targets will fail, and that failure is the fix arriving. (#33)
+- **A few names change on `jvm` and `android`**, because the JVM lookup was built from the language and region alone and silently discarded script subtags: `sr-Latn` was named as though it were `sr`. It is now built from the full language tag. (#33)
+- **`localizedDisplayName` still falls back to English, and that is unchanged** — what changed is that the fallback is now reachable. See the new `localizedDisplayNameOrNull` below, and [ADR-0005](docs/knowledge/decisions/completeness-over-consistency-for-display-names.md) for why English is treated as an untranslated answer rather than a wrong one.
+
+### Added
+
+- **`Outcome.isSuccess`, `Outcome.isFailure` and `Outcome.exceptionOrNull()`**, matching `kotlin.Result`, for callers that want to test or read a failure without a `when`. (#35)
+- **`Outcome.getOrDefault(defaultValue)`**, the form of `getOrElse` that ignores why the operation failed. (#35)
+- **`Locale.localizedDisplayNameOrNull(displayIn)`**, which performs the same lookup without the English fallback and returns `null` when no genuine translation exists. `localizedDisplayName` is unchanged and now routes through it. Use the nullable form wherever showing the wrong language is worse than showing nothing — a language picker, say — and the throwing-free original where any readable name will do. (#33)
+- **`Locale.currentOrNull` and `Currency.currentOrNull`**, beside the existing `current`. Both `current` properties are `requireNotNull` over a platform lookup and throw `IllegalArgumentException` when the platform cannot answer, which makes them a poor default argument, a poor property initialiser and a poor thing to read during composition. Neither `current` changes behaviour; the nullable forms are additions. (#33)
+- **Bundled display names, so a platform's gaps are filled rather than papered over.** Platform CLDR coverage is uneven and the platforms lack *different* pairs — each lacks 1,084 to 1,266 of the 17,889 pairs the library ships — so a table assembled from what they collectively know covers all but 21. A **1,565-name supplement** ships to every target and is consulted only when the platform returns nothing. Linux has no system CLDR at all, so it alone receives the **full 16,797-name matrix**. Both are packed as one string per display language and parsed lazily, per language, on first use. (#20)
+- **Per-platform coverage tests that fail when a platform's CLDR moves.** Platform data changes with OS and toolchain releases, and it changes silently — a platform that loses a language renders English, which looks like a working library. `JvmCoverageTest` and `AppleCoverageTest` each pin the platform's own gap count and how many pairs remain untranslated after the supplement, so the change is reviewed rather than discovered. An `appleTest` source set was added to run the second of them. (#20)
+- **A dependency skill, shipped inside the sources jar**, correcting what an agent is most likely to get wrong about this library — including that display names must never be compared across platforms. (#20)
+
+### Fixed
+
+- **`Intl.DisplayNames` is constructed correctly on `js`.** Two compounding faults, each hidden by a `catch (Throwable)` that made the failure indistinguishable from a working fallback: a `js(...)` snippet cannot reference a captured local, because the compiler renames it; and Kotlin/JS re-emits such a snippet rather than passing it through, losing the `new` operator, so construction failed with "Constructor Intl.DisplayNames requires 'new'". The call now goes through `Reflect.construct` — which is also CSP-safe, unlike a `Function` factory — and takes the tags as parameters. (#33)
+- **The platforms' own silent English fallback is now detected on `jvm`, `android` and Apple targets.** Asked for a name in a language it does not carry, neither the JDK nor `NSLocale` reports failure — each renders the English form, so a real English word comes back and the library had no way to tell it from a translation. The previous miss detection looked for an untranslated subtag echoed back, a different and much rarer failure, so it almost never fired. Each bridge now compares against the English rendering, with English itself exempt because the comparison is meaningless there. (#33)
+- **Two `@throws` tags named `IllegalStateException`** where `requireNotNull` throws `IllegalArgumentException`. (#33)
+- **`NOTICE.md` and `THIRD-PARTY-NOTICES.md` stated that no CLDR data was embedded**, which stopped being true the moment the tables shipped. Both are corrected, the Unicode License v3 is reproduced verbatim, and the provenance is recorded: Unicode CLDR 48.2.0, pinned by version and npm integrity hash, with the 613 pairs upstream CLDR lacks taken from platform CLDR implementations. (#20)
+
+### Changed
+
+- **The README explains why completeness is pursued and consistency is not.** Of the pairs every platform can name, Apple and a browser disagree on wording for 40.8% and the JVM and Apple for 9.6% — `nl-BE` is "Nederlands (België)" on two platforms and "Vlaams" on the third. Identical wording across targets is not a property this library offers: compare locales, never their rendered names, and keep rendered names out of cache keys and snapshot tests. (#20)
+- **New records**: [ADR-0005](docs/knowledge/decisions/completeness-over-consistency-for-display-names.md) on choosing completeness over consistency, [RAD-0002](docs/knowledge/research/delivering-display-names-where-the-platform-has-no-cldr.md) on delivering names where the platform has no CLDR, and a [regeneration guide](docs/knowledge/guides/regenerating-display-name-tables.md) for the two generated tables. (#20)
+- **The test workflow assembles the publications**, so a packaging break surfaces in CI rather than at release. (#20)
+
 ## [4.0.0] - 2026-09-21
 
 A breaking release. It removes names deprecated across the 2.x and 3.x lines, corrects operators and symbol lookups that returned confident wrong answers, and brings the GeoJSON types into line with RFC 7946.
