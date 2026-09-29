@@ -112,11 +112,17 @@ when (val result = runOutcome { url(userInput) }) {
 - `Gallon.symbol` is `"US gal"`, was `"gal"`; `Calorie.symbol` is `"cal"` and `Kilocalorie.symbol` is `"kcal"`. Anything rendering `.symbol` produces different output, with no compile error.
 - `UnitOfMeasure.findFirst` returns `null` on an ambiguous symbol, where it previously returned the first match by declaration order.
 
-**Changed shape in 4.1.0-alpha1**, breaking source compatibility:
+**Changed shape in 4.1.0-alpha1**, breaking source compatibility. `Outcome` is aligned with `kotlin.Result`. Read this before the rename list, because **everything else here fails to compile and this one does not**:
+
+- **A failure callback's `it.message` was a non-null `String` and is now the nullable `Throwable.message`.** The callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` itself rather than the `Outcome.Failure` wrapper, and `Outcome.Failure.message` — which still exists, and is still non-null — is no longer what `it` refers to. Inside a string template the old code keeps compiling and silently renders the text `null` for an exception carrying no message. `it.message ?: it.toString()` is the non-null equivalent, and is exactly what `Outcome.Failure.message` does. This is the entire silent-breakage surface of the change, and a list of renamed methods does not show it.
+
+Then the renames, all of which the compiler finds, because the old names cease to exist rather than changing meaning:
 
 - **`Outcome`'s accessors are renamed to `kotlin.Result`'s.** `dataOrNull` is now `getOrNull`, `dataOrThrow` is `getOrThrow`, and `dataOrElse` is `getOrElse`. There are no deprecated aliases — the old names are gone. `Success.data` is unchanged and is still `data`, not `value`.
-- **`Outcome`'s failure callbacks receive the `Throwable`, not the `Outcome.Failure`.** This covers `onFailure`, `fold`'s second parameter, `recover` and `getOrElse`. A body reading `it.exception` becomes `it`; a body reading `it.message` still compiles but now gets the **nullable** `Throwable.message`, so assigning it to a `String` stops compiling. Branch on the type when the non-null `Outcome.Failure.message` is wanted.
+- **A callback body reading `it.exception` becomes just `it`.** A read of `.exception` on an `Outcome.Failure` you reached by a type check or smart cast needs no change at all: `Failure.exception` is untouched. Only the callback parameter changed.
 - **`Outcome.isSuccess`, `Outcome.isFailure`, `exceptionOrNull()` and `getOrDefault(default)`** are new, and match `kotlin.Result`.
+
+**Grep your doc comments, not only your source.** A KDoc sample using the old API compiles nowhere, so nothing flags it, and it is the first thing the next reader copies. The first consumer to migrate found ten such samples against four genuine source breakages of the same shape.
 
 **Changed behaviour in 4.1.0-alpha1**, with no signature change:
 

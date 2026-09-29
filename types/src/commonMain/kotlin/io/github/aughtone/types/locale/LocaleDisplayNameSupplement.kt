@@ -18,7 +18,7 @@ import io.github.aughtone.types.util.LazyMap
  * `docs/knowledge/guides/regenerating-display-name-tables.md`, which collects from every platform
  * because no single one of them can fill its own gaps.
  *
- * Packed as one string per display language rather than 2467 separate entries: the payload is the
+ * Packed as one string per display language rather than 1565 separate entries: the payload is the
  * same, and Kotlin/Native compiles a handful of large literals far more happily than thousands of
  * small declarations. Each blob is `tag\u0001name\u0001tag\u0001name…`, sorted by tag, and is
  * parsed on first use for that language only.
@@ -209,8 +209,18 @@ internal object LocaleDisplayNameSupplement {
         packed.mapValues { (_, blob) -> { parse(blob) } }
     )
 
-    /** The number of names this table holds, for the coverage test to assert against. */
-    internal val size: Int = 1565
+    /**
+     * The number of names this table holds, for the coverage test to assert against.
+     *
+     * **Counted from [packed] rather than written down by the generator.** A hard-coded count went
+     * stale here once — the file declared one number and its own header comment another — and nothing
+     * noticed, because nothing read either. Deriving it means the constant cannot disagree with the
+     * payload; the test then pins the payload. It scans the whole blob, so it is `by lazy` and paid
+     * for only by the test that asks.
+     */
+    internal val size: Int by lazy {
+        packed.values.sumOf { blob -> (blob.count { it == '\u0001' } + 1) / 2 }
+    }
 
     /**
      * Returns the name of [languageTag] in [displayLanguage], or `null` if this table has none.

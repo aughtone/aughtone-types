@@ -62,3 +62,19 @@ The count differs by target because it is the platform's own gaps intersected wi
 **A generation step must emit a count and assert on it.** Not because the transport is unreliable — collecting through test stdout was measured as exact, once counted correctly — but because the first attempt appeared to lose about 85 rows per platform and did not. The rows were real: the shipped map holds two entries that build the same language tag, `zh` carrying a `Hans` script and `zh-Hans` itself, so 87 pairs legitimately occur twice and a parser keyed by tag collapses them. A declared count compared against a parsed one catches that in seconds; without it, a duplicate key is indistinguishable from a dropped row.
 
 This supersedes [ADR-0003](localized-display-names-via-platform-cldr.md) on two points: that wording variance is acceptable because it is slight — it is not slight — and that the English fallback is an adequate answer for a platform with no data. Delegation as the primary mechanism, which that record chose, stands and is reaffirmed here.
+
+## Amendment — 2026-09-29: the numbers in this record went stale, exactly as it warned
+
+This record argues that measurements like these belong in a test rather than in prose, and then recorded several of them only in prose. Those are now wrong. The decision is unaffected; the figures are corrected here, and the ones that can be asserted now are.
+
+**The supplement holds 1,565 names, not 1,685.** The arithmetic above is self-consistent — 2,467 candidates less 782 English-equal names is 1,685 — so 120 names were removed by some later trimming pass that nobody wrote down. Eleven of them were entries carrying raw subtags rather than names, such as `pa (Guru)` and `zh (Hans, CN)`, which were filtered deliberately. The remaining hundred-odd cannot be accounted for from here without regenerating, and are not worth regenerating to explain.
+
+**Both generated files disagreed with themselves.** Each declared a hard-coded `size` while its own header comment declared a different count — the supplement said 1,565 and 2,467, the Linux table said 16,797 and 17,868 — and each comment claimed the constant existed "for the coverage test to assert against" when no test read it. Three numbers per file, no two of them agreeing, and nothing to catch it.
+
+**Both `size` constants are now derived from the payload** with a `by lazy` count over the packed blobs, so a count cannot contradict what it counts, and `LocaleDisplayNameSupplementTest` pins the supplement's at 1,565 along with the 89 display languages. The Linux table's 16,797 remains unasserted: there is no `linuxTest` source set, and `linuxX64` cannot execute on an arm64 macOS host regardless.
+
+**The untranslated counts are 823 on JVM and 910 on Apple**, as their coverage tests have asserted all along — not the "801 on JVM and Apple" recorded above, which is both wrong and wrong in shape, since the two platforms do not share a figure. The "23 on JS and Wasm" is unverified: no test pins it, and nothing here reproduces it.
+
+**Mind the denominator, which is how the earlier counts went wrong three times.** `localeResourceMap` has 202 entries and 201 distinct language tags, because `zh` carrying a `Hans` script and `zh-Hans` build the same tag. The matrix is therefore 17,978 pairs by resource entry and 17,889 by tag, and the coverage tests deduplicate by tag. Quoting one denominator against the other is the specific error behind the 30 → 0 → 21 sequence recorded above.
+
+The lesson is narrower than "write tests". A number in prose has no owner and no failure mode, so nothing stops a later change from invalidating it — which is what happened here, in the very document making that argument. A number worth recording is worth deriving from the thing it describes, and then asserting.
