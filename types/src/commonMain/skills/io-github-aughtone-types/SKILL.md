@@ -1,22 +1,23 @@
 ---
 name: io-github-aughtone-types
 description: >-
-  Shared value types for Kotlin Multiplatform: money and currency, distances,
-  speeds and GPS coordinates, GeoJSON geometry, URLs, URNs and geo URIs,
-  locales, units of measure, arbitrary-precision integers and decimals, and
-  Outcome — a sealed success-or-failure result type that stands in for
-  kotlin.Result, which is a value class and cannot carry a failure out to
-  Swift, JavaScript or Dart. Reach for it instead of hand-rolling a money class
-  that loses cents through Double, a latitude/longitude pair nothing validates,
-  a URL compared with ==, a BigDecimal that only exists on the JVM, or your own
-  sealed Result for multiplatform error handling. Every value type is
-  @Serializable and behaves identically on JVM, Android, iOS, JS, Wasm and
-  Linux. It models
-  values; it does not render them — for display formatting such as "3 days
-  ago", "1.5 km" or a masked card number, use a formatting library instead.
+  Hold money without losing cents to Double: ISO 4217 currency by code or
+  locale, minor units, banker's half-even rounding. Shared value types for
+  Kotlin Multiplatform — JVM, Android, iOS, JS, Wasm, Linux — identical on
+  each. Arbitrary-precision decimals and big integers off the JVM; GPS
+  latitude and longitude, distance between two points, move a point by
+  distance and bearing; distance, speed, altitude and compass heading with
+  accuracy; GeoJSON points, polygons and features validated on decode, with
+  winding order and bounding boxes; parse and compare URLs, URIs, URNs and
+  geo URIs, build a URL with query parameters, percent-encode or URL-encode
+  text; BCP 47 locales named in the reader's own language; units of measure
+  and SI prefixes by symbol; a bit set and a lazy map; and Outcome, a sealed
+  success-or-failure result standing in for kotlin.Result, a value class
+  Swift cannot take apart. Models values; does not render them — for "1.5
+  km", "$12.50" or "3 days ago" use io.github.aughtone:format-readable.
 license: Apache-2.0
 metadata:
-  version: "4.1.0-alpha1"
+  version: "4.1.0-SNAPSHOT"
   repository: https://github.com/aughtone/aughtone-types
 ---
 
@@ -53,7 +54,7 @@ val maybe = urlOrNull(userInput)                 // null instead
 val geo = geoUri("geo:48.2,16.3")
 ```
 
-**Carry failure as data rather than as an exception**, which is what `Outcome` is for. It is the stand-in for `kotlin.Result` in multiplatform code: `Result` is a `value class` over `Any?` with no representation Swift, JavaScript or Dart can take apart, so a failure returned from shared code arrives as an opaque box. `Outcome` is a sealed class and compiles to an ordinary hierarchy everywhere.
+**Carry failure as data rather than as an exception**, which is what `Outcome` is for. It is the stand-in for `kotlin.Result` in multiplatform code: `Result` is a `value class` over `Any?`, which has no stable representation outside Kotlin, so a failure returned from shared code reaches a Swift caller as an opaque box it cannot take apart. `Outcome` is a sealed class and compiles to an ordinary class hierarchy on every target, so Swift branches on the concrete type and reads the payload. Kotlin/JS and Kotlin/Wasm callers get the same benefit within Kotlin; this library exports nothing to plain JavaScript.
 
 ```kotlin
 when (val result = runOutcome { url(userInput) }) {
@@ -74,23 +75,25 @@ when (val result = runOutcome { url(userInput) }) {
 
 **`Money` equality ignores scale, but serialization preserves it.** `Money(5.1, usd) == Money(5.10, usd)` is `true`, because no arithmetic here can make two spellings of one amount differ in value. The stored scale is untouched and still serialized, so **two equal amounts can serialize differently**. Compare `value.scale` explicitly to ask whether two amounts were *written* the same way. `BigDecimal` is unaffected and keeps JDK-style scale-sensitive equality.
 
-**Comparing `Money` across currencies throws.** `Money` implements `Comparable<Money>`, and ordering two different currencies is not meaningful, so it raises `IllegalArgumentException` rather than inventing an answer. Sorting a mixed-currency list is a runtime failure, not a compile error.
+**Every `Money` operation across two currencies throws.** `plus`, `minus`, `times`, `div` and `compareTo` all raise `IllegalArgumentException` rather than inventing an answer, so **sorting or summing a mixed-currency list is a runtime failure, not a compile error**. The symptom is an exception from `sorted()`, `max()`, `sum()` or a `TreeMap` on a collection that looked homogeneous.
+
+**`Currency` equality is its ISO 4217 code, and nothing else.** `name`, `symbol`, `number`, `digits`, `obsolete` and `replacedBy` take no part, so two instances describing one currency are one value however they were built — the bundled map, a platform lookup, a decoded payload with a different `name`. The symptoms to expect: a `Set` or `distinct()` over currencies collapses entries you can see are textually different, `usd.copy(symbol = "US$") == usd` is `true`, and a map keyed by `Currency` finds a value under an instance you did not put there. Compare the individual properties where presentation is what you care about. Every `Money` operation defers to this, `equals` and `compareTo` included. Before 4.1.0 `Currency` compared all seven fields, so amounts from different sources added fine and then threw from `sorted()`.
 
 **`Distance` and `Speed` reject negative results instead of clamping them.** `Distance(3.0) - Distance(5.0)` throws; it does not return zero. The same applies to negative scalars in `Speed.times` and `Speed.div`, and to a negative divisor on `Distance`. Guard the call, or compare first, when operands may arrive in either order. A zero distance or speed is perfectly valid — only going below zero is refused.
 
 **`Locale.current` and `Currency.current` throw when the platform cannot say.** Both are `requireNotNull` over a platform lookup, so they raise `IllegalArgumentException` rather than defaulting to English or USD. That makes them a poor default argument, a poor property initialiser and a poor thing to read during composition. Use `Locale.currentOrNull` and `Currency.currentOrNull` where a sensible fallback exists, and keep the throwing form where none does — failing loudly beats silently rendering someone else's language.
 
-**`UnitOfMeasure.findFirst` returns `null` for an ambiguous symbol** rather than guessing by declaration order. `findFirst("gal")` is `null`, because `Gallon` and `GallonImperial` both claim it and picking one silently is a twenty-percent error. Use `findAll(symbol)`, which returns every candidate — empty for unknown, more than one for ambiguous, so the two cases stay distinguishable.
+**`UnitOfMeasure.findFirst` returns `null` for an ambiguous symbol** rather than guessing by declaration order. `findFirst("gal")` is `null`, because `Gallon` and `GallonImperial` both claim it and picking one silently is a twenty-percent error. The symptom is a `null` that reads as "unknown unit" when the truth is "more than one unit". Use `findAll(symbol)`, which returns every candidate — empty for unknown, more than one for ambiguous, so the two cases stay distinguishable. **Symbol lookup is case-sensitive**, which is how `GB` (gigabyte) and `Gb` (gigabit) name different units — so never lowercase a symbol before looking it up, or you get an empty list rather than a match.
 
 **Invalid GeoJSON is rejected on construction *and* on deserialization.** Minimum position counts, positions of at least two elements, and closed linear rings of at least four positions are all enforced, so a payload that used to decode into a structurally invalid value now throws. Winding order is deliberately **not** enforced: RFC 7946 §3.1.6 tells parsers not to reject polygons that break the right-hand rule, so a clockwise exterior ring round-trips unchanged. Use `GeoPolygon.windingOf()` to inspect it and `rewound()` to correct it, or the `geoPolygon(...)` factory, which refuses bad winding at construction.
 
-**URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. In every case the value you supplied is preserved and serialized unchanged — only the comparison is normalized.
+**URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. The symptom is a count that comes out lower than expected: `distinct()`, a `Set` or a map key collapses values you can see are textually different, and two URNs differing only after `?+` or `#` become one entry. The value you supplied is preserved and serialized unchanged — only the comparison is normalized.
 
-**`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not, but when neither can supply one the English name comes back with nothing to mark it. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
+**`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not — including on Linux, which has no system CLDR and answers entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
 
 **Never depend on the exact name.** Platforms disagree about wording on a large share of the names they all know — a browser and a native platform differ on roughly 40% — so `nl-BE` may be "Nederlands (België)" or "Vlaams" depending on where your code runs. Compare locales, never their rendered names, and keep them out of cache keys and snapshot tests.
 
-**A `LazyMap` value function must be pure.** The cache is an immutable map behind an atomic reference, and under contention a value function may run more than once for the same key — the losing caller discards its own result and returns the winner's. Every caller observes the same value, but a function with side effects will perform them more than once.
+**A `LazyMap` value function must be pure.** The cache is an immutable map behind an atomic reference, and under contention a value function may run more than once for the same key — the losing caller discards its own result and returns the winner's. Every caller observes the same value, so the symptom is never a wrong lookup: it is the side effect happening twice, a duplicate log line, a counter that over-counts, or work done and thrown away.
 
 ## What moved, and what it used to be called
 
@@ -112,7 +115,7 @@ when (val result = runOutcome { url(userInput) }) {
 - `Gallon.symbol` is `"US gal"`, was `"gal"`; `Calorie.symbol` is `"cal"` and `Kilocalorie.symbol` is `"kcal"`. Anything rendering `.symbol` produces different output, with no compile error.
 - `UnitOfMeasure.findFirst` returns `null` on an ambiguous symbol, where it previously returned the first match by declaration order.
 
-**Changed shape in 4.1.0-alpha1**, breaking source compatibility. `Outcome` is aligned with `kotlin.Result`. Read this before the rename list, because **everything else here fails to compile and this one does not**:
+**Changed shape in 4.1.0**, breaking source compatibility. `Outcome` is aligned with `kotlin.Result`. Read this before the rename list, because **everything else here fails to compile and this one does not**:
 
 - **A failure callback's `it.message` was a non-null `String` and is now the nullable `Throwable.message`.** The callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` itself rather than the `Outcome.Failure` wrapper, and `Outcome.Failure.message` — which still exists, and is still non-null — is no longer what `it` refers to. Inside a string template the old code keeps compiling and silently renders the text `null` for an exception carrying no message. `it.message ?: it.toString()` is the non-null equivalent, and is exactly what `Outcome.Failure.message` does. This is the entire silent-breakage surface of the change, and a list of renamed methods does not show it.
 
@@ -124,7 +127,7 @@ Then the renames, all of which the compiler finds, because the old names cease t
 
 **Grep your doc comments, not only your source.** A KDoc sample using the old API compiles nowhere, so nothing flags it, and it is the first thing the next reader copies. The first consumer to migrate found ten such samples against four genuine source breakages of the same shape.
 
-**Changed behaviour in 4.1.0-alpha1**, with no signature change:
+**Changed behaviour in 4.1.0**, with no signature change:
 
 - **`localizedDisplayName` was returning English for every locale on the JS target**, in 3.4.0 and 4.0.0, and now returns real translations. Anything rendering locale names on web will change output. The other targets are unaffected in kind, though a few names change where the JVM had been discarding script subtags.
 - **`localizedDisplayNameOrNull`, `Locale.currentOrNull` and `Currency.currentOrNull`** are new. Nothing is removed and nothing is renamed.
@@ -148,6 +151,10 @@ It does no I/O, has no networking, and reads no files or resources at runtime.
 
 ## Calling it from other languages
 
-Kotlin callers on every target need nothing beyond this file. Swift callers do, because the export renames things:
+**Kotlin is the consumer surface, on every target.** Kotlin callers need nothing beyond this file, whether they are on the JVM, Android, Kotlin/JS, Kotlin/Wasm, a native Apple target or Linux.
+
+**Swift callers need one more page,** because the export renames and reshapes things, and because nothing here is annotated `@Throws` — a Kotlin exception reaching the Objective-C boundary terminates the process rather than becoming a Swift error, so the non-throwing forms are the only ones a Swift caller can recover from:
 
 - [Calling it from Swift](references/swift.md)
+
+**There is no hand-written-JavaScript surface.** No declaration carries `@JsExport`, so nothing in this library is reachable from plain JavaScript or TypeScript by name, and the generated type definitions do not describe it. The `js` and `wasmJs` targets are for **Kotlin** code compiled to those platforms, which sees the ordinary Kotlin API. That is also the sense in which `Outcome` helps a browser: Kotlin/JS code reads the sealed hierarchy, where a `kotlin.Result` would arrive as an opaque box.

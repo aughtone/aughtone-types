@@ -30,6 +30,8 @@ implementation(libs.aughtone.types)
 ```
 
 > [!IMPORTANT]
+> **v4.1.0 Breaking Changes**: `Outcome` is aligned with `kotlin.Result`. `dataOrNull`, `dataOrThrow` and `dataOrElse` are renamed `getOrNull`, `getOrThrow` and `getOrElse`, with no deprecated aliases, and the callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` rather than the `Outcome.Failure`. **Check the callbacks first: they still compile.** A body reading `it.message` keeps building but now gets the nullable `Throwable.message` instead of the non-null `Outcome.Failure.message`, so an exception with no message renders the text `null`. Use `it.message ?: it.toString()`. `isSuccess`, `isFailure`, `exceptionOrNull()` and `getOrDefault` are new. Also: `localizedDisplayName` returned English for every locale on the JS and Wasm targets in 3.4.0 and 4.0.0 and now returns real translations, so anything rendering locale names on web changes output.
+>
 > **v4.0.0 Breaking Changes**: A breaking release. `Outcome.Error` and `Locale.toLanguageTag()` are removed; `Money` equality is now numeric so `5.1` equals `5.10`; `Distance` and `Speed` throw instead of clamping to zero; `GeoBoundingBox` leaves the geometry hierarchy; `GeoFeature.properties` becomes `JsonObject`; invalid GeoJSON is now rejected; and `UnitOfMeasure.findFirst` refuses ambiguous symbols rather than guessing. Several change behaviour **without a compile error** — see the [changelog](CHANGELOG.md) before upgrading.
 >
 > **v3.4.0 `Outcome.Error` renamed**: The failure case of `Outcome` is now `Outcome.Failure`, and the factory is `Outcome.failure(...)`. The old names shipped as deprecated aliases in 3.4.0 and are removed in 4.0.0. `Outcome$Error` no longer exists as a class, so upgrading from 3.3.0 needs a clean and rebuild rather than a code change.
@@ -69,7 +71,7 @@ implementation(libs.aughtone.types)
 | | `BigDecimal` | Pure Kotlin | Arbitrary-precision decimal math with rounding support. |
 | **Utilities** | `BitSet` | Multiplatform | Space-efficient storage for bit-level flags. |
 | | `BankersValue` | Half-to-Even | Precision math with bias-free rounding rules. |
-| **Control Flow** | `Outcome` | Sealed (KMP-safe) | Success-or-failure result that survives the Swift/JS boundary, unlike `kotlin.Result`. |
+| **Control Flow** | `Outcome` | Sealed (KMP-safe) | Success-or-failure result Swift can read as data, unlike `kotlin.Result`. Reads like `Result`: `getOrNull`, `getOrThrow`, `getOrElse`, `fold`, `map`, `recover`. |
 
 ## 🚀 Quick Usage
 

@@ -35,8 +35,12 @@ data class Money(
 ) : Comparable<Money> {
 
     /**
-     * Two amounts are equal when they share a currency and the same numeric value, irrespective of
-     * scale. `Money(5.1, usd) == Money(5.10, usd)`.
+     * Two amounts are equal when they are the same currency and the same numeric value, irrespective
+     * of scale. `Money(5.1, usd) == Money(5.10, usd)`.
+     *
+     * The currency is compared with [Currency]'s own equality, which is its ISO 4217 [Currency.code]
+     * and nothing else — so two amounts carrying differently-sourced instances of one currency are
+     * equal, the same way they add and subtract.
      */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -46,14 +50,18 @@ data class Money(
 
     /**
      * Hashes the amount rather than its representation, so that values equal under [equals] land in
-     * the same bucket. Without stripping the scale here, `5.1` and `5.10` would be equal yet hash
-     * differently, and every hash-based collection would misbehave.
+     * the same bucket. The scale is stripped deliberately, because `5.1` and `5.10` are equal and
+     * would otherwise hash differently; [Currency] hashes its code, for the same reason.
      */
     override fun hashCode(): Int =
         31 * value.stripTrailingZeros().hashCode() + currency.hashCode()
 
     /**
      * Orders two amounts of the same currency numerically.
+     *
+     * Currencies are matched with [Currency]'s own equality, as every other operation here does, so
+     * returning `0` exactly when [equals] is `true` holds — which is what keeps a `TreeMap` and a
+     * `HashMap` agreeing on how many keys they contain.
      *
      * @throws IllegalArgumentException if the currencies differ — comparing USD to EUR is not a
      *         meaningful ordering, and silently producing one would be worse than refusing.
@@ -97,43 +105,47 @@ data class Money(
     constructor(value: Double, currency: Currency = Currency.current) : this(BigDecimal.valueOf(value), currency)
 
     /**
-     * Adds another `Money` object to this one. Currencies are matched by ISO 4217 [Currency.code],
-     * so instances sourced from the resource map and from platform-native lookups are compatible.
-     * The result keeps this instance's [currency].
+     * Adds another `Money` object to this one. Currencies are matched by [Currency] equality, which is
+     * the ISO 4217 code, so instances sourced from the resource map and from platform-native lookups
+     * are compatible. The result keeps this instance's [currency].
      * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun plus(other: Money): Money {
-        require(this.currency.code == other.currency.code) { "Cannot add money with different currencies." }
+        require(this.currency == other.currency) { "Cannot add money with different currencies." }
         return Money(this.value + other.value, this.currency)
     }
 
     /**
-     * Subtracts another `Money` object from this one. Currencies are matched by ISO 4217
-     * [Currency.code]. The result keeps this instance's [currency].
+     * Subtracts another `Money` object from this one. Currencies are matched by [Currency] equality,
+     * which is the ISO 4217 code. The result keeps this instance's [currency].
      * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun minus(other: Money): Money {
-        require(this.currency.code == other.currency.code) { "Cannot subtract money with different currencies." }
+        require(this.currency == other.currency) { "Cannot subtract money with different currencies." }
         return Money(this.value - other.value, this.currency)
     }
 
     /**
-     * Multiplies this `Money` object by another `Money` object. Currencies are matched by
-     * ISO 4217 [Currency.code].
-     * Note: Multiplying two monetary values is an unusual operation.
+     * Multiplies this `Money` object by another `Money` object. Currencies are matched by [Currency]
+     * equality, which is the ISO 4217 code. The result keeps this instance's [currency].
+     *
+     * Note: Multiplying two monetary values is an unusual operation — the product of two amounts is
+     * not itself an amount. [times] with a scalar is almost always what is wanted.
+     *
+     * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun times(other: Money): Money {
-        require(this.currency.code == other.currency.code) { "Cannot multiply money with different currencies." }
+        require(this.currency == other.currency) { "Cannot multiply money with different currencies." }
         return Money(this.value * other.value, this.currency)
     }
 
     /**
      * Divides this `Money` object by another `Money` object, returning a [Double] ratio.
-     * Currencies are matched by ISO 4217 [Currency.code].
+     * Currencies are matched by [Currency] equality, which is the ISO 4217 code.
      * @throws IllegalArgumentException if the currency codes do not match.
      */
     operator fun div(other: Money): Double {
-        require(this.currency.code == other.currency.code) { "Cannot divide money with different currencies." }
+        require(this.currency == other.currency) { "Cannot divide money with different currencies." }
         return this.value.toDouble() / other.value.toDouble()
     }
 

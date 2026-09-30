@@ -3,23 +3,23 @@
     "changes": [
         {
             "kind": "skill",
-            "path": ".agents/skills/to-library-skill",
+            "path": ".agents/skills/librarian-skill-author",
             "files": {
-                "SKILL.md": "86a4c24cc1c5bb1d09068825cb0caea905a3ec1ed4a9d2135fa55e7a38a3db21",
-                "assets/SKILL.template.md": "55ec2ffa212aeeca94829bcb8ed0d1925954658d126587df224dcdfe5e14ab0b",
-                "references/per-language.md": "63da4569b725ed43b0d5087acaf14495eeb6d3823cb9e36556d1729dbb55b74c",
-                "references/writing-each-section.md": "981231a67b9631652f7d938d2b114d12b63fc426c87303af6d1973cad812c9d4"
+                "SKILL.md": "8a2ddf3e7a92cdd489a1d3e89f6cea9f6ee2ad75648d0d65524d66d60a2d938e",
+                "assets/SKILL.template.md": "c5b0a7176a840321345627e93f265cd28fa21b7aada0f821a722d46af4604f78",
+                "references/per-language.md": "e27fec9ec4ce6f42a69ebab61bcf535c4d55a94f38f264a7c4bebc4f07e76eaa",
+                "references/writing-each-section.md": "01c861b80ed0c1edfcc41cf018476e42078b828bec40e2711601a4b01030bb16"
             },
             "by": "gradle-plugin"
         },
         {
             "kind": "skill",
-            "path": ".claude/skills/to-library-skill",
+            "path": ".claude/skills/librarian-skill-author",
             "files": {
-                "SKILL.md": "86a4c24cc1c5bb1d09068825cb0caea905a3ec1ed4a9d2135fa55e7a38a3db21",
-                "assets/SKILL.template.md": "55ec2ffa212aeeca94829bcb8ed0d1925954658d126587df224dcdfe5e14ab0b",
-                "references/per-language.md": "63da4569b725ed43b0d5087acaf14495eeb6d3823cb9e36556d1729dbb55b74c",
-                "references/writing-each-section.md": "981231a67b9631652f7d938d2b114d12b63fc426c87303af6d1973cad812c9d4"
+                "SKILL.md": "8a2ddf3e7a92cdd489a1d3e89f6cea9f6ee2ad75648d0d65524d66d60a2d938e",
+                "assets/SKILL.template.md": "c5b0a7176a840321345627e93f265cd28fa21b7aada0f821a722d46af4604f78",
+                "references/per-language.md": "e27fec9ec4ce6f42a69ebab61bcf535c4d55a94f38f264a7c4bebc4f07e76eaa",
+                "references/writing-each-section.md": "01c861b80ed0c1edfcc41cf018476e42078b828bec40e2711601a4b01030bb16"
             },
             "by": "gradle-plugin"
         }

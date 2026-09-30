@@ -82,6 +82,28 @@ A nullable or generic numeric becomes a boxed class: `accuracy` on `Coordinates`
 
 `GeoPoint` has one initializer taking a raw `KotlinDoubleArray` and another taking `[AOTKDouble]` with a `bbox`; they are different initializers, not one with a default.
 
+## Nothing in this library is `throws`, and an exception crashes the app
+
+This is the most consequential difference on the page, and it is invisible: **no declaration in this library is annotated `@Throws`, so nothing exports as Swift `throws` and nothing gains an `NSError` out-parameter.** Read from the generated header: zero members carry `error:(NSError **)error`, and `getOrThrow` arrives as plain `- (T _Nullable)getOrThrow`.
+
+Kotlin/Native converts a Kotlin exception into a Swift error *only* for a declaration marked `@Throws`. Without it, an exception reaching the Objective-C boundary is an unhandled Kotlin exception and the runtime terminates the process. There is no `catch` to write: `try?` will not compile against a non-throwing method, and `do/catch` cannot save you.
+
+Plenty of this library throws. `Outcome.getOrThrow()` on a failure; `Locale.Companion.shared.current` and `Currency.Companion.shared.current` when the platform cannot resolve one; `Money.compareTo`, `plus`, `minus`, `times` and `div` across two currencies; `Distance` and `Speed` operators that would go below zero; GeoJSON construction that breaks RFC 7946's structural rules; and `url`, `uri`, `geoUri` and `urn` on malformed input.
+
+So on the Swift side, the non-throwing forms are not a convenience — they are the only callable ones:
+
+```swift
+// Crashes the app on bad input. No compiler warning, no catch.
+let site = UriParsingKt.url(value: userInput)
+
+// The two forms that cannot crash.
+let maybe = UriParsingKt.urlOrNull(value: userInput)          // nil
+let result = OutcomeKt.runOutcome { UriParsingKt.url(value: userInput) }
+if let failure = result as? OutcomeFailure { report(failure.message) }
+```
+
+Use the `OrNull` parser, `Locale.Companion.shared.currentOrNull`, `Outcome.getOrNull()` or `getOrDefault`, and `runOutcome { }` to turn a throwing call into data before it reaches the boundary. Check the currencies match before comparing or adding two `Money` values, and the operand order before subtracting a `Distance`, because there is no recovery once the call is made.
+
 ## The coordinate-order trap applies here too
 
 `GeoPoint.init(longitude:latitude:)` and `Coordinates.init(latitude:longitude:)` take their arguments in opposite orders, exactly as in Kotlin. Swift's argument labels make this visible at the call site, which Kotlin's positional form does not — so the labels are worth reading rather than autocompleting.

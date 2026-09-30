@@ -20,11 +20,15 @@ Read it from the build rather than guessing:
 - **A JavaScript target that produces a library** (`binaries.library()`, `generateTypeScriptDefinitions()`, a published npm package) means JavaScript consumers, and `javascript.md`. A JS target that only builds an executable or a demo does not.
 - **JVM and Android targets** are Kotlin or Java consumers. `SKILL.md` usually covers Kotlin already; add `java.md` only where the Java-facing API differs.
 
+**A target in the build proves the code compiles for it, not that anything is exported to its callers.** JavaScript callers need `@JsExport`; Swift callers need a published XCFramework, Swift package or pod, not only a framework task a test app uses. A Compose module's framework is usually for apps, not a Swift API.
+
 Ship only the languages the library is actually consumed in. When unsure whether a target is published for outside callers, ask the maintainer.
+
+**Whatever you conclude, say it in `SKILL.md`.** "Called from Kotlin only; there is no Swift or JavaScript surface" tells an agent as much as a reference file would, and without it an agent writing Swift will assume there is one.
 
 ## What goes in a reference
 
-What a consumer in that language **cannot discover from the API surface**. For a Kotlin Multiplatform library called from Swift: which suspend functions arrived as completion handlers and which as `async`; what the synthetic class wrapping top-level functions is called; which default arguments did not survive the export; where generics eroded; which parts are effectively unusable from Swift and what to use instead.
+What a consumer in that language **cannot discover from the API surface**. For a Kotlin Multiplatform library called from Swift: **which calls throw** — a Kotlin exception crossing into Swift without `@Throws` terminates the process instead of becoming a Swift `Error`, so list every entry point that can throw and its non-throwing alternative; which suspend functions arrived as completion handlers and which as `async`; what the synthetic class wrapping top-level functions is called; which default arguments did not survive the export; where generics eroded; which parts are effectively unusable from Swift and what to use instead.
 
 Interop behaviour changes between toolchain releases. A reference that asserts specifics should say what it was measured against, in `metadata.measured-against` or in the reference itself.
 

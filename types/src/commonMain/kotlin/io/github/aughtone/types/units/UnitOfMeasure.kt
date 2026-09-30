@@ -14,17 +14,20 @@ package io.github.aughtone.types.units
  * @see <a href="https://www.nist.gov/pml/owm/metric-si/si-units">NIST SI Units</a>
  *
  * ### Digital Information Units
- * The `BIT` and `BYTE` related units (e.g., `KILOBYTE`, `MEGABYTE`) are based on their binary (JEDEC)
- * definitions, where 1 kilobyte = 1024 bytes. To reduce ambiguity, the primary symbols for these
- * units use the IEC standard prefixes (Ki, Mi, Ti).
+ * [Bit] and [Byte] and their multiples are **named** on the binary (JEDEC) reading, where a kilobyte
+ * is 1024 bytes. Each family is regular:
+ * - A prefixed **byte** leads with the unambiguous IEC symbol and keeps the decimal spelling as an
+ *   alternative: [Kilobyte] is `KiB`/`kB`, [Megabyte] `MiB`/`MB`, [Gigabyte] `GiB`/`GB`, [Terabyte]
+ *   `TiB`/`TB`.
+ * - A prefixed **bit** leads with the spelled-out form and keeps the short form as an alternative:
+ *   [Kilobit] is `kbit`/`kb`, [Megabit] `Mbit`/`Mb`, [Gigabit] `Gbit`/`Gb`, [Terabit] `Tbit`/`Tb`.
  *
- * Common decimal-based symbols (`kB`, `MB`, etc.) are included as alternative symbols, but be aware of
- * their potential ambiguity (e.g., `MB` can mean 10^6 or 2^20 bytes). This enum consistently uses the
- * binary (powers-of-1024) interpretation.
- * - `KILOBYTE` uses primary symbol `KiB` (kibibyte) and alt symbol `kB`.
- * - `MEGABYTE` uses primary symbol `MiB` (mebibyte) and alt symbol `MB`.
- * - `TERABYTE` uses primary symbol `TiB` (tebibyte) and alt symbol `TB`.
+ * Symbol lookup is **case-sensitive**, which is the only reason `GB` and `Gb` can name different
+ * units. Do not lowercase a symbol before calling [findAll].
  *
+ * **This enum names units; it does not convert between them.** An entry carries its [symbol] and any
+ * [altSymbols], and nothing here multiplies by 1024 or by 1000 — the binary reading is what the names
+ * mean, not arithmetic the library performs.
  */
 enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Acre("ac", "acre"),
@@ -60,8 +63,8 @@ enum class UnitOfMeasure(val symbol: String, vararg val altSymbols: String) {
     Furlong("fur"),
     Gallon("US gal", "gal", "gal (US)", "US gallon"),
     GallonImperial("imp gal", "gal", "imperial gal", "UK gal", "imp. gal.", "imp⋅gal"),
-    Gigabit("Gb"),
-    Gigabyte("GB"),
+    Gigabit("Gbit", "Gb"),
+    Gigabyte("GiB", "GB"),
     Gigahertz("GHz"),
     Gigawatt("GW"),
     Gram("g", "gm"),

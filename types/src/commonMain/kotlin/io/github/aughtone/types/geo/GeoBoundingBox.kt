@@ -15,8 +15,10 @@ import kotlinx.serialization.Serializable
  * [GeoGeometry], which meant it serialized as a geometry object that no conformant GeoJSON reader
  * accepts, and allowed a bounding box to be passed anywhere a geometry was expected.
  *
- * Use [toDoubleArray] to obtain the RFC form, and assign it to the `bbox` property of the geometry
- * or feature it bounds.
+ * Use [toBbox] to obtain the RFC form and assign it to the `bbox` property of the geometry or feature
+ * it bounds: that property is a `List<Double>?`, which is what [toBbox] returns. [toDoubleArray]
+ * gives the same numbers as a `DoubleArray` for callers doing their own arithmetic, and will not
+ * assign to `bbox`.
  *
  * @property west The westernmost longitude in decimal degrees.
  * @property south The southernmost latitude in decimal degrees.

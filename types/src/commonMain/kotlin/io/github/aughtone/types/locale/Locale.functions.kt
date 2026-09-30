@@ -156,15 +156,17 @@ expect fun localeForNative(languageTag: String): Locale?
 /**
  * Retrieves the current default [Locale] for the native platform.
  *
- * This `expect` function is implemented on each platform to query the system's current
- * locale setting. It then delegates to the common [getCurrentNativeLocaleImpl] function
- * to perform the lookup and fallback logic.
+ * This `expect` function is implemented once per platform, each querying whatever its system
+ * exposes — `java.util.Locale` on the JVM and Android, `NSLocale` on Apple targets, `Intl` in a
+ * browser, and the `LANG` environment variable on Linux. There is no shared implementation behind
+ * them, so the tag a platform reports, and whether it reports one at all, differ.
  *
- * @param fallbackTag An optional IETF BCP 47 language tag to use as a fallback if the 
- * native locale cannot be resolved.
- * @return The current native [Locale], or the fallback locale if provided and resolved, 
- * otherwise `null`.
- * @see Locale.Companion.getCurrent
+ * @param fallbackTag An optional IETF BCP 47 language tag to fall back to when the platform reports
+ *        nothing. It is resolved the same way any tag is, so an unrecognised one still yields `null`.
+ * @return The current native [Locale], the resolved [fallbackTag] if the platform gave nothing, or
+ *         `null` if neither could be resolved.
+ * @see Locale.current
+ * @see Locale.currentOrNull
  */
 expect fun currentNativeLocale(fallbackTag: String? = null): Locale?
 
@@ -235,12 +237,19 @@ fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): Strin
  * Retrieves the display name of [locale], localized for the language of [displayIn],
  * using the native platform's CLDR data.
  *
- * This is an `expect` function, requiring a platform-specific implementation. Platforms
- * without native locale-name data (like Linux) return `null`, as do all platforms when
- * the language is unknown to their CLDR data.
+ * This is an `expect` function, requiring a platform-specific implementation. Every platform returns
+ * `null` for a pair its data cannot name, which is what [Locale.localizedDisplayNameOrNull] reports
+ * and what [Locale.localizedDisplayName] replaces with the English name.
  *
- * **Warning:** The results of this function may vary between platforms due to differences
- * in their underlying locale systems.
+ * **Linux is the exception, and does not consult platform data at all.** It ships no CLDR, so there
+ * is nothing to query: that target answers from a bundled table holding the whole matrix. It is
+ * therefore no more likely to return `null` than any other platform — before 4.1.0 it returned
+ * `null` for everything.
+ *
+ * **Warning:** The results of this function vary between platforms, and not slightly. Of the pairs
+ * every platform can name, a browser and a native platform disagree on the wording of roughly 40%,
+ * so `nl-BE` may be "Nederlands (België)" or "Vlaams" depending on where the code runs. Compare
+ * locales, never their rendered names, and keep rendered names out of cache keys and snapshot tests.
  *
  * @param locale The locale whose name should be produced.
  * @param displayIn The locale whose language the name should be rendered in.
