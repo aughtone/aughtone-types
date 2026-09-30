@@ -71,7 +71,7 @@ when (val result = runOutcome { url(userInput) }) {
 
 ## Invariants and traps
 
-**`Coordinates` and `GeoPoint` take their arguments in opposite orders.** `Coordinates(latitude, longitude)` follows the conversational order; `GeoPoint(longitude, latitude)` follows RFC 7946, which puts longitude first. Both parameters are `Double`, so swapping them compiles and puts the point in the wrong hemisphere. Use named arguments for `Coordinates`, and remember that anything GeoJSON is longitude-first.
+**`Coordinates` and `GeoPoint` take their arguments in opposite orders.** `Coordinates(latitude, longitude)` follows the conversational order; `GeoPoint(longitude, latitude)` follows RFC 7946, which puts longitude first. Both parameters are `Double`, so swapping them compiles and puts the point in the wrong hemisphere. Use **`Coordinates.toGeoPoint()`** to convert between them rather than reordering by hand, use named arguments when constructing either, and remember that anything GeoJSON is longitude-first. The symptom of getting it wrong is a point that serializes and validates cleanly and plots in the sea.
 
 **`Money` equality ignores scale, but serialization preserves it.** `Money(5.1, usd) == Money(5.10, usd)` is `true`, because no arithmetic here can make two spellings of one amount differ in value. The stored scale is untouched and still serialized, so **two equal amounts can serialize differently**. Compare `value.scale` explicitly to ask whether two amounts were *written* the same way. `BigDecimal` is unaffected and keeps JDK-style scale-sensitive equality.
 

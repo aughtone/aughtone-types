@@ -61,7 +61,7 @@ implementation(libs.aughtone.types)
 | | `Altitude` | SI (Meters) | Vertical distance above/below reference. |
 | | `Azimuth` | Degrees | Compass bearing (0-360°). |
 | | `Telemetry` | Unified Domain | Comprehensive model with coordinates, azimuth, speed, and altitude. |
-| **Geospatial** | `GeoJson` | **RFC 7946** | `GeoPoint`, `GeoFeature`, and `GeoFeatureCollection` models. |
+| **Geospatial** | `GeoJson` | **RFC 7946** | `GeoPoint`, `GeoFeature`, and `GeoFeatureCollection` models. `Coordinates.toGeoPoint()` reorders to GeoJSON's longitude-first position. |
 | **SI Units** | `UnitOfMeasure` | SI / Imperial | Definitions for meters, liters, bytes, etc. |
 | | `MetricPrefix` | SI Prefixes | Scaling factors from `Quetta` to `Quecto`. |
 | **Identifiers** | `Url` | **RFC 3986** | Uniform Resource Locators (Web). |

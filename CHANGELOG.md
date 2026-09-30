@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- **`Coordinates.toGeoPoint()`**, the conversion that cannot be got wrong. `Coordinates` takes latitude first, as the pair is spoken; a GeoJSON position takes longitude first, per RFC 7946 §3.1.1. Both values are `Double`, so hand-converting compiles whichever way round it is written and silently puts the point in the wrong hemisphere. `Coordinates.accuracy` is dropped, because GeoJSON defines no member for it — a position's optional third element is altitude, not an error estimate. A `GeoPoint(Coordinates)` constructor was considered and declined: GeoJSON's own order is correct for `GeoPoint`, and a constructor does not carry the reordering in its name. (#34)
+
 - **`Outcome.isSuccess`, `Outcome.isFailure` and `Outcome.exceptionOrNull()`**, matching `kotlin.Result`, for callers that want to test or read a failure without a `when`. (#35)
 - **`Outcome.getOrDefault(defaultValue)`**, the form of `getOrElse` that ignores why the operation failed. (#35)
 - **`Locale.localizedDisplayNameOrNull(displayIn)`**, which performs the same lookup without the English fallback and returns `null` when no genuine translation exists. `localizedDisplayName` is unchanged and now routes through it. Use the nullable form wherever showing the wrong language is worse than showing nothing — a language picker, say — and the throwing-free original where any readable name will do. (#33)

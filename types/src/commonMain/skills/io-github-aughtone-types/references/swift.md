@@ -108,6 +108,8 @@ Use the `OrNull` parser, `Locale.Companion.shared.currentOrNull`, `Outcome.getOr
 
 `GeoPoint.init(longitude:latitude:)` and `Coordinates.init(latitude:longitude:)` take their arguments in opposite orders, exactly as in Kotlin. Swift's argument labels make this visible at the call site, which Kotlin's positional form does not — so the labels are worth reading rather than autocompleting.
 
+Better, convert rather than retype: `coordinates.toGeoPoint()` arrives as an ordinary method on `Coordinates`, since the Kotlin extension exports as an Objective-C category, and it does the reordering for you. It drops `accuracy`, which GeoJSON has no member for.
+
 ## If you received this as an XCFramework
 
 You are reading this file, so you have the sources jar. A Swift developer given only a binary XCFramework never receives it, and the only guidance that reaches them is the doc comment Kotlin writes into the framework header.
