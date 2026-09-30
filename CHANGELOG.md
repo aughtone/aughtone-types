@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-09-30
+
+A breaking release. `Outcome` now reads as `kotlin.Result`, `Currency` compares by its ISO 4217 code, `Gigabyte` and `Gigabit` gain the symbols their families already had, and locale display names are repaired on JS and bundled where a platform has no CLDR. Several changes alter behaviour **without a compile error** — read the first two sections before upgrading.
+
 ### ⚠️ Breaking Changes
 
 - **`Outcome`'s failure callbacks now receive the `Throwable`, not the `Outcome.Failure`.** This applies to `onFailure`, `fold`'s second parameter, `recover` and `getOrElse`, matching `kotlin.Result`. **This is the one part of the change that does not fail the build, so check it first:** a body reading `it.message` keeps compiling, because `Throwable.message` exists, but it is `String?` where `Outcome.Failure.message` was a non-null `String` — inside a string template it silently renders the text `null` for an exception carrying no message. Use `it.message ?: it.toString()`, which is what `Failure.message` does. A body reading `it.exception` becomes just `it`; a read of `.exception` on a `Failure` you reached by a type check or smart cast needs no change, since `Failure.exception` is untouched. Grep your doc comments as well as your source — a KDoc sample compiles nowhere, so nothing flags it. (#35)
