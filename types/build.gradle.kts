@@ -8,13 +8,19 @@ plugins {
     alias(libs.plugins.multiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
-    alias(libs.plugins.dependencySkills)
 }
 
-// Dependency skills trial: write the skill an agent uses to write this library's guide.
-dependencySkills {
-    author { }
-}
+// Ships this library's agent skill in every sources jar, where a consumer's tooling reads it. The skill is
+// written at src/commonMain/skills/<name>/, a directory beside the source that no sources jar picks up by
+// itself, and lands at commonMain/skills/<name>/ in each: the root and every per-target jar.
+tasks.withType<Zip>()
+    .matching { it.name == "sourcesJar" || it.name.endsWith("SourcesJar") }
+    .configureEach {
+        from("src/commonMain/skills") {
+            include("*/SKILL.md", "*/references/**", "*/assets/**")
+            into("commonMain/skills")
+        }
+    }
 
 group = libs.versions.group.get()
 version = libs.versions.versionName.get()
