@@ -1,5 +1,3 @@
-import org.gradle.api.tasks.PathSensitivity
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -11,6 +9,18 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.vanniktech.mavenPublish)
 }
+
+// Ships this library's agent skill in every sources jar, where a consumer's tooling reads it. The skill is
+// written at src/commonMain/skills/<name>/, a directory beside the source that no sources jar picks up by
+// itself, and lands at commonMain/skills/<name>/ in each: the root and every per-target jar.
+tasks.withType<Zip>()
+    .matching { it.name == "sourcesJar" || it.name.endsWith("SourcesJar") }
+    .configureEach {
+        from("src/commonMain/skills") {
+            include("*/SKILL.md", "*/references/**", "*/assets/**")
+            into("commonMain/skills")
+        }
+    }
 
 group = libs.versions.group.get()
 version = libs.versions.versionName.get()
@@ -144,7 +154,7 @@ mavenPublishing {
     coordinates(group.toString(), "types", version.toString())
 
     pom {
-        name = "Aughtone Types"
+        name = "Aught One Types"
         description = "A library of reusable types."
         inceptionYear = "2025"
         url = "https://github.com/aughtone/aughtone-types"

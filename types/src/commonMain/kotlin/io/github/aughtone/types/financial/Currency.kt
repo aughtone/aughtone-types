@@ -42,6 +42,35 @@ data class Currency(
     val replacedBy: String? = null,
 ) {
     /**
+     * Two currencies are equal when their ISO 4217 [code] matches, and nothing else takes part.
+     *
+     * ISO 4217 makes the alphabetic code the identity of a currency; [name] and [symbol] are how it
+     * is presented, and [number], [digits], [obsolete] and [replacedBy] are facts about the currency
+     * the code already names. Two instances carrying `"USD"` describe the same money however they were
+     * built — from the bundled resource map, from a platform lookup, or decoded from a payload someone
+     * else wrote with a different `name` or `symbol` — so they compare equal, sit in one bucket of a
+     * `Set`, and act as one map key.
+     *
+     * This is the same principle the URI types follow: equality is what the governing specification
+     * says identifies the value, not a field-by-field comparison. Compare the individual properties
+     * when a presentation difference is what you actually care about.
+     *
+     * Note the consequence for `copy`: `usd.copy(symbol = "US$")` is equal to `usd`.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Currency) return false
+        return code == other.code
+    }
+
+    /**
+     * Hashes the ISO 4217 [code] alone, so that currencies equal under [equals] land in the same
+     * bucket. Hashing any other property would put two equal currencies in different buckets and
+     * every hash-based collection would misbehave.
+     */
+    override fun hashCode(): Int = code.hashCode()
+
+    /**
      * The scale factor used to convert the arbitrary-precision [BigDecimal] value to
      * its decimal representation (e.g., 100.0 for currencies with 2 digits).
      * Calculated as 10 raised to the power of [digits].
@@ -61,11 +90,27 @@ data class Currency(
          * current region. It relies on the [Locale.current] mapping to determine the
          * correct ISO 4217 code.
          *
-         * @throws IllegalStateException if the current locale or its associated currency cannot be determined.
+         * @throws IllegalArgumentException if the current locale or its associated currency
+         *   cannot be determined. Use [currentOrNull] to receive `null` instead.
+         * @see currentOrNull
          * @see Locale.current
          */
         val current: Currency
             get() = requireNotNull(getCurrency(Locale.current)) { "Your locale could not be found, or there was no currency mapped to it. Try getCurrency(Locale) or construct your own." }
+
+        /**
+         * Returns the currency for the user's current region, or `null` when it cannot be
+         * determined.
+         *
+         * The same lookup as [current], reported rather than thrown, and `null` covers both ways it
+         * can fail: the platform could not resolve a locale at all, or it resolved one that no
+         * currency is mapped to. Those are different problems, so use [Locale.currentOrNull] first
+         * if you need to tell them apart.
+         *
+         * @return The current [Currency], or `null` if it could not be determined.
+         */
+        val currentOrNull: Currency?
+            get() = Locale.currentOrNull?.let { getCurrency(it) }
 
         /**
          * Retrieves the currency associated with the specified locale.

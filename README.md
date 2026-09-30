@@ -10,7 +10,7 @@ Published to Maven Central as `io.github.aughtone:types`.
 
 ```kotlin
 // build.gradle.kts
-implementation("io.github.aughtone:types:4.0.0")
+implementation("io.github.aughtone:types:4.1.0")
 ```
 
 Or through a version catalog:
@@ -18,7 +18,7 @@ Or through a version catalog:
 ```toml
 # gradle/libs.versions.toml
 [versions]
-aughtone-types = "4.0.0"
+aughtone-types = "4.1.0"
 
 [libraries]
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
@@ -30,6 +30,8 @@ implementation(libs.aughtone.types)
 ```
 
 > [!IMPORTANT]
+> **v4.1.0 Breaking Changes**: `Outcome` is aligned with `kotlin.Result`. `dataOrNull`, `dataOrThrow` and `dataOrElse` are renamed `getOrNull`, `getOrThrow` and `getOrElse`, with no deprecated aliases, and the callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` rather than the `Outcome.Failure`. **Check the callbacks first: they still compile.** A body reading `it.message` keeps building but now gets the nullable `Throwable.message` instead of the non-null `Outcome.Failure.message`, so an exception with no message renders the text `null`. Use `it.message ?: it.toString()`. `isSuccess`, `isFailure`, `exceptionOrNull()` and `getOrDefault` are new. **`Currency` now compares by its ISO 4217 code alone**, so a `Set` or map keyed by `Currency` may hold one entry where it held two, and `Money` amounts from different sources sort instead of throwing. **`Gigabyte` is now `GiB` and `Gigabit` `Gbit`**, keeping `GB` and `Gb` as alternatives, so rendering `.symbol` changes for those two. Also: `localizedDisplayName` returned English for every locale on the JS and Wasm targets in 3.4.0 and 4.0.0 and now returns real translations, so anything rendering locale names on web changes output.
+>
 > **v4.0.0 Breaking Changes**: A breaking release. `Outcome.Error` and `Locale.toLanguageTag()` are removed; `Money` equality is now numeric so `5.1` equals `5.10`; `Distance` and `Speed` throw instead of clamping to zero; `GeoBoundingBox` leaves the geometry hierarchy; `GeoFeature.properties` becomes `JsonObject`; invalid GeoJSON is now rejected; and `UnitOfMeasure.findFirst` refuses ambiguous symbols rather than guessing. Several change behaviour **without a compile error** — see the [changelog](CHANGELOG.md) before upgrading.
 >
 > **v3.4.0 `Outcome.Error` renamed**: The failure case of `Outcome` is now `Outcome.Failure`, and the factory is `Outcome.failure(...)`. The old names shipped as deprecated aliases in 3.4.0 and are removed in 4.0.0. `Outcome$Error` no longer exists as a class, so upgrading from 3.3.0 needs a clean and rebuild rather than a code change.
@@ -59,7 +61,7 @@ implementation(libs.aughtone.types)
 | | `Altitude` | SI (Meters) | Vertical distance above/below reference. |
 | | `Azimuth` | Degrees | Compass bearing (0-360°). |
 | | `Telemetry` | Unified Domain | Comprehensive model with coordinates, azimuth, speed, and altitude. |
-| **Geospatial** | `GeoJson` | **RFC 7946** | `GeoPoint`, `GeoFeature`, and `GeoFeatureCollection` models. |
+| **Geospatial** | `GeoJson` | **RFC 7946** | `GeoPoint`, `GeoFeature`, and `GeoFeatureCollection` models. `Coordinates.toGeoPoint()` reorders to GeoJSON's longitude-first position. |
 | **SI Units** | `UnitOfMeasure` | SI / Imperial | Definitions for meters, liters, bytes, etc. |
 | | `MetricPrefix` | SI Prefixes | Scaling factors from `Quetta` to `Quecto`. |
 | **Identifiers** | `Url` | **RFC 3986** | Uniform Resource Locators (Web). |
@@ -69,7 +71,7 @@ implementation(libs.aughtone.types)
 | | `BigDecimal` | Pure Kotlin | Arbitrary-precision decimal math with rounding support. |
 | **Utilities** | `BitSet` | Multiplatform | Space-efficient storage for bit-level flags. |
 | | `BankersValue` | Half-to-Even | Precision math with bias-free rounding rules. |
-| **Control Flow** | `Outcome` | Sealed (KMP-safe) | Success-or-failure result that survives the Swift/JS boundary, unlike `kotlin.Result`. |
+| **Control Flow** | `Outcome` | Sealed (KMP-safe) | Success-or-failure result Swift can read as data, unlike `kotlin.Result`. Reads like `Result`: `getOrNull`, `getOrThrow`, `getOrElse`, `fold`, `map`, `recover`. |
 
 ## 🚀 Quick Usage
 
@@ -91,8 +93,8 @@ implementation(libs.aughtone.types)
 - **Rounding**: `BigDecimal("1.255").setScale(2, RoundingMode.HALF_EVEN)` -> `1.26`.
 
 ### ✅ Success or Failure
-- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Failure`; `when` over the two, or use `fold`, `map`, `recover`, `dataOrElse`.
-- Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure as data. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
+- **Outcome**: `runOutcome { parse(input) }` returns `Outcome.Success` or `Outcome.Failure`; `when` over the two, or use `fold`, `map`, `recover`, `getOrNull`, `getOrElse`.
+- Unlike `kotlin.Result` it is a sealed class, so Swift and JavaScript callers can read the failure as data. It otherwise reads as `Result` does — same members, same callback arguments — so it stands in for one where `Result` cannot cross the language boundary. See [ADR-0004](docs/knowledge/decisions/outcome-over-kotlin-result.md).
 
 ### 🗺️ GeoJSON
 - **GeoJSON**: `GeoPoint(45.5, -122.6, 100.0).toGeoJson()` (**RFC 7946**).
@@ -108,13 +110,20 @@ localeFor("bn")?.localizedDisplayName() // "bengali" for a French user, "ベン�
 
 Rather than bundling a full translation matrix (~90 × 90 names) into every app, this delegates to the CLDR data each platform already ships — `java.util.Locale` (JVM/Android), `NSLocale` (Apple), `Intl.DisplayNames` (JS/Wasm). Bundled resource files aren't viable everywhere: browsers can't read files synchronously, and klibs can't deliver resources into an iOS app bundle.
 
-**Tradeoffs to be aware of:**
-- Names come from the OS, so wording may differ slightly between platforms and OS versions (e.g. "Chinese (Simplified)" vs "Simplified Chinese").
-- Linux targets have no system CLDR data — they always return the English fallback.
-- Browsers need `Intl.DisplayNames` (widely available since ~2020); older environments fall back to English.
-- The function never returns `null` — the worst case is the English `displayName`.
+### Completeness, not consistency
 
-See [ADR-0003](docs/knowledge/decisions/localized-display-names-via-platform-cldr.md) for the full rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for the deferred bundled-tables alternative.
+This is the one place the library does **not** promise every platform the same answer, and the reason is measured rather than assumed. Of the locale names that the JVM, Apple and a browser can all produce, they disagree on **40.8%** between Apple and the browser, and **9.6%** between the JVM and Apple. Not near-misses: `nl-BE` is "Nederlands (België)" on two platforms and "Vlaams" on the third. That is CLDR version skew between operating systems and browsers, and delegation cannot remove it.
+
+So the goal here is **completeness** — every locale gets a name in the reader's language — and not **consistency**, which would mean bundling the full translation matrix into every artifact. That costs roughly 107 KB gzipped on web and mobile to fix a problem those platforms do not have, since they already ship the data. Elsewhere in this library identical behaviour everywhere is the point; for display names the price was judged wrong, deliberately.
+
+**What that means for you:**
+- **Never depend on the exact string.** Compare locales, not their rendered names. A snapshot test or a cache key built on one will differ across targets.
+- **`localizedDisplayName` never returns `null`** — the worst case is the English `displayName`. That fallback is silent, so use **`localizedDisplayNameOrNull`** when showing the wrong language matters more than showing nothing: it returns `null` where the platform has no data, instead of quietly handing back English.
+- **Coverage varies by platform and the holes differ.** Each lacks 6–7% of pairs, but not the same ones — the JVM has no Inuktitut, Apple has some; Apple is thin on Igbo where the JVM is not.
+- **Linux has no system CLDR at all** and returns the English fallback for everything.
+- **Browsers need `Intl.DisplayNames`**, available since roughly 2020; older environments fall back to English.
+
+See [ADR-0005](docs/knowledge/decisions/completeness-over-consistency-for-display-names.md) for the decision and the measurements, [ADR-0003](docs/knowledge/decisions/localized-display-names-via-platform-cldr.md) for the original delegation rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for gap-filling work.
 
 ---
 ## 🧪 Verification & Parity

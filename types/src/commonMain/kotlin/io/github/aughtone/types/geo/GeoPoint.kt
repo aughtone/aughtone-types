@@ -31,6 +31,12 @@ data class GeoPoint(
     /**
      * Secondary constructor for creating a 2D Point.
      *
+     * **Longitude comes first**, which is the opposite of how the pair is usually spoken and the
+     * opposite of [io.github.aughtone.types.quantitative.Coordinates], which takes latitude first.
+     * RFC 7946 §3.1.1 fixes this order for GeoJSON positions, so it is the specification's choice
+     * rather than this library's. Both parameters are `Double`, so transposing them compiles,
+     * serializes and puts the point in the wrong hemisphere. Use named arguments.
+     *
      * @param longitude The longitude in decimal degrees.
      * @param latitude The latitude in decimal degrees.
      */
@@ -43,7 +49,8 @@ data class GeoPoint(
      * @param latitude The latitude in decimal degrees.
      * @param altitude The altitude in meters above or below the WGS 84 reference ellipsoid.
      */
-    constructor(longitude: Double, latitude: Double, altitude: Double) : this(listOf(longitude, latitude, altitude))
+    constructor(longitude: Double, latitude: Double, altitude: Double) :
+        this(listOf(longitude, latitude, altitude))
 
     /**
      * Secondary constructor for creating a [GeoPoint] from an array of coordinates.

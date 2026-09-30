@@ -45,3 +45,33 @@ Add `io.github.aughtone.types.outcome.Outcome<T>` — a `sealed class` with two 
 The name was wrong on two counts. Every callback in the API already said *failure* — `onFailure`, and `fold`'s second parameter — so the type and the callbacks disagreed with each other in the same file. And `Outcome.Error` reads as a relative of `kotlin.Error`, which is a specific severe-throwable type it has nothing to do with; a case holding an ordinary `Throwable` should not borrow that name.
 
 The rename is a binary break — `Outcome$Error` no longer exists as a class — which strictly argues for a major version. It ships as a minor anyway: 3.3.0 was hours old with no consumer compiled against it, the alias preserves source compatibility, and for a consumer the remedy is a clean and rebuild rather than a code change. The alias was removed in 4.0.0.
+
+## Amendment — 2026-09-29, after 4.0.0
+
+**Decision 6 is reversed.** The accessors are now named as `kotlin.Result` names them: `getOrNull`, `getOrThrow`, `getOrElse`, and a new `getOrDefault`, replacing `dataOrNull`, `dataOrThrow` and `dataOrElse`. `isSuccess`, `isFailure` and `exceptionOrNull()` are added for the same reason. The callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` itself rather than the `Failure` wrapper, which is what `Result` passes.
+
+The original reasoning — that matching half of `Result`'s vocabulary implies the rest is present — assumed a reader who would be misled by the resemblance. What actually happened is the opposite: the resemblance is what a caller is looking for. `Result` is the type they already know and cannot use across the language boundary, and every consuming project reached for `Outcome` as the thing that stands in for it. A deliberately different vocabulary made every call site a translation exercise, for a distinction the type's own documentation already draws.
+
+The remaining difference in vocabulary is `Success.data` where `Result` has `value`. That one stays: it is the payload accessor consumers already destructure and pattern-match on, and it is the name in every `when` branch written against 3.x and 4.0.0.
+
+This is a source-breaking change shipped in a `-alpha` prerelease, and it was accepted on the understanding that the consumer cost was one edit per project. That estimate was wrong: one sibling library alone has **72 call sites**, which migrating touched 35 files to fix, plus nineteen in its README and KDoc. The remaining consumers have one or two files each.
+
+A first estimate of the callback damage was also too high, and the correction is the useful part. Reads of `.exception` mostly do **not** break: that library had 111 of them and changed none, because they sit on an `Outcome.Failure` reached by a type check or smart cast, and `Failure.exception` is untouched. Only a callback *parameter* changed type. What did need care was narrower and quieter — see below.
+
+The decision stands, for two reasons the corrected number does not touch. The renames are mechanical and the compiler finds every one of them, because the old names cease to exist rather than changing meaning. And the cost only grows: every consumer added before the rename pays it, and after 4.1.0 leaves alpha the rename cannot be made at all without a major version.
+
+**The single silent breakage is a callback body reading `it.message`.** It keeps compiling, because `Throwable.message` exists, but it is `String?` where `Outcome.Failure.message` was a non-null `String`. In a string template that renders the literal text `null` for an exception carrying no message. The first consumer to migrate had fourteen of these, every one of them building a policy-identifier failure message that would have thrown an `IllegalStateException` reading "not a valid policy chain: null" — compiling cleanly the whole way. `it.message ?: it.toString()` is the fix, and is what `Failure.message` does internally.
+
+This is worth stating ahead of the rename list rather than inside it, which is how the shipped skill now orders it: a reader scanning renamed methods has no reason to look for the one change that is not a renamed method.
+
+**Doc comments are the other place to look, and nothing flags them.** That consumer had ten KDoc samples using the old API against four genuine source breakages of the same shape. A sample compiles nowhere, so no build catches it, and it is the first thing the next reader copies.
+
+**A deprecation cycle was proposed and is declined.** `@Deprecated` with `ReplaceWith` for one minor version would have turned 72 call sites into a single IDE action per consumer, at the cost of carrying dead names briefly. A consumer maintainer asked for it, having just done the migration by hand. The answer is no, and the clean break stands: 4.1.0 ships no deprecated aliases and no transitional minor.
+
+The reason is that a deprecation would have covered the wrong half. `ReplaceWith` can express the three renames, which are precisely the changes the compiler already catches. It cannot express the callback signature change at all — the one edit that compiles silently and puts the text `null` into a thrown exception. So the transitional release would have automated the half nobody needed help with, left the half that actually bites uncovered, and advertised source compatibility it did not have. A consumer who saw only deprecation warnings would reasonably have concluded the migration was mechanical, which is the opposite of true.
+
+That it was asked for after the work was already done is worth recording rather than smoothing over: the cost was real and fell on one consumer, and the answer is still no.
+
+The lesson about the estimate is worth more than the estimate. It came from counting usage in the consumers that were in front of us, and the library with two orders of magnitude more usage was the one nobody had open. Counting a breaking change's blast radius means counting it in every consumer, not in the consumer that prompted the question.
+
+The parenthetical lesson is about discovery rather than naming: the library's own skill did not mention `Outcome` in its description, so an agent searching for a multiplatform result type ranked this library below several that have nothing to do with the problem. A type that exists to be reached for has to be findable by the words someone with the problem would use — here, the name of the type they are trying to replace.

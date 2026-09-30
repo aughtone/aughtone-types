@@ -186,6 +186,18 @@ data class BigDecimal(
      */
     fun toDouble(): Double = toString().toDouble()
 
+    /**
+     * Divides by [divisor] and requires an exact result.
+     *
+     * There is no rounding here: if the quotient does not terminate — `1 / 3`, say — this refuses
+     * rather than choosing a scale for you. Use the three-argument [divide] to say what scale and
+     * rounding you want, which is what [io.github.aughtone.types.financial.Money.div] does.
+     *
+     * @param divisor The value to divide by.
+     * @return The exact quotient.
+     * @throws ArithmeticException if [divisor] is zero, or if the quotient has a non-terminating
+     *         decimal expansion and so has no exact representation.
+     */
     fun divide(divisor: BigDecimal): BigDecimal {
         if (divisor.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
@@ -225,6 +237,16 @@ data class BigDecimal(
         return BigDecimal(exact, this.scale - divisor.scale + extraDigits)
     }
 
+    /**
+     * Divides by [other] to the given [scale], rounding as [roundingMode] directs.
+     *
+     * @param other The value to divide by.
+     * @param scale The number of digits after the decimal point in the result.
+     * @param roundingMode How to round the digit that falls off the end.
+     * @return The quotient at [scale].
+     * @throws ArithmeticException if [other] is zero, or if [roundingMode] is
+     *         [RoundingMode.UNNECESSARY] and rounding would in fact be needed.
+     */
     fun divide(other: BigDecimal, scale: Int, roundingMode: RoundingMode): BigDecimal {
         if (other.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
@@ -249,10 +271,29 @@ data class BigDecimal(
         return BigDecimal(roundedUnscaled, scale)
     }
 
+    /**
+     * Returns this value at [newScale] **without rounding**, which is [RoundingMode.UNNECESSARY].
+     *
+     * Reducing the scale therefore only succeeds when the digits being dropped are zeros. To drop
+     * significant digits, use the two-argument [setScale] and name a rounding mode.
+     *
+     * @param newScale The scale the result should carry.
+     * @return This value at [newScale].
+     * @throws ArithmeticException if reaching [newScale] would discard a non-zero digit.
+     */
     fun setScale(newScale: Int): BigDecimal {
         return setScale(newScale, RoundingMode.UNNECESSARY)
     }
 
+    /**
+     * Returns this value at [newScale], rounding as [roundingMode] directs when digits are dropped.
+     *
+     * @param newScale The scale the result should carry.
+     * @param roundingMode How to round when [newScale] is smaller than the current [scale].
+     * @return This value at [newScale].
+     * @throws ArithmeticException if [roundingMode] is [RoundingMode.UNNECESSARY] and rounding
+     *         would in fact be needed.
+     */
     fun setScale(newScale: Int, roundingMode: RoundingMode): BigDecimal {
         if (newScale == this.scale) return this
         if (newScale > this.scale) {
@@ -306,6 +347,18 @@ data class BigDecimal(
             return parseString(value.toString())
         }
 
+        /**
+         * Converts [value] to the decimal that the [Double] holds **exactly**, binary fraction and
+         * all: `valueOfExact(0.1)` is `0.1000000000000000055511151231257827021181583404541015625`.
+         *
+         * That is almost never what a caller wants for a displayed or stored number — [valueOf]
+         * goes through the shortest string that round-trips, giving `0.1`. Reach for this only when
+         * the exact binary value matters.
+         *
+         * @param value The double to convert.
+         * @return The exact decimal value of [value].
+         * @throws ArithmeticException if [value] is `NaN` or infinite, neither of which is a decimal.
+         */
         fun valueOfExact(value: Double): BigDecimal {
             if (value.isNaN() || value.isInfinite()) {
                 throw ArithmeticException("Cannot convert NaN or Infinite double to BigDecimal")

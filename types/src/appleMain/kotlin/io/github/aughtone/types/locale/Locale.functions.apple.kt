@@ -36,8 +36,21 @@ actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): Str
     // meaning the platform has no CLDR data for it; report null so callers can fall back.
     val languageName = displayLocale.displayNameForKey(NSLocaleLanguageCode, locale.languageCode)
     if (languageName == null || languageName.equals(locale.languageCode, ignoreCase = true)) return null
-    return displayLocale.displayNameForKey(NSLocaleIdentifier, locale.languageTag)
+
+    val localized = displayLocale.displayNameForKey(NSLocaleIdentifier, locale.languageTag)
         ?.takeIf { it.isNotBlank() }
+        ?: return null
+
+    // That check alone is not enough. When Apple knows the language but carries no data for the
+    // display locale, it does not echo the subtag — it quietly renders the English form, so a real
+    // English word comes back and the miss is invisible. Comparing against the English rendering is
+    // what exposes it, and the comparison cannot mean anything when the display language is itself
+    // English. Apple's coverage is not the JVM's: it carries Inuktitut, which the JVM does not.
+    if (!displayIn.languageCode.equals("en", ignoreCase = true)) {
+        val english = NSLocale(localeIdentifier = "en")
+        if (localized == english.displayNameForKey(NSLocaleIdentifier, locale.languageTag)) return null
+    }
+    return localized
 }
 
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {

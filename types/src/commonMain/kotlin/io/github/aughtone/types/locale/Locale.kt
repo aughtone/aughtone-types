@@ -77,11 +77,29 @@ data class Locale(
          * This property provides a platform-independent way to access the user's active
          * locale settings. It is resolved using native platform APIs.
          *
-         * @throws IllegalStateException if the system locale cannot be determined.
+         * @throws IllegalArgumentException if the system locale cannot be determined. Use
+         *   [currentOrNull] to receive `null` instead.
+         * @see currentOrNull
          * @see currentNativeLocale
          */
         val current: Locale
             get() = requireNotNull(currentNativeLocale()) { "Could not determine your locale. Try using getLocale(languageTag) or construct your own." }
+
+        /**
+         * Returns the system's current default [Locale], or `null` when the platform cannot say.
+         *
+         * The same lookup as [current], reported rather than thrown. Reach for this wherever a
+         * sensible fallback exists and an exception would be the wrong shape — a default argument,
+         * a property initialiser, a composable — since [current] throws and those are all places a
+         * throw is hard to recover from.
+         *
+         * Prefer [current] when there is no fallback: failing loudly beats silently rendering
+         * someone else's language.
+         *
+         * @return The current [Locale], or `null` if the platform could not resolve one.
+         */
+        val currentOrNull: Locale?
+            get() = currentNativeLocale()
 
 
         /**

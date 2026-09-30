@@ -2,7 +2,7 @@
 
 Pinned source snapshots for the data tables compiled into the published artifact. These are inputs, not documentation — they live here rather than under `knowledge/` because a documentation mirror carries markdown only, and a data file parked in the knowledge base is invisible to readers of it.
 
-Keywords: where did the currency list come from, where did the locale display names come from, is the locale table CLDR, do we need the Unicode license, ISO 4217 source, regenerating the resource maps, why are some country names out of date
+Keywords: where did the currency list come from, where did the locale display names come from, is the locale table CLDR, do we need the Unicode license, ISO 4217 source, regenerating the resource maps, why are some country names out of date, which CLDR version, why is some data not reproducible, platform-harvested names
 
 ## `list-one.xml` — ISO 4217 currency codes
 
@@ -11,6 +11,24 @@ Published: 2025-02-04 (from the file's own `Pblshd` attribute)
 Compiled into: `io.github.aughtone.types.financial.currencyResourceMap` (`Currency.resource.kt`)
 
 Provenance is settled. Attribution is in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
+
+## `UNICODE-LICENSE-V3.txt` — localized display names
+
+Source: Unicode CLDR, via the npm package `cldr-localenames-full`
+Pinned: version **48.2.0**, integrity `sha512-4o0paYDz0UXhfhChAVFkmVl2CP0YTSEqE6WrC0fNafaSC5u5DAXphxH3SZ1Ujczarikr8DToKZfiok6EqWLdNQ==`
+Compiled into: `LocaleDisplayNameSupplement` (all targets) and `LocaleDisplayNameTable` (Linux only)
+
+The licence file is vendored here rather than the data, because the data is 1.9 MB and the package is reproducible from its version and integrity hash. Attribution is in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
+
+Names are **composed**, not transcribed: language, script and territory are read from CLDR's own files and assembled with CLDR's own `localeDisplayPattern`. That is the same rule the platforms apply, which is why the output matches them — `fr` + `en-AU` gives "anglais (Australie)" from either.
+
+### Part of this data is not from the pinned release
+
+CLDR 48.2.0 cannot name 619 of the pairs this library ships. Those were taken from platform CLDR implementations instead — JDK 26, Apple, and a Chromium browser, measured 2026-09-28 — and **that portion is not reproducible from any pinned source**. Each platform carries its own CLDR version and, in places, vendor additions; Apple's handful of Inuktitut names exist in no CLDR release this project could find.
+
+Of the names that ship, **16,590 come from the pinned release and 207 from platform implementations**. Six pairs can be named by neither and fall back to English.
+
+This is a known weakness, deliberately accepted rather than overlooked, and it is the one part of this directory that does not meet the standard the rest of it sets. Replacing it with a citable source is tracked separately.
 
 ## `supported_languages.json` — locale display names
 

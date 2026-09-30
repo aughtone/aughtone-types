@@ -17,6 +17,11 @@ private const val EARTH_RADIUS = 6371e3
 /**
  * Represents a geographical coordinate, defined by latitude and longitude.
  *
+ * **Latitude comes first here**, matching how the pair is spoken, and that is the opposite of
+ * [io.github.aughtone.types.geo.GeoPoint], which puts longitude first because RFC 7946 requires it
+ * of GeoJSON positions. Both parameters are `Double`, so transposing them compiles and silently
+ * relocates the point. Use named arguments when converting between the two.
+ *
  * This data class is used to specify a precise location on the Earth's surface.
  *
  * @property latitude The latitude of the coordinate, in decimal degrees.
