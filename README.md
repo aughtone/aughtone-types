@@ -10,7 +10,7 @@ Published to Maven Central as `io.github.aughtone:types`.
 
 ```kotlin
 // build.gradle.kts
-implementation("io.github.aughtone:types:4.0.0")
+implementation("io.github.aughtone:types:4.1.0")
 ```
 
 Or through a version catalog:
@@ -18,7 +18,7 @@ Or through a version catalog:
 ```toml
 # gradle/libs.versions.toml
 [versions]
-aughtone-types = "4.0.0"
+aughtone-types = "4.1.0"
 
 [libraries]
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
@@ -30,7 +30,7 @@ implementation(libs.aughtone.types)
 ```
 
 > [!IMPORTANT]
-> **v4.1.0 Breaking Changes**: `Outcome` is aligned with `kotlin.Result`. `dataOrNull`, `dataOrThrow` and `dataOrElse` are renamed `getOrNull`, `getOrThrow` and `getOrElse`, with no deprecated aliases, and the callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` rather than the `Outcome.Failure`. **Check the callbacks first: they still compile.** A body reading `it.message` keeps building but now gets the nullable `Throwable.message` instead of the non-null `Outcome.Failure.message`, so an exception with no message renders the text `null`. Use `it.message ?: it.toString()`. `isSuccess`, `isFailure`, `exceptionOrNull()` and `getOrDefault` are new. Also: `localizedDisplayName` returned English for every locale on the JS and Wasm targets in 3.4.0 and 4.0.0 and now returns real translations, so anything rendering locale names on web changes output.
+> **v4.1.0 Breaking Changes**: `Outcome` is aligned with `kotlin.Result`. `dataOrNull`, `dataOrThrow` and `dataOrElse` are renamed `getOrNull`, `getOrThrow` and `getOrElse`, with no deprecated aliases, and the callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` rather than the `Outcome.Failure`. **Check the callbacks first: they still compile.** A body reading `it.message` keeps building but now gets the nullable `Throwable.message` instead of the non-null `Outcome.Failure.message`, so an exception with no message renders the text `null`. Use `it.message ?: it.toString()`. `isSuccess`, `isFailure`, `exceptionOrNull()` and `getOrDefault` are new. **`Currency` now compares by its ISO 4217 code alone**, so a `Set` or map keyed by `Currency` may hold one entry where it held two, and `Money` amounts from different sources sort instead of throwing. **`Gigabyte` is now `GiB` and `Gigabit` `Gbit`**, keeping `GB` and `Gb` as alternatives, so rendering `.symbol` changes for those two. Also: `localizedDisplayName` returned English for every locale on the JS and Wasm targets in 3.4.0 and 4.0.0 and now returns real translations, so anything rendering locale names on web changes output.
 >
 > **v4.0.0 Breaking Changes**: A breaking release. `Outcome.Error` and `Locale.toLanguageTag()` are removed; `Money` equality is now numeric so `5.1` equals `5.10`; `Distance` and `Speed` throw instead of clamping to zero; `GeoBoundingBox` leaves the geometry hierarchy; `GeoFeature.properties` becomes `JsonObject`; invalid GeoJSON is now rejected; and `UnitOfMeasure.findFirst` refuses ambiguous symbols rather than guessing. Several change behaviour **without a compile error** — see the [changelog](CHANGELOG.md) before upgrading.
 >
