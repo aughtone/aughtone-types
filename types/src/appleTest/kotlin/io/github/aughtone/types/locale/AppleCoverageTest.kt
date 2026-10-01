@@ -1,17 +1,18 @@
 package io.github.aughtone.types.locale
 
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 /**
- * Pins how much of the display-name matrix this platform produces on its own.
+ * Watches how much of the display-name matrix this platform produces on its own.
  *
  * Platform CLDR moves with operating system and toolchain releases, and it moves silently: a
  * platform that quietly loses a language renders English instead, which looks like a working
  * library. This turns that into a failure.
  *
- * A change here is not automatically a defect — it means the platform's data moved. The response is
- * to regenerate the supplement and update the number, deliberately, having looked at what changed.
+ * The counts are host data, so they drift a little between OS, simulator and JDK releases; the
+ * assertion tolerates that and fails on a broken bridge or a move large enough to regenerate the
+ * supplement for. See [assertCoverageNear]. When it does fail, regenerate and update the baseline
+ * deliberately, having looked at what changed.
  *
  * Measured against Apple CLDR on iosSimulatorArm64, 2026-09-28.
  */
@@ -21,22 +22,17 @@ class AppleCoverageTest {
     private val displayLanguages = locales.map { it.languageCode }.distinct()
 
     @Test
-    fun platformCoverageHasNotMoved() {
+    fun platformCoverageStaysNearItsBaseline() {
         var gaps = 0
         for (tag in displayLanguages) {
             val displayIn = Locale.getLocale(tag) ?: continue
             gaps += locales.count { localizedDisplayNameForNative(it, displayIn) == null }
         }
-        assertEquals(
-            1199,
-            gaps,
-            "This platform's own CLDR coverage has changed. Regenerate the supplement and update " +
-                "this number once you have looked at what moved."
-        )
+        assertCoverageNear("Apple platform gaps", baseline = 1199, actual = gaps)
     }
 
     @Test
-    fun theSupplementClosesEveryGapItCan() {
+    fun untranslatedPairsStayNearTheirBaseline() {
         // What the supplement cannot close is what has no genuine translation anywhere: either no
         // platform can name the pair at all, or the ones that can return the English word, which the
         // supplement deliberately does not carry. Both render in English — true, untranslated — and
@@ -50,12 +46,7 @@ class AppleCoverageTest {
                 }
             }
         }
-        assertEquals(
-            910,
-            unfilled.size,
-            "Pairs no platform can name changed. They fall back to English; the set was " +
-                "Inuktitut and Tibetan named in the thinnest display languages. Got: " +
-                unfilled.sorted().take(12)
-        )
+        println("UNTRANSLATED sample: " + unfilled.sorted().take(12))
+        assertCoverageNear("Apple untranslated after the supplement", baseline = 910, actual = unfilled.size)
     }
 }

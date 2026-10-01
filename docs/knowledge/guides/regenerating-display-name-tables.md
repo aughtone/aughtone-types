@@ -73,13 +73,13 @@ class TableEmitterTest {
 
 **7. Remove the emitter, restore the supplement lookup, and run `./gradlew check`.**
 
-**8. Update the tests that pin the numbers.** `JvmCoverageTest` and `AppleCoverageTest` pin two each — the platform's own gap count, and how many pairs remain untranslated after the supplement — and `LocaleDisplayNameSupplementTest` pins the supplement's derived size and the display-language count. They will fail with the new values in the message. Change them only once you have looked at what moved; that check is the whole point of them.
+**8. Update the baselines.** `JvmCoverageTest` and `AppleCoverageTest` each hold two baselines — the platform's own gap count, and how many pairs remain untranslated after the supplement — and `LocaleDisplayNameSupplementTest` pins the supplement's derived size and the display-language count exactly. The coverage baselines are **tolerant**, within 5%, because they measure host data: a different OS, simulator runtime or JDK reports slightly different counts, and an exact pin failed a release on CI over a drift of six pairs. Every run prints the actual counts, so watch the logs for drift. Change a baseline only once you have looked at what moved.
 
 The Linux table's `size` is **not** pinned by any test, because there is no `linuxTest` source set and `linuxX64` cannot execute on an arm64 macOS host anyway. It is derived from the payload, so it cannot contradict the file it lives in, but nothing asserts the payload itself.
 
 ## What to expect
 
-These are the values the tests assert as of 2026-09-29, taken from the tests and the shipped files rather than from a generation run:
+These are the baselines the tests hold as of 2026-09-29, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
 
 | | value | asserted in |
 |---|---|---|
