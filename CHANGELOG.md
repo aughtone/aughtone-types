@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`iku`, `ike` and `ikt` resolve to Inuktitut, and syllabics is `iu`'s default script.** `iku` is the three-letter code for the `iu` macrolanguage, and `ike` (Eastern Canadian Inuktitut) and `ikt` (Inuinnaqtun) are its two members; this library carries Inuktitut once, as `iu`, so all three resolve to it in every lookup, keeping any region, as `iw` already resolves to `he`. Because `iu` means syllabics, a `Cans` script subtag adds nothing and is dropped: `iu-Cans-CA` and `ike-Cans-CA` are `iu-CA`. Any other script is kept, so `ike-Latn-CA` normalizes to `iu-Latn-CA` rather than being rewritten to syllabics. (#40)
+
 ## [4.1.0] - 2026-09-30
 
 A breaking release. `Outcome` now reads as `kotlin.Result`, `Currency` compares by its ISO 4217 code, `Gigabyte` and `Gigabit` gain the symbols their families already had, and locale display names are repaired on JS and bundled where a platform has no CLDR. Several changes alter behaviour **without a compile error** — read the first two sections before upgrading.

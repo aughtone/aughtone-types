@@ -1,11 +1,24 @@
 package io.github.aughtone.types.locale
 
-// Legacy ISO 639 codes still returned by some platforms (e.g. java.util.Locale on
-// Android and JVM < 17), mapped to their modern BCP 47 equivalents.
+// Language codes that name a locale this library carries under a different code, mapped to it.
 private val legacyLanguageCodes: Map<String, String> = mapOf(
+    // Deprecated ISO 639 codes still returned by some platforms (e.g. java.util.Locale on Android
+    // and JVM < 17), mapped to their modern BCP 47 equivalents.
     "iw" to "he",
     "in" to "id",
     "ji" to "yi",
+    // Inuktitut. iku is the ISO 639-2/3 code for the iu macrolanguage itself; ike (Eastern Canadian
+    // Inuktitut) and ikt (Inuinnaqtun, Western) are its two ISO 639-3 members. This library carries
+    // Inuktitut once, as iu, so all three resolve to it.
+    "iku" to "iu",
+    "ike" to "iu",
+    "ikt" to "iu",
+)
+
+// The script a language is written in when its tag names none, so naming it adds nothing:
+// iu-Cans-CA is iu-CA. iu means syllabics here, as it does in CLDR's likely subtags.
+private val defaultScripts: Map<String, String> = mapOf(
+    "iu" to "Cans",
 )
 
 internal fun normalizeLanguageTag(languageTag: String): String {
@@ -13,32 +26,32 @@ internal fun normalizeLanguageTag(languageTag: String): String {
     val parts = normalized.split('-')
     if (parts.isEmpty() || parts[0].isEmpty()) return ""
     return buildString {
-        val language = parts[0].lowercase()
-        append(legacyLanguageCodes[language] ?: language)
+        val language = parts[0].lowercase().let { legacyLanguageCodes[it] ?: it }
+        append(language)
         var afterSingleton = false
         for (i in 1 until parts.size) {
             val part = parts[i]
-            append('-')
-            when {
+            val segment = when {
                 // Everything after a singleton (extension or private-use marker like
                 // "u" or "x") stays lowercase per BCP 47 canonical form.
-                afterSingleton -> {
-                    append(part.lowercase())
-                }
+                afterSingleton -> part.lowercase()
                 part.length == 1 -> {
                     afterSingleton = true
-                    append(part.lowercase())
+                    part.lowercase()
                 }
                 part.length == 4 && part.all { it.isLetter() } -> {
-                    append(part.lowercase().replaceFirstChar { it.uppercase() })
+                    val script = part.lowercase().replaceFirstChar { it.uppercase() }
+                    // A script subtag directly after the language that is that language's default
+                    // carries no information, so it is dropped rather than kept as a second spelling.
+                    if (i == 1 && defaultScripts[language] == script) continue
+                    script
                 }
-                (part.length == 2 && part.all { it.isLetter() }) || (part.length == 3 && part.all { it.isDigit() }) -> {
-                    append(part.uppercase())
-                }
-                else -> {
-                    append(part.lowercase())
-                }
+                (part.length == 2 && part.all { it.isLetter() }) || (part.length == 3 && part.all { it.isDigit() }) ->
+                    part.uppercase()
+                else -> part.lowercase()
             }
+            append('-')
+            append(segment)
         }
     }
 }
