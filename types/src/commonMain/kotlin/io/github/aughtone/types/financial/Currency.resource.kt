@@ -34,7 +34,7 @@ internal val currencyResourceMap: Map<String, Currency> = lazyMapOf(
     "BAM" to { Currency("BAM", 977, 2, "Convertible Mark",  "KM") },
     "BBD" to { Currency("BBD", 52, 2, "Barbados Dollar",  "$") },
     "BDT" to { Currency("BDT", 50, 2, "Taka",  "৳") },
-    "BGN" to { Currency("BGN", 975, 2, "Bulgarian Lev",  "лв") },
+    "BGN" to { Currency("BGN", 975, 2, "Bulgarian Lev",  "лв", obsolete = true, replacedBy = "EUR") },
     "BHD" to { Currency("BHD", 48, 3, "Bahraini Dinar",  ".د.ب") },
     "BIF" to { Currency("BIF", 108, 0, "Burundi Franc",  "FBu") },
     "BMD" to { Currency("BMD", 60, 2, "Bermudian Dollar",  "$") },

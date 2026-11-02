@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **A locale's currency now comes from its country, so ordinary locales stop missing.** `Currency.getCurrency`, `current`, `currentOrNull` and `currencyFor(locale)` matched whole language tags against a table of 112 pairs, so `en-IN` or `fil-PH` found nothing and `current` threw. A locale with no country, such as `en`, still has no currency. (#43)
+- **`bg-BG` is `EUR`, not `BGN`**, since Bulgaria adopted the euro on 2026-01-01. `BGN` stays available by code, now marked obsolete and replaced by `EUR`. (#43)
+
 ### Added
 
 - **`iku`, `ike` and `ikt` resolve to Inuktitut, and syllabics is `iu`'s default script.** `iku` is the three-letter code for the `iu` macrolanguage, and `ike` (Eastern Canadian Inuktitut) and `ikt` (Inuinnaqtun) are its two members; this library carries Inuktitut once, as `iu`, so all three resolve to it in every lookup, keeping any region, as `iw` already resolves to `he`. Because `iu` means syllabics, a `Cans` script subtag adds nothing and is dropped: `iu-Cans-CA` and `ike-Cans-CA` are `iu-CA`. Any other script is kept, so `ike-Latn-CA` normalizes to `iu-Latn-CA` rather than being rewritten to syllabics. (#40)

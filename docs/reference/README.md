@@ -12,6 +12,13 @@ Compiled into: `io.github.aughtone.types.financial.currencyResourceMap` (`Curren
 
 Provenance is settled. Attribution is in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
 
+## Country to currency
+
+Source: `java.util.Currency` on JDK 26, which tracks ISO 4217, read for every ISO 3166 region on 2026-11-01
+Compiled into: `io.github.aughtone.types.financial.regionToCurrencyMap` (`RegionToCurrency.resource.kt`)
+
+Two entries differ from that source, each marked in the file: `SV` is `USD`, where the JDK reports the colon, and `XK` is `EUR`, which the JDK does not report. `list-one.xml` cannot supply this table, because it names countries in prose rather than by code, and it predates the euro in Bulgaria and the Caribbean guilder.
+
 ## `UNICODE-LICENSE-V3.txt` — localized display names
 
 Source: Unicode CLDR, via the npm package `cldr-localenames-full`
