@@ -20,7 +20,7 @@ class LocaleDisplayNameSupplementTest {
     @Test
     fun `the supplement holds the number of names it says it does`() {
         assertEquals(
-            1565,
+            4683,
             LocaleDisplayNameSupplement.size,
             "The supplement's payload changed size. Regenerate deliberately and update this number."
         )
@@ -29,7 +29,7 @@ class LocaleDisplayNameSupplementTest {
     @Test
     fun `the supplement covers every display language the library ships`() {
         val displayLanguages = localeResourceMap.values.map { it.languageCode }.distinct()
-        assertEquals(89, displayLanguages.size, "The shipped display-language set changed.")
+        assertEquals(114, displayLanguages.size, "The shipped display-language set changed.")
     }
 
     @Test

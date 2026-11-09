@@ -1,6 +1,7 @@
 package io.github.aughtone.types.locale
 
 // Language codes that name a locale this library carries under a different code, mapped to it.
+// Kept by hand; these take precedence over the generated three-letter aliases in languageAliasMap.
 private val legacyLanguageCodes: Map<String, String> = mapOf(
     // Deprecated ISO 639 codes still returned by some platforms (e.g. java.util.Locale on Android
     // and JVM < 17), mapped to their modern BCP 47 equivalents.
@@ -13,12 +14,18 @@ private val legacyLanguageCodes: Map<String, String> = mapOf(
     "iku" to "iu",
     "ike" to "iu",
     "ikt" to "iu",
+    // ISO 639-2 for Tagalog. CLDR folds both tl and tgl into fil, but this library ships tl and fil
+    // as separate locales, so tgl goes to the one it is the code for.
+    "tgl" to "tl",
 )
 
 // The script a language is written in when its tag names none, so naming it adds nothing:
-// iu-Cans-CA is iu-CA. iu means syllabics here, as it does in CLDR's likely subtags.
+// iu-Cans-CA is iu-CA. iu, cr and oj mean syllabics here, as they do in CLDR's likely subtags; a
+// Latin-script tag such as cr-Latn-CA is a different locale and keeps its script.
 private val defaultScripts: Map<String, String> = mapOf(
     "iu" to "Cans",
+    "cr" to "Cans",
+    "oj" to "Cans",
 )
 
 internal fun normalizeLanguageTag(languageTag: String): String {
@@ -26,7 +33,7 @@ internal fun normalizeLanguageTag(languageTag: String): String {
     val parts = normalized.split('-')
     if (parts.isEmpty() || parts[0].isEmpty()) return ""
     return buildString {
-        val language = parts[0].lowercase().let { legacyLanguageCodes[it] ?: it }
+        val language = parts[0].lowercase().let { legacyLanguageCodes[it] ?: languageAliasMap[it] ?: it }
         append(language)
         var afterSingleton = false
         for (i in 1 until parts.size) {
@@ -61,6 +68,10 @@ internal fun normalizeLanguageTag(languageTag: String): String {
  *
  * This is a strict lookup and does not perform fallback. If an exact match for the
  * provided [languageTag] is not found, this function returns `null`.
+ *
+ * The tag is normalized first, and that includes the language code: a three-letter or deprecated
+ * code for a language with a two-letter one is replaced by it, as BCP 47 requires, so `eng-CA` finds
+ * `en-CA` and `cre` finds `cr`. A language with only a three-letter code, such as `hur`, keeps it.
  *
  * @param languageTag The IETF BCP 47 language tag (e.g., "en-US").
  * @return The exact matching [Locale], or `null` if not found.
