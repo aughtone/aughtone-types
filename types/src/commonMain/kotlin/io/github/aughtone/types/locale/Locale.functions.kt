@@ -182,7 +182,8 @@ expect fun localeForNative(languageTag: String): Locale?
  *
  * This `expect` function is implemented once per platform, each querying whatever its system
  * exposes — `java.util.Locale` on the JVM and Android, `NSLocale` on Apple targets, `Intl` in a
- * browser, and the `LANG` environment variable on Linux. There is no shared implementation behind
+ * browser, and the `LC_ALL`, `LC_MESSAGES` and `LANG` environment variables on Linux, where the
+ * `C` and `POSIX` locales count as reporting nothing. There is no shared implementation behind
  * them, so the tag a platform reports, and whether it reports one at all, differ.
  *
  * @param fallbackTag An optional IETF BCP 47 language tag to fall back to when the platform reports

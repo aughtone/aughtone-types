@@ -14,7 +14,7 @@ import kotlin.test.Test
  * supplement for. See [assertCoverageNear]. When it does fail, regenerate and update the baseline
  * deliberately, having looked at what changed.
  *
- * Measured against JDK 26 CLDR, 2026-11-08.
+ * Measured against JDK 26 CLDR, 2026-11-09.
  */
 class JvmCoverageTest {
 
@@ -47,6 +47,6 @@ class JvmCoverageTest {
             }
         }
         println("UNTRANSLATED sample: " + unfilled.sorted().take(12))
-        assertCoverageNear("JVM untranslated after the supplement", baseline = 8510, actual = unfilled.size)
+        assertCoverageNear("JVM untranslated after the supplement", baseline = 8609, actual = unfilled.size)
     }
 }

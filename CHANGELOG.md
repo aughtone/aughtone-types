@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - **A locale's currency now comes from its country, so ordinary locales stop missing.** `Currency.getCurrency`, `current`, `currentOrNull` and `currencyFor(locale)` matched whole language tags against a table of 112 pairs, so `en-IN` or `fil-PH` found nothing and `current` threw. A locale with no country, such as `en`, still has no currency. (#43)
+- **English names are no longer shipped as translations.** 99 bundled names in Tibetan, Inuktitut, Sundanese, Tajik and Javanese were a platform's English fallback, such as "Austrian German" for `de-AT` in Tibetan, so `localizedDisplayNameOrNull` returned English while claiming a translation existed. They are gone from the supplement and the Linux table, so where a platform has no name of its own those pairs now report `null`. (#45)
+- **On Linux, `Locale.current` no longer invents a locale under `LANG=C`.** It read only `LANG` and turned `C` into a language `c`. It now reads `LC_ALL`, `LC_MESSAGES` and `LANG` in POSIX order, drops the codeset and modifier, and treats `C`, `POSIX` and an empty value as no locale, so `current` throws and `currentOrNull` is `null`, as on other platforms. (#46)
 - **`bg-BG` is `EUR`, not `BGN`**, since Bulgaria adopted the euro on 2026-01-01. `BGN` stays available by code, now marked obsolete and replaced by `EUR`. (#43)
 
 ### Changed

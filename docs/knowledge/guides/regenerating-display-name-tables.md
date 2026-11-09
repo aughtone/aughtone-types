@@ -64,10 +64,11 @@ class TableEmitterTest {
 
 **Compare the emitted `EMIT-COUNT` against the number of rows you parsed, and stop if they differ.** The transport is exact; a mismatch means the parser is wrong. The specific trap: **two resource entries build the same language tag** — `zh` carrying a `Hans` script, and `zh-Hans` — so 87 pairs legitimately appear twice, and anything keyed by `(displayLanguage, tag)` silently collapses them. That looks exactly like 87 dropped rows.
 
-**4. Compose from CLDR, then fill from the platforms.** For every pair, compose the name from the pinned CLDR package. Where it lacks the language, script or territory name, take the platform's name, in the order JVM, then Apple, then JS, then Wasm: platforms disagree about wording for roughly 40% of the names they share, so one has to win, and the JVM is the most complete. **Reject two kinds of platform answer**, both of which look like names:
+**4. Compose from CLDR, then fill from the platforms.** For every pair, compose the name from the pinned CLDR package. Where it lacks the language, script or territory name, take the platform's name, in the order JVM, then Apple, then JS, then Wasm: platforms disagree about wording for roughly 40% of the names they share, so one has to win, and the JVM is the most complete. **Reject three kinds of platform answer**, all of which look like names:
 
 - **an echo of the codes**, such as `zh (Hans)` or `pa (Guru)`, which Apple returns for some pairs it cannot name;
 - **the platform's English fallback, in a display language it has no data for.** A browser asked for names in Mohawk answers in English, so the same name turns up for one tag across every such display language. Keep a name in a display language with no CLDR data only when it is the only display language that platform gives it in and it is not that platform's English name. That is how Apple's own name for Mohawk in Mohawk survives while its English fallbacks do not.
+- **an English name in a display language that does have CLDR data, but not enough.** Asked for `de-AT` in Tibetan, a platform answers "Austrian German". Reject a platform-filled name whose parts — the language, and each script or region in parentheses — are all CLDR English names, unless the display language's own CLDR data gives the same string. Filipino CLDR genuinely uses English names and `tl` is served from `fil` data, so the `tl` names that look English stay. A name only partly English, such as "Cree (Kanada)", is what the platform returns natively and is kept. (#45)
 
 **When only adding locales, leave existing pairs alone.** Platform data drifts between runs, so a full regeneration rewrites a handful of established platform-filled names for no reason. Recompose everything, check that the existing pairs come out unchanged apart from that drift, and then ship the existing entries as they were plus the new pairs.
 
@@ -88,15 +89,15 @@ The Linux table's `size` is **not** pinned by any test, because there is no `lin
 
 ## What to expect
 
-These are the baselines the tests hold as of 2026-11-08, after the Canadian Indigenous languages were added in #44, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
+These are the baselines the tests hold as of 2026-11-09, after the Canadian Indigenous languages were added in #44 and the English fallbacks removed in #45, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
 
 | | value | asserted in |
 |---|---|---|
-| Supplement names | 4,683 | `LocaleDisplayNameSupplementTest` |
-| Linux matrix names | 19,915 | nothing — derived only |
+| Supplement names | 4,584 | `LocaleDisplayNameSupplementTest` |
+| Linux matrix names | 19,816 | nothing — derived only |
 | Display languages | 114 | `LocaleDisplayNameSupplementTest` |
-| JVM: own gaps / untranslated after the supplement | 10,276 / 8,510 | `JvmCoverageTest` |
-| Apple: own gaps / untranslated after the supplement | 8,875 / 8,463 | `AppleCoverageTest` |
+| JVM: own gaps / untranslated after the supplement | 10,276 / 8,609 | `JvmCoverageTest` |
+| Apple: own gaps / untranslated after the supplement | 8,875 / 8,562 | `AppleCoverageTest` |
 
 **Most of the untranslated pairs are expected.** About 6,300 of them are names rendered *in* one of the 25 Canadian Indigenous languages, which no CLDR release and almost no platform has data for. A jump of that size from adding a display language with no CLDR data is the honest answer, not a broken bridge.
 

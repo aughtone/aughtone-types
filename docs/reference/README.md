@@ -40,7 +40,7 @@ Names are **composed**, not transcribed: language, script and territory are read
 
 CLDR 48.2.0 cannot name 8,423 of the 28,728 pairs this library ships. Most of those are names rendered *in* one of the 25 Canadian Indigenous languages added in #44, for which CLDR has no locale data at all. The rest were taken from platform CLDR implementations where one could name them — JDK 26, Apple, and a Chromium browser, measured 2026-09-28 and again for the #44 pairs on 2026-11-07 — and **that portion is not reproducible from any pinned source**. Each platform carries its own CLDR version and, in places, vendor additions; Apple's handful of Inuktitut names, and its five names for Canadian Indigenous languages in themselves, exist in no CLDR release this project could find.
 
-Of the names that ship, **19,581 come from the pinned release and 334 from platform implementations**. A platform answer is not taken when it only echoes the codes, such as `zh (Hans)`, or when it is the platform's English fallback for a display language it has no data for. Everything neither source can name falls back to English.
+Of the names that ship, **19,581 come from the pinned release and 235 from platform implementations**. A platform answer is not taken when it only echoes the codes, such as `zh (Hans)`, or when it is the platform's English fallback for a display language it has too little data for, such as "Austrian German" offered as Tibetan. Everything neither source can name falls back to English.
 
 This is a known weakness, deliberately accepted rather than overlooked, and it is the one part of this directory that does not meet the standard the rest of it sets. Replacing it with a citable source is tracked separately.
 

@@ -14,7 +14,7 @@ import kotlin.test.Test
  * supplement for. See [assertCoverageNear]. When it does fail, regenerate and update the baseline
  * deliberately, having looked at what changed.
  *
- * Measured against Apple CLDR on iosSimulatorArm64, 2026-11-08.
+ * Measured against Apple CLDR on iosSimulatorArm64, 2026-11-09.
  */
 class AppleCoverageTest {
 
@@ -47,6 +47,6 @@ class AppleCoverageTest {
             }
         }
         println("UNTRANSLATED sample: " + unfilled.sorted().take(12))
-        assertCoverageNear("Apple untranslated after the supplement", baseline = 8463, actual = unfilled.size)
+        assertCoverageNear("Apple untranslated after the supplement", baseline = 8562, actual = unfilled.size)
     }
 }
