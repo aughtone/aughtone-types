@@ -2,7 +2,6 @@ package io.github.aughtone.types.locale
 
 import io.github.aughtone.types.financial.Currency
 import io.github.aughtone.types.financial.currencyFor
-import io.github.aughtone.types.financial.localeToCurrencyMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

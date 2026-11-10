@@ -90,8 +90,9 @@ data class Currency(
          * current region. It relies on the [Locale.current] mapping to determine the
          * correct ISO 4217 code.
          *
-         * @throws IllegalArgumentException if the current locale or its associated currency
-         *   cannot be determined. Use [currentOrNull] to receive `null` instead.
+         * @throws IllegalArgumentException if the current locale cannot be determined, or it has no
+         *   country to take a currency from, such as a bare `en`. Use [currentOrNull] to receive
+         *   `null` instead.
          * @see currentOrNull
          * @see Locale.current
          */
@@ -103,8 +104,8 @@ data class Currency(
          * determined.
          *
          * The same lookup as [current], reported rather than thrown, and `null` covers both ways it
-         * can fail: the platform could not resolve a locale at all, or it resolved one that no
-         * currency is mapped to. Those are different problems, so use [Locale.currentOrNull] first
+         * can fail: the platform could not resolve a locale at all, or it resolved one with no
+         * country to take a currency from. Those are different problems, so use [Locale.currentOrNull] first
          * if you need to tell them apart.
          *
          * @return The current [Currency], or `null` if it could not be determined.
@@ -115,35 +116,15 @@ data class Currency(
         /**
          * Retrieves the currency associated with the specified locale.
          *
-         * The lookup follows a BCP 47 stepdown: the full language tag is tried first,
-         * then candidates with the script and variant subtags dropped. Since the region
-         * is what selects a currency, language-region is preferred before the bare
-         * language (e.g. `zh-Hans-CN` -> `zh-CN` -> `zh-Hans` -> `zh`).
+         * The currency comes from the locale's country alone, so the language and script play no
+         * part: `en-IN` and `ta-IN` are both `INR`. A locale with no country, such as `en`, has no
+         * currency to infer and gives `null`, as does a region without one, such as `AQ` or `419`.
          *
          * @param locale The locale to look up. Defaults to [Locale.current].
-         * @return The [Currency] associated with the locale, or `null` if not found.
+         * @return The [Currency] in use in the locale's country, or `null` if there is none to infer.
          */
         fun getCurrency(locale: Locale = Locale.current): Currency? =
-            currencyCodeFor(locale)?.let { currencyFor(it) }
-
-        private fun currencyCodeFor(locale: Locale): String? {
-            val language = locale.languageCode
-            val script = locale.scriptCode
-            val region = locale.regionCode
-            val candidates = buildList {
-                add(locale.languageTag)
-                if (region != null) {
-                    if (script != null) add("$language-$script-$region")
-                    add("$language-$region")
-                }
-                if (script != null) add("$language-$script")
-                add(language)
-            }.distinct()
-            for (tag in candidates) {
-                localeToCurrencyMap[tag]?.let { return it }
-            }
-            return null
-        }
+            locale.regionCode?.let { regionToCurrencyMap[it] }?.let { currencyFor(it) }
     }
 
 }

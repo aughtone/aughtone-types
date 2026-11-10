@@ -78,3 +78,9 @@ This record argues that measurements like these belong in a test rather than in 
 **Mind the denominator, which is how the earlier counts went wrong three times.** `localeResourceMap` has 202 entries and 201 distinct language tags, because `zh` carrying a `Hans` script and `zh-Hans` build the same tag. The matrix is therefore 17,978 pairs by resource entry and 17,889 by tag, and the coverage tests deduplicate by tag. Quoting one denominator against the other is the specific error behind the 30 → 0 → 21 sequence recorded above.
 
 The lesson is narrower than "write tests". A number in prose has no owner and no failure mode, so nothing stops a later change from invalidating it — which is what happened here, in the very document making that argument. A number worth recording is worth deriving from the thing it describes, and then asserting.
+
+## Amendment — 2026-09-30: the coverage pins are tolerant, not exact
+
+The decision above says a per-platform test "records the measured gap count and fails when it moves". Pinned exactly, it failed the first CI run after the 4.1.0 release: CI's iOS simulator reported 1,205 Apple gaps against a baseline of 1,199 taken on a developer machine, and 912 untranslated pairs against 910. Nothing in the library was wrong. The counts are host data, and two hosts carry two slightly different CLDRs.
+
+The tests now assert that each count stays within 5% of its baseline, and print the actual value on every run. That still fails on what they exist to catch — a bridge that stops working sends the count toward the whole matrix of 17,889, as the JS defect did — and on a move large enough to regenerate the supplement for, while tolerating the drift between machines. The supplement's own size is still pinned exactly, because it is library data rather than host data.

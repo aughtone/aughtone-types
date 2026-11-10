@@ -10,7 +10,7 @@ Published to Maven Central as `io.github.aughtone:types`.
 
 ```kotlin
 // build.gradle.kts
-implementation("io.github.aughtone:types:4.1.0")
+implementation("io.github.aughtone:types:4.2.0")
 ```
 
 Or through a version catalog:
@@ -18,7 +18,7 @@ Or through a version catalog:
 ```toml
 # gradle/libs.versions.toml
 [versions]
-aughtone-types = "4.1.0"
+aughtone-types = "4.2.0"
 
 [libraries]
 aughtone-types = { module = "io.github.aughtone:types", version.ref = "aughtone-types" }
@@ -30,6 +30,8 @@ implementation(libs.aughtone.types)
 ```
 
 > [!IMPORTANT]
+> **v4.2.0 Behaviour Changes**: No API is renamed or removed, but some results change without a compile error. A locale's currency now comes from its country, so `en-IN` is `INR` where it was `null`, and `bg-BG` is `EUR`. A three-letter language code now normalizes to the two-letter one, so `parseLocale("eng-US").languageTag` is `"en-US"`: compare locales, not their tags as text. A shipped locale is now found by its own tag, so `localeFor("zh-Hant-TW")` is no longer `null`. On Linux, `Locale.current` throws under `LANG=C` rather than inventing a locale. See the [changelog](CHANGELOG.md).
+>
 > **v4.1.0 Breaking Changes**: `Outcome` is aligned with `kotlin.Result`. `dataOrNull`, `dataOrThrow` and `dataOrElse` are renamed `getOrNull`, `getOrThrow` and `getOrElse`, with no deprecated aliases, and the callbacks handed to `onFailure`, `fold`, `recover` and `getOrElse` now receive the `Throwable` rather than the `Outcome.Failure`. **Check the callbacks first: they still compile.** A body reading `it.message` keeps building but now gets the nullable `Throwable.message` instead of the non-null `Outcome.Failure.message`, so an exception with no message renders the text `null`. Use `it.message ?: it.toString()`. `isSuccess`, `isFailure`, `exceptionOrNull()` and `getOrDefault` are new. **`Currency` now compares by its ISO 4217 code alone**, so a `Set` or map keyed by `Currency` may hold one entry where it held two, and `Money` amounts from different sources sort instead of throwing. **`Gigabyte` is now `GiB` and `Gigabit` `Gbit`**, keeping `GB` and `Gb` as alternatives, so rendering `.symbol` changes for those two. Also: `localizedDisplayName` returned English for every locale on the JS and Wasm targets in 3.4.0 and 4.0.0 and now returns real translations, so anything rendering locale names on web changes output.
 >
 > **v4.0.0 Breaking Changes**: A breaking release. `Outcome.Error` and `Locale.toLanguageTag()` are removed; `Money` equality is now numeric so `5.1` equals `5.10`; `Distance` and `Speed` throw instead of clamping to zero; `GeoBoundingBox` leaves the geometry hierarchy; `GeoFeature.properties` becomes `JsonObject`; invalid GeoJSON is now rejected; and `UnitOfMeasure.findFirst` refuses ambiguous symbols rather than guessing. Several change behaviour **without a compile error** — see the [changelog](CHANGELOG.md) before upgrading.
@@ -76,7 +78,7 @@ implementation(libs.aughtone.types)
 ## 🚀 Quick Usage
 
 ### 🌎 Domain Fundamentals
-- **Locales**: `Locale.current` or `localeFor("fr-CH")`.
+- **Locales**: `Locale.current` or `localeFor("fr-CH")`. Three-letter codes normalize to the two-letter form where one exists (`eng-CA` is `en-CA`), and languages with only a three-letter code keep it (`hur-CA`, `moh-CA`).
 - **Money**: `Money(12.50, Currency.Usd)` or `Money(BigDecimal("1.23456"), Currency.Eur)`.
 - **Telemetry**: `Telemetry(coords, speed = 2.5.mps, azimuth = 90.degrees)`.
 
@@ -119,8 +121,9 @@ So the goal here is **completeness** — every locale gets a name in the reader'
 **What that means for you:**
 - **Never depend on the exact string.** Compare locales, not their rendered names. A snapshot test or a cache key built on one will differ across targets.
 - **`localizedDisplayName` never returns `null`** — the worst case is the English `displayName`. That fallback is silent, so use **`localizedDisplayNameOrNull`** when showing the wrong language matters more than showing nothing: it returns `null` where the platform has no data, instead of quietly handing back English.
-- **Coverage varies by platform and the holes differ.** Each lacks 6–7% of pairs, but not the same ones — the JVM has no Inuktitut, Apple has some; Apple is thin on Igbo where the JVM is not.
-- **Linux has no system CLDR at all** and returns the English fallback for everything.
+- **Coverage varies by platform and the holes differ.** The platforms lack different pairs — the JVM has no Inuktitut, Apple has some; Apple is thin on Igbo where the JVM is not — and a bundled table fills what one platform has and another lacks.
+- **Some languages cannot be a display language yet.** No platform and no CLDR release has display data in most Canadian Indigenous languages, so a name rendered *in* Halkomelem or Mohawk is almost always the English one. Names *of* them in other languages are available.
+- **Linux has no system CLDR at all**, so it answers from a bundled copy of the whole matrix.
 - **Browsers need `Intl.DisplayNames`**, available since roughly 2020; older environments fall back to English.
 
 See [ADR-0005](docs/knowledge/decisions/completeness-over-consistency-for-display-names.md) for the decision and the measurements, [ADR-0003](docs/knowledge/decisions/localized-display-names-via-platform-cldr.md) for the original delegation rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for gap-filling work.

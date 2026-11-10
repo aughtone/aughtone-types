@@ -2,26 +2,24 @@ package io.github.aughtone.types.financial
 
 import io.github.aughtone.types.locale.localeResourceMap
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 class CurrencyMismatchTest {
     @Test
     fun `every mapped currency code exists in the currency resource map`() {
-        localeToCurrencyMap.values.toSet().forEach { code ->
+        regionToCurrencyMap.forEach { (region, code) ->
             assertNotNull(
                 currencyResourceMap[code],
-                "Currency $code is mapped from a locale but missing from currencyResourceMap"
+                "Currency $code is mapped from region $region but missing from currencyResourceMap"
             )
         }
     }
 
     @Test
-    fun `every mapped locale tag exists in the locale resource map`() {
-        localeToCurrencyMap.keys.forEach { tag ->
-            assertNotNull(
-                localeResourceMap[tag],
-                "Locale $tag is mapped to a currency but missing from localeResourceMap"
-            )
+    fun `a region's currency is never one the resource map calls obsolete`() {
+        regionToCurrencyMap.forEach { (region, code) ->
+            assertFalse(currencyResourceMap.getValue(code).obsolete, "$region maps to obsolete $code")
         }
     }
 

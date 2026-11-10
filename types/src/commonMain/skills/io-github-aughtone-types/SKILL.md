@@ -17,7 +17,7 @@ description: >-
   km", "$12.50" or "3 days ago" use io.github.aughtone:format-readable.
 license: Apache-2.0
 metadata:
-  version: "4.1.0"
+  version: "4.2.0"
   repository: https://github.com/aughtone/aughtone-types
 ---
 
@@ -44,7 +44,7 @@ val trip = Distance(meters = 1500.0)
 Json.encodeToString(price)
 ```
 
-`currencyFor` is overloaded: given a `String` it looks up an ISO 4217 code, and given a `Locale` it resolves that region's currency. `Currency.getCurrency(locale)` is the same lookup as the second, and `availableCurrencies()` lists them all.
+`currencyFor` is overloaded: given a `String` it looks up an ISO 4217 code, and given a `Locale` it resolves the currency of that locale's country, so `en-IN` and `ta-IN` are both `INR` and a bare `en` gives `null`. `Currency.getCurrency(locale)` is the same lookup as the second, and `availableCurrencies()` lists them all.
 
 **Parse text into a type, and get a typed failure when it is not one.** Every parser has a throwing form and an `OrNull` form; malformed input raises `UriParseException`, which extends `IllegalArgumentException`.
 
@@ -81,7 +81,7 @@ when (val result = runOutcome { url(userInput) }) {
 
 **`Distance` and `Speed` reject negative results instead of clamping them.** `Distance(3.0) - Distance(5.0)` throws; it does not return zero. The same applies to negative scalars in `Speed.times` and `Speed.div`, and to a negative divisor on `Distance`. Guard the call, or compare first, when operands may arrive in either order. A zero distance or speed is perfectly valid — only going below zero is refused.
 
-**`Locale.current` and `Currency.current` throw when the platform cannot say.** Both are `requireNotNull` over a platform lookup, so they raise `IllegalArgumentException` rather than defaulting to English or USD. That makes them a poor default argument, a poor property initialiser and a poor thing to read during composition. Use `Locale.currentOrNull` and `Currency.currentOrNull` where a sensible fallback exists, and keep the throwing form where none does — failing loudly beats silently rendering someone else's language.
+**`Locale.current` and `Currency.current` throw when the platform cannot say.** Both are `requireNotNull` over a platform lookup, so they raise `IllegalArgumentException` rather than defaulting to English or USD. `Currency.current` also throws when the locale has no country, such as a bare `en`, because the currency comes from the country alone. That makes them a poor default argument, a poor property initialiser and a poor thing to read during composition. Use `Locale.currentOrNull` and `Currency.currentOrNull` where a sensible fallback exists, and keep the throwing form where none does — failing loudly beats silently rendering someone else's language.
 
 **`UnitOfMeasure.findFirst` returns `null` for an ambiguous symbol** rather than guessing by declaration order. `findFirst("gal")` is `null`, because `Gallon` and `GallonImperial` both claim it and picking one silently is a twenty-percent error. The symptom is a `null` that reads as "unknown unit" when the truth is "more than one unit". Use `findAll(symbol)`, which returns every candidate — empty for unknown, more than one for ambiguous, so the two cases stay distinguishable. **Symbol lookup is case-sensitive**, which is how `GB` (gigabyte) and `Gb` (gigabit) name different units — so never lowercase a symbol before looking it up, or you get an empty list rather than a match.
 
@@ -90,6 +90,8 @@ when (val result = runOutcome { url(userInput) }) {
 **URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. The symptom is a count that comes out lower than expected: `distinct()`, a `Set` or a map key collapses values you can see are textually different, and two URNs differing only after `?+` or `#` become one entry. The value you supplied is preserved and serialized unchanged — only the comparison is normalized.
 
 **`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not — including on Linux, which has no system CLDR and answers entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
+
+**A three-letter language code becomes the two-letter one.** `parseLocale("eng-US").languageTag` is `"en-US"`, and `fre`, `ger` or `cre` come back as `fr`, `de` or `cr`, because BCP 47 requires the shortest code. The symptom is a tag you stored as text no longer matching the one you get back, so compare `Locale` values or normalize both sides through `parseLocale`. A language with only a three-letter code, such as `hur` or `moh`, keeps it.
 
 **Never depend on the exact name.** Platforms disagree about wording on a large share of the names they all know — a browser and a native platform differ on roughly 40% — so `nl-BE` may be "Nederlands (België)" or "Vlaams" depending on where your code runs. Compare locales, never their rendered names, and keep them out of cache keys and snapshot tests.
 
@@ -131,6 +133,15 @@ Then the renames, all of which the compiler finds, because the old names cease t
 
 - **`localizedDisplayName` was returning English for every locale on the JS target**, in 3.4.0 and 4.0.0, and now returns real translations. Anything rendering locale names on web will change output. The other targets are unaffected in kind, though a few names change where the JVM had been discarding script subtags.
 - **`localizedDisplayNameOrNull`, `Locale.currentOrNull` and `Currency.currentOrNull`** are new. Nothing is removed and nothing is renamed.
+
+**Changed behaviour in 4.2.0**, with no signature change:
+
+- **A locale's currency comes from its country.** It used to match the whole tag against a short table, so `en-IN` or `fil-PH` gave `null` and `Currency.current` threw for them; now they give `INR` and `PHP`. `bg-BG` is `EUR`, and `BGN` is marked obsolete with `replacedBy` `EUR`.
+- **A three-letter or deprecated language code normalizes to the two-letter one** in every lookup and in `parseLocale`: `eng-US` comes back as `en-US`, `mo` as `ro`, and `sh` as Serbian. A tag compared as text against one stored earlier may stop matching.
+- **A shipped locale is found by its own `languageTag`.** `localeFor("zh-Hant-TW")` and `localeFor("sr-Latn-RS")` were `null`, and `resolveLocale` dropped the region from them; both now return the shipped locale.
+- **Some display names that were English now report `null`** from `localizedDisplayNameOrNull`, where a platform had no name of its own in Tibetan, Inuktitut, Sundanese, Tajik or Javanese.
+- **On Linux, `Locale.current` reads `LC_ALL`, `LC_MESSAGES` and `LANG`**, in that order, and throws under `LANG=C` or `POSIX`, where it used to return a locale with the language `c`.
+- **Cree, Ojibwe, Inupiaq and 22 three-letter-only Canadian Indigenous languages** are new locales. Nothing is removed and nothing is renamed.
 
 **Earlier renames still worth knowing**, because code and training data predate them:
 

@@ -101,6 +101,47 @@ class LocaleTest {
     }
 
     @Test
+    fun `the three letter Inuktitut code resolves to iu`() {
+        // iku is ISO 639-2/3 for the same language as iu, just the long form.
+        assertEquals("iu", localeFor("iku")?.languageTag)
+        assertEquals("iu-CA", localeFor("iku-CA")?.languageTag)
+    }
+
+    @Test
+    fun `Eastern Canadian Inuktitut resolves to iu`() {
+        // ike is the syllabics-written member of the iu macrolanguage, which is the variety the
+        // bundled iu locale describes, so every lookup answers with iu, as iw does with he.
+        assertEquals("iu", localeFor("ike")?.languageTag)
+        assertEquals("iu-CA", localeFor("ike-CA")?.languageTag)
+        assertEquals("iu", resolveLocale("ike")?.languageTag)
+        assertEquals("iu-CA", resolveLocale("ike-CA")?.languageTag)
+        assertEquals("iu-CA", resolveLocale("IKE_ca")?.languageTag)
+        assertEquals("iu-CA", Locale.getLocale("ike-CA")?.languageTag)
+    }
+
+    @Test
+    fun `Inuinnaqtun resolves to iu like the other Inuktitut codes`() {
+        assertEquals("iu", localeFor("ikt")?.languageTag)
+        assertEquals("iu-CA", localeFor("ikt-CA")?.languageTag)
+    }
+
+    @Test
+    fun `syllabics is iu's default script so naming it changes nothing`() {
+        assertEquals("iu-CA", localeFor("iu-Cans-CA")?.languageTag)
+        assertEquals("iu", localeFor("iu-Cans")?.languageTag)
+        assertEquals("iu-CA", localeFor("ike-Cans-CA")?.languageTag)
+        assertEquals("iu-CA", resolveLocale("ike_cans_ca")?.languageTag)
+    }
+
+    @Test
+    fun `a script that is not the default is kept`() {
+        // Latin-script Inuktitut is a real tag; it must not be silently rewritten to syllabics.
+        assertEquals("iu-Latn-CA", normalizeLanguageTag("ike-Latn-CA"))
+        // And the default-script rule applies only to the language it belongs to.
+        assertEquals("sr-Latn-RS", normalizeLanguageTag("sr-Latn-RS"))
+    }
+
+    @Test
     fun `test legacy indonesian code resolves to modern locale`() {
         val locale = resolveLocale("in-ID")
         assertNotNull(locale)
