@@ -6,9 +6,11 @@ import platform.posix.getenv
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
-    val langEnv = getenv("LANG")?.toKString()
-    val localeString = langEnv?.split(".")?.firstOrNull()
-    val languageTag = localeString?.replace("_", "-")
+    val languageTag = posixLocaleTag(
+        lcAll = getenv("LC_ALL")?.toKString(),
+        lcMessages = getenv("LC_MESSAGES")?.toKString(),
+        lang = getenv("LANG")?.toKString(),
+    )
     val tag = languageTag ?: fallbackTag ?: return null
     return resolveLocale(tag) ?: parseLocale(tag)
 }

@@ -19,6 +19,13 @@ Compiled into: `io.github.aughtone.types.financial.regionToCurrencyMap` (`Region
 
 Two entries differ from that source, each marked in the file: `SV` is `USD`, where the JDK reports the colon, and `XK` is `EUR`, which the JDK does not report. `list-one.xml` cannot supply this table, because it names countries in prose rather than by code, and it predates the euro in Bulgaria and the Caribbean guilder.
 
+## Three-letter language aliases
+
+Source: Unicode CLDR 48.0 language aliases, read through ICU 78.2 in Node 24 by canonicalizing every three-letter code, 2026-11-07
+Compiled into: `io.github.aughtone.types.locale.languageAliasMap` (`LanguageAlias.resource.kt`)
+
+An alias is kept only when CLDR's replacement is a bare language code this library ships, so `eng` → `en` is kept and `cnr` → `sr-ME` is not. That covers ISO 639-2/T and 639-2/B codes, deprecated codes such as `mol`, and the member CLDR treats as its macrolanguage, such as `cmn` → `zh` and `cwd` → `cr`. Four codes are kept by hand in `legacyLanguageCodes` instead and left out of the generated file: `iku`, `ike` and `ikt`, which resolve to `iu` (#40), and `tgl`, which goes to `tl` because CLDR's replacement `fil` ships as a separate locale. To regenerate, canonicalize `aaa`…`zzz` with `Intl.getCanonicalLocales` and apply the same filter.
+
 ## `UNICODE-LICENSE-V3.txt` — localized display names
 
 Source: Unicode CLDR, via the npm package `cldr-localenames-full`
@@ -31,9 +38,9 @@ Names are **composed**, not transcribed: language, script and territory are read
 
 ### Part of this data is not from the pinned release
 
-CLDR 48.2.0 cannot name 619 of the pairs this library ships. Those were taken from platform CLDR implementations instead — JDK 26, Apple, and a Chromium browser, measured 2026-09-28 — and **that portion is not reproducible from any pinned source**. Each platform carries its own CLDR version and, in places, vendor additions; Apple's handful of Inuktitut names exist in no CLDR release this project could find.
+CLDR 48.2.0 cannot name 8,423 of the 28,728 pairs this library ships. Most of those are names rendered *in* one of the 25 Canadian Indigenous languages added in #44, for which CLDR has no locale data at all. The rest were taken from platform CLDR implementations where one could name them — JDK 26, Apple, and a Chromium browser, measured 2026-09-28 and again for the #44 pairs on 2026-11-07 — and **that portion is not reproducible from any pinned source**. Each platform carries its own CLDR version and, in places, vendor additions; Apple's handful of Inuktitut names, and its five names for Canadian Indigenous languages in themselves, exist in no CLDR release this project could find.
 
-Of the names that ship, **16,590 come from the pinned release and 207 from platform implementations**. Six pairs can be named by neither and fall back to English.
+Of the names that ship, **19,581 come from the pinned release and 235 from platform implementations**. A platform answer is not taken when it only echoes the codes, such as `zh (Hans)`, or when it is the platform's English fallback for a display language it has too little data for, such as "Austrian German" offered as Tibetan. Everything neither source can name falls back to English.
 
 This is a known weakness, deliberately accepted rather than overlooked, and it is the one part of this directory that does not meet the standard the rest of it sets. Replacing it with a citable source is tracked separately.
 
@@ -41,7 +48,7 @@ This is a known weakness, deliberately accepted rather than overlooked, and it i
 
 **Status: first-party curated data, adopted 2026-09-06.** Owned under this project's copyright, carrying no third-party license. It is maintained **as source, by hand** — not generated, and never to be regenerated from a CLDR or JDK run.
 
-The table that actually ships is `Locale.resource.kt` (`localeResourceMap`), 202 entries. This JSON file is a **historical snapshot of 168 of them** and is not the source of truth — see *The snapshot had already drifted* below.
+The table that actually ships is `Locale.resource.kt` (`localeResourceMap`), 253 entries. This JSON file is a copy of it kept for provenance, held to it entry for entry by `LocaleSnapshotParityTest`, and is not the source of truth — see *The snapshot had already drifted* below.
 
 ### It is not CLDR, and that was tested rather than assumed
 
@@ -58,6 +65,7 @@ The lineage is consistent with a pre-JDK-9 JRE locale table (Java's own data bef
 These are conventions, not errors, and should survive any future edit:
 
 - **Script is carried in the display name** — `Serbian (Latin)`, `Uzbek (Latin)`, `Chinese (Simplified, China)`, `Norwegian (Bokmål, Norway)`. CLDR drops it; this table keeps it because for these languages the script is the useful distinction.
+- **The Canadian Indigenous languages added in #44 take CLDR's English name**, such as `Ojibwa`, `Dogrib` and `Mi'kmaw`, so the English name matches what every platform says. Five have no CLDR name and use their ISO 639-3 reference name instead: `Squamish`, `Nuu-chah-nulth`, `Shuswap`, `Oneida` and `Wyandot`.
 - `Bengali` rather than CLDR's `Bangla`, `Kurdish` rather than `Kurmanji`, `Malay (Brunei Darussalam)` using the official long form. All current English usage.
 
 ### Names corrected on 2026-09-06
@@ -80,6 +88,6 @@ Eleven entries were factually stale — renamed countries, abbreviated or incomp
 
 ### The snapshot had already drifted
 
-`Locale.resource.kt` carries **202** entries; this JSON carries **168**. The 34 extra languages were added straight to the Kotlin table and never back to the snapshot, so the file documented here as the "source" had silently fallen 34 entries behind what ships. No entry conflicts between the two — the JSON is simply a subset.
+`Locale.resource.kt` carried **202** entries when this JSON carried **168**. The 34 extra languages were added straight to the Kotlin table and never back to the snapshot, so the file documented here as the "source" had silently fallen 34 entries behind what ships. No entry conflicts between the two — the JSON is simply a subset.
 
 That is the practical argument for maintaining the Kotlin table as source and treating this file as history: a second copy with no test binding it to the first drifts, and nothing reports it. **Either delete this file or bind it to the shipping table with a test; leaving it as an unenforced duplicate is what produced the drift.**

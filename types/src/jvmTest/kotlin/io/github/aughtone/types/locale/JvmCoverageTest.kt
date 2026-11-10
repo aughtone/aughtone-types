@@ -14,7 +14,7 @@ import kotlin.test.Test
  * supplement for. See [assertCoverageNear]. When it does fail, regenerate and update the baseline
  * deliberately, having looked at what changed.
  *
- * Measured against JDK 26 CLDR, 2026-09-28.
+ * Measured against JDK 26 CLDR, 2026-11-09.
  */
 class JvmCoverageTest {
 
@@ -28,7 +28,7 @@ class JvmCoverageTest {
             val displayIn = Locale.getLocale(tag) ?: continue
             gaps += locales.count { localizedDisplayNameForNative(it, displayIn) == null }
         }
-        assertCoverageNear("JVM platform gaps", baseline = 1084, actual = gaps)
+        assertCoverageNear("JVM platform gaps", baseline = 10276, actual = gaps)
     }
 
     @Test
@@ -47,6 +47,6 @@ class JvmCoverageTest {
             }
         }
         println("UNTRANSLATED sample: " + unfilled.sorted().take(12))
-        assertCoverageNear("JVM untranslated after the supplement", baseline = 823, actual = unfilled.size)
+        assertCoverageNear("JVM untranslated after the supplement", baseline = 8609, actual = unfilled.size)
     }
 }
