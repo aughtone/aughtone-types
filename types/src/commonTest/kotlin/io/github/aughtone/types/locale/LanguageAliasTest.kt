@@ -30,6 +30,22 @@ class LanguageAliasTest {
     }
 
     @Test
+    fun `Moldavian's deprecated code goes to Romanian`() {
+        assertEquals("ro", localeFor("mo")?.languageTag)
+        assertEquals("ro-RO", localeFor("mo-RO")?.languageTag)
+        assertEquals("ro-MD", normalizeLanguageTag("mo-MD"))
+    }
+
+    @Test
+    fun `Serbo-Croatian's codes go to the Latin-script Serbian this library ships`() {
+        // CLDR maps sh and hbs to sr-Latn. Serbian ships here only in Latin script, as sr and sr-RS.
+        assertEquals("sr-Latn", localeFor("sh")?.languageTag)
+        assertEquals("sr-Latn-RS", localeFor("sh-RS")?.languageTag)
+        assertEquals("sr-Latn-RS", localeFor("hbs-RS")?.languageTag)
+        assertEquals("sr-Latn-RS", resolveLocale("sh_RS")?.languageTag)
+    }
+
+    @Test
     fun `every alias names a language the library ships`() {
         val shipped = localeResourceMap.values.map { it.languageCode }.toSet()
         val dangling = languageAliasMap.filterValues { it !in shipped }

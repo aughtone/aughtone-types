@@ -8,6 +8,12 @@ private val legacyLanguageCodes: Map<String, String> = mapOf(
     "iw" to "he",
     "in" to "id",
     "ji" to "yi",
+    // Moldavian, deprecated in favour of Romanian.
+    "mo" to "ro",
+    // Serbo-Croatian, two- and three-letter. CLDR maps both to sr-Latn; Serbian ships here only in
+    // Latin script, under sr and sr-RS, so the language alone reaches it.
+    "sh" to "sr",
+    "hbs" to "sr",
     // Inuktitut. iku is the ISO 639-2/3 code for the iu macrolanguage itself; ike (Eastern Canadian
     // Inuktitut) and ikt (Inuinnaqtun, Western) are its two ISO 639-3 members. This library carries
     // Inuktitut once, as iu, so all three resolve to it.
@@ -73,12 +79,26 @@ internal fun normalizeLanguageTag(languageTag: String): String {
  * code for a language with a two-letter one is replaced by it, as BCP 47 requires, so `eng-CA` finds
  * `en-CA` and `cre` finds `cr`. A language with only a three-letter code, such as `hur`, keeps it.
  *
+ * A tag naming a script also finds a locale stored without one when that locale is written in it, so
+ * every shipped locale is found by its own [Locale.languageTag]: `zh-Hant-TW` finds the locale also
+ * reached as `zh-TW`. A script the locale is not written in is not a match, so `zh-Hans-HK` is `null`.
+ *
  * @param languageTag The IETF BCP 47 language tag (e.g., "en-US").
  * @return The exact matching [Locale], or `null` if not found.
  * @see resolveLocale
  * @see parseLocale
  */
-fun localeFor(languageTag: String): Locale? = localeResourceMap[normalizeLanguageTag(languageTag)]
+fun localeFor(languageTag: String): Locale? {
+    val normalized = normalizeLanguageTag(languageTag)
+    localeResourceMap[normalized]?.let { return it }
+    // Many locales are keyed without the script they carry, as the platforms report them: zh-TW
+    // rather than zh-Hant-TW. Their own languageTag includes it, so try the tag without its script
+    // and accept the locale only if it is written in that script.
+    val parts = normalized.split('-')
+    val script = parts.getOrNull(1)?.takeIf { it.length == 4 && it.all(Char::isLetter) } ?: return null
+    val withoutScript = (parts.take(1) + parts.drop(2)).joinToString("-")
+    return localeResourceMap[withoutScript]?.takeIf { it.scriptCode == script }
+}
 
 /**
  * Resolves a [Locale] instance from the resource map using the BCP 47 "lookup" algorithm.
