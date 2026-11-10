@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-11-09
+
+A minor release. Canadian Indigenous languages join `Locale`, three-letter language codes normalize to their two-letter form, and a locale's currency comes from its country. Nothing is renamed or removed, but several results change **without a compile error**: a tag stored as text may no longer match the one that comes back, `en-IN` now has a currency, and a few display names now report `null` rather than English.
+
 ### Fixed
 
 - **A locale's currency now comes from its country, so ordinary locales stop missing.** `Currency.getCurrency`, `current`, `currentOrNull` and `currencyFor(locale)` matched whole language tags against a table of 112 pairs, so `en-IN` or `fil-PH` found nothing and `current` threw. A locale with no country, such as `en`, still has no currency. (#43)
