@@ -81,7 +81,9 @@ internal fun normalizeLanguageTag(languageTag: String): String {
  *
  * A tag naming a script also finds a locale stored without one when that locale is written in it, so
  * every shipped locale is found by its own [Locale.languageTag]: `zh-Hant-TW` finds the locale also
- * reached as `zh-TW`. A script the locale is not written in is not a match, so `zh-Hans-HK` is `null`.
+ * reached as `zh-TW`. A locale that names no script is written in its language's default, so
+ * `fr-Latn-FR` finds `fr-FR` and `iu-Cans-CA` finds `iu-CA`. A script the locale is not written in is
+ * not a match, so `zh-Hans-HK` and `iu-Latn-CA` are `null`.
  *
  * @param languageTag The IETF BCP 47 language tag (e.g., "en-US").
  * @return The exact matching [Locale], or `null` if not found.
@@ -95,10 +97,14 @@ fun localeFor(languageTag: String): Locale? {
     // rather than zh-Hant-TW. Their own languageTag includes it, so try the tag without its script
     // and accept the locale only if it is written in that script.
     val parts = normalized.split('-')
-    val script = parts.getOrNull(1)?.takeIf { it.length == 4 && it.all(Char::isLetter) } ?: return null
+    val script = scriptSubtagOf(parts) ?: return null
     val withoutScript = (parts.take(1) + parts.drop(2)).joinToString("-")
-    return localeResourceMap[withoutScript]?.takeIf { it.scriptCode == script }
+    return localeResourceMap[withoutScript]?.takeIf { it.effectiveScriptCode == script }
 }
+
+/** The script subtag of a normalized tag split on `-`, which BCP 47 places straight after the language. */
+internal fun scriptSubtagOf(parts: List<String>): String? =
+    parts.getOrNull(1)?.takeIf { it.length == 4 && it.all(Char::isLetter) }
 
 /**
  * Resolves a [Locale] instance from the resource map using the BCP 47 "lookup" algorithm.
@@ -106,6 +112,17 @@ fun localeFor(languageTag: String): Locale? {
  * This function provides a consistent, platform-independent way to access locale information.
  * It implements a fallback mechanism by progressively removing subtags from the provided
  * language tag. For example, if "en-GB-scouse" is not found, it will try "en-GB", and then "en".
+ *
+ * A script named in the tag is kept: the fallback stops at language and script, and never answers
+ * in a different script from the one asked for. `sr-Latn-ME` finds Latin `sr`, but `sr-Cyrl-RS`
+ * does not fall back to it, and `iu-Latn-CA` does not fall back to syllabic `iu`. Nor does it borrow
+ * another region to match a script: `zh-Hant-MO` finds Traditional `zh-Hant`, which has no region,
+ * rather than `zh-TW` or `zh-HK`. When the fallback finds nothing, the platform lookup decides, as it does for any tag nothing shipped
+ * matches: the JVM, Android and Apple targets return a locale keeping the requested script, and
+ * JavaScript, Wasm and Linux return `null`.
+ *
+ * Only a script named in the tag is kept. One merely implied by the region is not considered, so
+ * `zh-MO` still falls back to Simplified `zh`.
  *
  * The [languageTag] should be a valid IETF BCP 47 language tag.
  *
@@ -116,13 +133,12 @@ fun localeFor(languageTag: String): Locale? {
  */
 fun resolveLocale(languageTag: String): Locale? {
     val normalized = normalizeLanguageTag(languageTag)
-    var currentTag = normalized
-    while (currentTag.isNotEmpty()) {
-        val locale = localeFor(currentTag)
-        if (locale != null) {
-            return locale
-        }
-        currentTag = currentTag.substringBeforeLast('-', "")
+    var parts = normalized.split('-')
+    // A requested script is part of what was asked for; stepping below it would answer in another one.
+    val floor = if (scriptSubtagOf(parts) != null) 2 else 1
+    while (parts.size >= floor && parts.first().isNotEmpty()) {
+        localeFor(parts.joinToString("-"))?.let { return it }
+        parts = parts.dropLast(1)
     }
     return localeForNative(normalized)
 }

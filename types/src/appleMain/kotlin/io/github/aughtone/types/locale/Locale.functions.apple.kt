@@ -24,7 +24,10 @@ actual fun localeForNative(languageTag: String): Locale? {
     return Locale(
         languageCode = nsLocale.languageCode,
         regionCode = nsLocale.countryCode?.takeIf { it.isNotEmpty() },
-        scriptCode = nsLocale.scriptCode?.takeIf { it.isNotEmpty() },
+        // NSLocale reports no script for some tags that name one, such as sr-Cyrl-RS, and the locale
+        // came back as plain sr-RS. Keep the script the tag asked for when NSLocale drops it.
+        scriptCode = nsLocale.scriptCode?.takeIf { it.isNotEmpty() }
+            ?: scriptSubtagOf(normalizeLanguageTag(languageTag).split('-')),
         variantCode = nsLocale.variantCode?.takeIf { it.isNotEmpty() },
         displayName = currentDisplayName ?: selfDisplayName
     )
