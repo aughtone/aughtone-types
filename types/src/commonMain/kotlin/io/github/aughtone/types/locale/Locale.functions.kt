@@ -117,9 +117,10 @@ internal fun scriptSubtagOf(parts: List<String>): String? =
  * in a different script from the one asked for. `sr-Latn-ME` finds Latin `sr`, but `sr-Cyrl-RS`
  * does not fall back to it, and `iu-Latn-CA` does not fall back to syllabic `iu`. Nor does it borrow
  * another region to match a script: `zh-Hant-MO` finds Traditional `zh-Hant`, which has no region,
- * rather than `zh-TW` or `zh-HK`. When the fallback finds nothing, the platform lookup decides, as it does for any tag nothing shipped
- * matches: the JVM, Android and Apple targets return a locale keeping the requested script, and
- * JavaScript, Wasm and Linux return `null`.
+ * rather than `zh-TW` or `zh-HK`. When the fallback finds nothing, the platform lookup decides, as
+ * it does for any tag nothing shipped matches: the JVM, Android and Apple targets return a locale
+ * keeping the requested script, Windows does so for a locale it knows and returns `null` otherwise,
+ * and JavaScript, Wasm and Linux return `null`.
  *
  * Only a script named in the tag is kept. One merely implied by the region is not considered, so
  * `zh-MO` still falls back to Simplified `zh`.
