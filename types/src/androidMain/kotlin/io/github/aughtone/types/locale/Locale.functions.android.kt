@@ -4,7 +4,14 @@ import java.util.Locale as JavaLocale
 
 actual fun localeForNative(languageTag: String): Locale? {
     val parsed = parseLocale(languageTag)
-    val javaLocale = JavaLocale(parsed.languageCode, parsed.regionCode ?: "", parsed.variantCode ?: "")
+    // The three-argument constructor has no script parameter, so a locale kept in another script was
+    // named like the default one: "Inuktitut (Canada)" for iu-Latn-CA. Only a tag can carry the script.
+    // Without a script the constructor stays, because forLanguageTag drops variants it finds ill-formed.
+    val javaLocale = if (parsed.scriptCode != null) {
+        JavaLocale.forLanguageTag(parsed.languageTag)
+    } else {
+        JavaLocale(parsed.languageCode, parsed.regionCode ?: "", parsed.variantCode ?: "")
+    }
     return Locale(
         languageCode = parsed.languageCode,
         regionCode = parsed.regionCode,

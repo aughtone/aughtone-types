@@ -89,18 +89,18 @@ The Linux table's `size` is **not** pinned by any test, because there is no `lin
 
 ## What to expect
 
-These are the baselines the tests hold as of 2026-11-09, after the Canadian Indigenous languages were added in #44 and the English fallbacks removed in #45, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
+These are the baselines the tests hold as of 2026-11-22, after the Canadian Indigenous languages were added in #44, the English fallbacks removed in #45 and `zh-Hant` added in #41, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
 
 | | value | asserted in |
 |---|---|---|
-| Supplement names | 4,584 | `LocaleDisplayNameSupplementTest` |
-| Linux matrix names | 19,816 | nothing — derived only |
+| Supplement names | 4,590 | `LocaleDisplayNameSupplementTest` |
+| Linux matrix names | 19,903 | nothing — derived only |
 | Display languages | 114 | `LocaleDisplayNameSupplementTest` |
-| JVM: own gaps / untranslated after the supplement | 10,276 / 8,609 | `JvmCoverageTest` |
-| Apple: own gaps / untranslated after the supplement | 8,875 / 8,562 | `AppleCoverageTest` |
+| JVM: own gaps / untranslated after the supplement | 10,303 / 8,635 | `JvmCoverageTest` |
+| Apple: own gaps / untranslated after the supplement | 8,895 / 8,582 | `AppleCoverageTest` |
 
 **Most of the untranslated pairs are expected.** About 6,300 of them are names rendered *in* one of the 25 Canadian Indigenous languages, which no CLDR release and almost no platform has data for. A jump of that size from adding a display language with no CLDR data is the honest answer, not a broken bridge.
 
-**Mind which denominator you are quoting.** The shipped `localeResourceMap` has 253 entries but only 252 distinct language tags — `zh` carrying a `Hans` script and `zh-Hans` build the same tag — so the matrix is 28,842 pairs counted by resource entry and 28,728 counted by tag. The coverage tests deduplicate by tag. Getting this wrong is what produced three different wrong answers for the unnameable-pair count, recorded in ADR-0005.
+**Mind which denominator you are quoting.** The shipped `localeResourceMap` has 254 entries but only 253 distinct language tags — `zh` carrying a `Hans` script and `zh-Hans` build the same tag — so the matrix is 28,956 pairs counted by resource entry and 28,842 counted by tag. The coverage tests deduplicate by tag. Getting this wrong is what produced three different wrong answers for the unnameable-pair count, recorded in ADR-0005.
 
 Treat the table as the current state rather than as targets. If a run produces something far away from it — a supplement of 12 entries, or of 12,000 — something upstream is wrong, most likely the emitter reading the supplement back or falling back to English.

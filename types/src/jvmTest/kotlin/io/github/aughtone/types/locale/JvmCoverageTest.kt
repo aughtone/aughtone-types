@@ -28,7 +28,7 @@ class JvmCoverageTest {
             val displayIn = Locale.getLocale(tag) ?: continue
             gaps += locales.count { localizedDisplayNameForNative(it, displayIn) == null }
         }
-        assertCoverageNear("JVM platform gaps", baseline = 10276, actual = gaps)
+        assertCoverageNear("JVM platform gaps", baseline = 10303, actual = gaps)
     }
 
     @Test
@@ -47,6 +47,6 @@ class JvmCoverageTest {
             }
         }
         println("UNTRANSLATED sample: " + unfilled.sorted().take(12))
-        assertCoverageNear("JVM untranslated after the supplement", baseline = 8609, actual = unfilled.size)
+        assertCoverageNear("JVM untranslated after the supplement", baseline = 8635, actual = unfilled.size)
     }
 }

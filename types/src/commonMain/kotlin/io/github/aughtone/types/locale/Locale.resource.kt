@@ -263,6 +263,7 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "yo" to { Locale(languageCode = "yo", displayName = "Yoruba") },
     "zh" to { Locale(languageCode = "zh", scriptCode = "Hans", displayName = "Chinese (Simplified)") },
     "zh-Hans" to { Locale(languageCode = "zh", scriptCode = "Hans", displayName = "Chinese (Simplified)") },
+    "zh-Hant" to { Locale(languageCode = "zh", scriptCode = "Hant", displayName = "Chinese (Traditional)") },
     "zh-CN" to { Locale(languageCode = "zh", regionCode = "CN", scriptCode = "Hans", displayName = "Chinese (Simplified, China)") },
     "zh-HK" to { Locale(languageCode = "zh", regionCode = "HK", scriptCode = "Hant", displayName = "Chinese (Traditional, Hong Kong)") },
     "zh-SG" to { Locale(languageCode = "zh", regionCode = "SG", scriptCode = "Hans", displayName = "Chinese (Simplified, Singapore)") },

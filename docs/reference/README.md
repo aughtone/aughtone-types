@@ -38,7 +38,7 @@ Names are **composed**, not transcribed: language, script and territory are read
 
 ### Part of this data is not from the pinned release
 
-CLDR 48.2.0 cannot name 8,423 of the 28,728 pairs this library ships. Most of those are names rendered *in* one of the 25 Canadian Indigenous languages added in #44, for which CLDR has no locale data at all. The rest were taken from platform CLDR implementations where one could name them — JDK 26, Apple, and a Chromium browser, measured 2026-09-28 and again for the #44 pairs on 2026-11-07 — and **that portion is not reproducible from any pinned source**. Each platform carries its own CLDR version and, in places, vendor additions; Apple's handful of Inuktitut names, and its five names for Canadian Indigenous languages in themselves, exist in no CLDR release this project could find.
+CLDR 48.2.0 cannot name 8,449 of the 28,842 pairs this library ships. Most of those are names rendered *in* one of the 25 Canadian Indigenous languages added in #44, for which CLDR has no locale data at all. The rest were taken from platform CLDR implementations where one could name them — JDK 26, Apple, and a Chromium browser, measured 2026-09-28 and again for the #44 pairs on 2026-11-07 — and **that portion is not reproducible from any pinned source**. Each platform carries its own CLDR version and, in places, vendor additions; Apple's handful of Inuktitut names, and its five names for Canadian Indigenous languages in themselves, exist in no CLDR release this project could find.
 
 Of the names that ship, **19,581 come from the pinned release and 235 from platform implementations**. A platform answer is not taken when it only echoes the codes, such as `zh (Hans)`, or when it is the platform's English fallback for a display language it has too little data for, such as "Austrian German" offered as Tibetan. Everything neither source can name falls back to English.
 
@@ -48,7 +48,7 @@ This is a known weakness, deliberately accepted rather than overlooked, and it i
 
 **Status: first-party curated data, adopted 2026-09-06.** Owned under this project's copyright, carrying no third-party license. It is maintained **as source, by hand** — not generated, and never to be regenerated from a CLDR or JDK run.
 
-The table that actually ships is `Locale.resource.kt` (`localeResourceMap`), 253 entries. This JSON file is a copy of it kept for provenance, held to it entry for entry by `LocaleSnapshotParityTest`, and is not the source of truth — see *The snapshot had already drifted* below.
+The table that actually ships is `Locale.resource.kt` (`localeResourceMap`), 254 entries. This JSON file is a copy of it kept for provenance, held to it entry for entry by `LocaleSnapshotParityTest`, and is not the source of truth — see *The snapshot had already drifted* below.
 
 ### It is not CLDR, and that was tested rather than assumed
 

@@ -248,6 +248,7 @@
     { "languageTag": "yo", "languageCode": "yo", "regionCode": null, "scriptCode": null, "variantCode": null, "displayName": "Yoruba" },
     { "languageTag": "zh", "languageCode": "zh", "regionCode": null, "scriptCode": "Hans", "variantCode": null, "displayName": "Chinese (Simplified)" },
     { "languageTag": "zh-Hans", "languageCode": "zh", "regionCode": null, "scriptCode": "Hans", "variantCode": null, "displayName": "Chinese (Simplified)" },
+    { "languageTag": "zh-Hant", "languageCode": "zh", "regionCode": null, "scriptCode": "Hant", "variantCode": null, "displayName": "Chinese (Traditional)" },
     { "languageTag": "zh-CN", "languageCode": "zh", "regionCode": "CN", "scriptCode": "Hans", "variantCode": null, "displayName": "Chinese (Simplified, China)" },
     { "languageTag": "zh-HK", "languageCode": "zh", "regionCode": "HK", "scriptCode": "Hant", "variantCode": null, "displayName": "Chinese (Traditional, Hong Kong)" },
     { "languageTag": "zh-SG", "languageCode": "zh", "regionCode": "SG", "scriptCode": "Hans", "variantCode": null, "displayName": "Chinese (Simplified, Singapore)" },
