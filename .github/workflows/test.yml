@@ -63,18 +63,9 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
 
   test-linux:
-    name: Run Linux Tests (${{ matrix.task }})
-    # A macOS host cannot execute Linux test binaries, so check above skips them. Each target runs
-    # on a runner of its own architecture.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            task: linuxX64Test
-          - runner: ubuntu-24.04-arm
-            task: linuxArm64Test
-    runs-on: ${{ matrix.runner }}
+    name: Run Linux Tests (linuxX64Test)
+    # A macOS host cannot execute Linux test binaries, so check above skips them.
+    runs-on: ubuntu-latest
     permissions:
       checks: write
       contents: read
@@ -91,18 +82,54 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run Linux tests
-        run: ./gradlew :types:${{ matrix.task }}
+      # Kotlin creates no linuxArm64Test task on any host, so the arm64 tests are linked here, where
+      # Kotlin/Native can cross-compile them, and run by the job below on an arm64 runner.
+      - name: Run Linux tests and link the arm64 test binary
+        run: ./gradlew :types:linuxX64Test :types:linkDebugTestLinuxArm64
 
       - name: Verify every test ran
-        run: python3 -I .github/scripts/verify_test_counts.py ${{ matrix.task }}
+        run: python3 -I .github/scripts/verify_test_counts.py linuxX64Test
+
+      - name: Keep the arm64 test binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64-test-binary
+          path: types/build/bin/linuxArm64/debugTest/test.kexe
+          retention-days: 1
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: '**/build/test-results/${{ matrix.task }}/*.xml'
-          check_name: 'JUnit Test Report (${{ matrix.task }})'
+          report_paths: '**/build/test-results/linuxX64Test/*.xml'
+          check_name: 'JUnit Test Report (linuxX64Test)'
+
+  test-linux-arm64:
+    name: Run Linux Tests (linuxArm64)
+    needs: test-linux
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Fetch the arm64 test binary
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-arm64-test-binary
+          path: arm64-test
+
+      # The binary writes no JUnit XML, so its own log is what the count is checked against. It exits
+      # non-zero when a test fails.
+      - name: Run Linux arm64 tests
+        run: |
+          chmod +x arm64-test/test.kexe
+          set -o pipefail
+          arm64-test/test.kexe --ktest_logger=SIMPLE | tee arm64-test/test.log
+
+      - name: Verify every test ran
+        run: python3 -I .github/scripts/verify_test_counts.py --log linuxArm64Test=arm64-test/test.log
 
   # Kotlin/Native runs Windows tests only on a Windows host, so the macOS job above compiles
   # mingwX64 but cannot test it. This job is the only place its tests run.

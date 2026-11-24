@@ -39,12 +39,29 @@ private fun windowsEnglishName(localeName: String): String? = memScoped {
     buffer.toKString().takeIf { it.isNotBlank() }
 }
 
+// LOCALE_ICONSTRUCTEDLOCALE from winnls.h, which the Kotlin/Native Windows bindings do not carry.
+private const val LOCALE_ICONSTRUCTEDLOCALE: UInt = 0x7Du
+
+/**
+ * Whether Windows made [localeName] up from its parts rather than knowing it: `"1"` for a constructed
+ * locale. An older Windows without the field reports nothing, which counts as known.
+ */
+@OptIn(ExperimentalForeignApi::class)
+private fun isConstructedLocale(localeName: String): Boolean = memScoped {
+    val length = GetLocaleInfoEx(localeName, LOCALE_ICONSTRUCTEDLOCALE, null, 0)
+    if (length == 0) return false
+    val buffer = allocArray<WCHARVar>(length)
+    if (GetLocaleInfoEx(localeName, LOCALE_ICONSTRUCTEDLOCALE, buffer, length) == 0) return false
+    buffer.toKString().trim() == "1"
+}
+
 @OptIn(ExperimentalForeignApi::class)
 actual fun localeForNative(languageTag: String): Locale? {
     val parsed = parseLocale(languageTag)
-    // Windows 10 and later answer GetLocaleInfoEx for any well-formed name, with placeholder data for
-    // one they do not know, so ask first whether Windows knows the locale, and report a miss instead.
-    if (IsValidLocaleName(parsed.languageTag) == 0) return null
+    // Windows 10 and later accept any well-formed name and answer with placeholder data for one they
+    // do not know, naming qq-QQ "Unknown Locale (qq-QQ)". IsValidLocaleName accepts those too, so
+    // also ask whether Windows constructed the locale rather than knowing it, and report a miss.
+    if (IsValidLocaleName(parsed.languageTag) == 0 || isConstructedLocale(parsed.languageTag)) return null
     val displayName = windowsEnglishName(parsed.languageTag) ?: return null
     return Locale(
         languageCode = parsed.languageCode,

@@ -7,6 +7,10 @@ line, the tests recorded in its JUnit XML results against the `@Test` functions 
 that task compiles, and exits non-zero on any shortfall or on a task with no results at all.
 
 Usage: verify_test_counts.py <test task>...   (run from the repository root, after the tests)
+       verify_test_counts.py --log <test task>=<log file>...
+
+A Kotlin/Native test binary run by hand writes no JUnit XML. For one of those, pass `--log` with the
+output of `test.kexe --ktest_logger=SIMPLE`; its `Passed:` and `Failed:` lines are counted instead.
 """
 import glob
 import re
@@ -45,9 +49,23 @@ def executed(task):
     return len(files), sum(int(ElementTree.parse(f).getroot().get("tests", 0)) for f in files)
 
 
-def main(tasks):
+def executed_from_log(path):
+    with open(path, encoding="utf-8") as log:
+        lines = log.read().splitlines()
+    return 1, sum(1 for line in lines if line.startswith(("Passed:", "Failed:")))
+
+
+def main(args):
+    logs = {}
+    tasks = []
+    use_logs = bool(args) and args[0] == "--log"
+    for arg in args[1:] if use_logs else args:
+        if use_logs:
+            task, _, path = arg.partition("=")
+            logs[task] = path
+        tasks.append(arg.partition("=")[0] if use_logs else arg)
     if not tasks:
-        print("usage: verify_test_counts.py <test task>...", file=sys.stderr)
+        print("usage: verify_test_counts.py <test task>... | --log <test task>=<log file>...", file=sys.stderr)
         return 2
     common = declared("commonTest")
     failed = False
@@ -57,7 +75,7 @@ def main(tasks):
             failed = True
             continue
         expected = common + sum(declared(s) for s in EXTRA_SOURCE_SETS[task])
-        files, ran = executed(task)
+        files, ran = executed_from_log(logs[task]) if task in logs else executed(task)
         status = "ok" if files and ran >= expected else "SHORT"
         print(f"{task}: ran {ran} of {expected} declared tests ({files} result files) {status}")
         failed = failed or status != "ok"
