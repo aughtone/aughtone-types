@@ -18,8 +18,9 @@ actual fun localeForNative(languageTag: String): Locale? {
     val selfDisplayName =
         nsLocale.displayNameForKey(NSLocaleIdentifier, nsLocale.localeIdentifier) ?: return null
 
-    // Get the display name in the current system's locale for user-friendliness.
-    val currentDisplayName = NSLocale.currentLocale.displayNameForKey(NSLocaleIdentifier, languageTag)
+    // The stored name is English, not the device's language: Locale.displayName finds the name in
+    // the reader's language itself, and falls back to this one only when nothing else can.
+    val englishDisplayName = NSLocale(localeIdentifier = "en").displayNameForKey(NSLocaleIdentifier, languageTag)
 
     return Locale(
         languageCode = nsLocale.languageCode,
@@ -29,7 +30,7 @@ actual fun localeForNative(languageTag: String): Locale? {
         scriptCode = nsLocale.scriptCode?.takeIf { it.isNotEmpty() }
             ?: scriptSubtagOf(normalizeLanguageTag(languageTag).split('-')),
         variantCode = nsLocale.variantCode?.takeIf { it.isNotEmpty() },
-        displayName = currentDisplayName ?: selfDisplayName
+        displayName = englishDisplayName ?: selfDisplayName
     )
 }
 
@@ -59,6 +60,6 @@ actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): Str
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val rawTag = NSLocale.currentLocale.localeIdentifier
     val languageTag = rawTag.substringBefore('@').replace('_', '-')
-    return resolveLocale(languageTag) ?: fallbackTag?.let { resolveLocale(it) } ?: parseLocale(languageTag)
+    return currentLocaleFrom(languageTag, fallbackTag)
 }
 

@@ -71,7 +71,7 @@ class ScriptFallbackTest {
         // "Inuktitut (Canada)". Targets with no platform lookup return null and have nothing to name.
         val same = listOf("iu-Latn-CA" to "iu-CA", "ru-Latn-RU" to "ru-RU").mapNotNull { (tag, default) ->
             val resolved = resolveLocale(tag) ?: return@mapNotNull null
-            "$tag -> ${resolved.displayName}".takeIf { resolved.displayName == localeForNative(default)?.displayName }
+            "$tag -> ${resolved.fallbackName}".takeIf { resolved.fallbackName == localeForNative(default)?.fallbackName }
         }
         assertTrue(same.isEmpty(), "named without the requested script: $same")
     }

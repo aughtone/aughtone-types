@@ -21,21 +21,21 @@ class CurrencyIdentityTest {
 
     @Test
     fun `presentation differences do not make a different currency`() {
-        assertEquals(usd, usd.copy(name = "United States Dollar", symbol = "US$"))
-        assertEquals(usd.hashCode(), usd.copy(name = "United States Dollar").hashCode())
+        assertEquals(usd, usd.restated(name = "United States Dollar", symbol = "US$"))
+        assertEquals(usd.hashCode(), usd.restated(name = "United States Dollar").hashCode())
     }
 
     @Test
     fun `a different code is a different currency`() {
         assertFalse(usd == currencyFor("EUR")!!)
-        assertFalse(usd == usd.copy(code = "CAD"))
+        assertFalse(usd == usd.restated(code = "CAD"))
     }
 
     @Test
     fun `one currency occupies one slot in a set and one key in a map`() {
-        assertEquals(1, setOf(usd, usd.copy(symbol = "US$"), usd.copy(name = "Dollar")).size)
+        assertEquals(1, setOf(usd, usd.restated(symbol = "US$"), usd.restated(name = "Dollar")).size)
         val byCurrency = mapOf(usd to "first")
-        assertEquals("first", byCurrency[usd.copy(symbol = "US$")])
+        assertEquals("first", byCurrency[usd.restated(symbol = "US$")])
     }
 
     @Test

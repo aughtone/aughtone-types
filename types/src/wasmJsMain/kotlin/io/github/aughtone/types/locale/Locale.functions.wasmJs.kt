@@ -12,8 +12,7 @@ private fun getNavigatorLanguage(): String? =
 
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val languageTag = getNavigatorLanguage()
-    val tag = languageTag ?: fallbackTag ?: return null
-    return resolveLocale(tag) ?: parseLocale(tag)
+    return currentLocaleFrom(languageTag, fallbackTag)
 }
 
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)

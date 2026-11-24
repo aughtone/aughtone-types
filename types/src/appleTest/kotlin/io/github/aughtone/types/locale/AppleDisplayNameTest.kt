@@ -38,7 +38,7 @@ class AppleDisplayNameTest {
         assertNull(localizedDisplayNameForNative(australianEnglish, tibetan))
         val supplied = australianEnglish.localizedDisplayNameOrNull(displayIn = tibetan)
         assertNotNull(supplied)
-        assertNotEquals(australianEnglish.displayName, supplied)
+        assertNotEquals(australianEnglish.fallbackName, supplied)
     }
 
     @Test

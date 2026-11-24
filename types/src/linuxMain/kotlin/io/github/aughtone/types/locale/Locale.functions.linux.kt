@@ -11,8 +11,7 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
         lcMessages = getenv("LC_MESSAGES")?.toKString(),
         lang = getenv("LANG")?.toKString(),
     )
-    val tag = languageTag ?: fallbackTag ?: return null
-    return resolveLocale(tag) ?: parseLocale(tag)
+    return currentLocaleFrom(languageTag, fallbackTag)
 }
 
 actual fun localeForNative(languageTag: String): Locale? {

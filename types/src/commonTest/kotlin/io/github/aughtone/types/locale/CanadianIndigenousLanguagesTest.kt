@@ -81,11 +81,11 @@ class CanadianIndigenousLanguagesTest {
 
     @Test
     fun `the new locales carry English names`() {
-        assertEquals("Cree (Canada)", localeFor("cr-CA")?.displayName)
-        assertEquals("Halkomelem", localeFor("hur")?.displayName)
-        assertEquals("Mohawk (Canada)", localeFor("moh-CA")?.displayName)
+        assertEquals("Cree (Canada)", localeFor("cr-CA")?.fallbackName)
+        assertEquals("Halkomelem", localeFor("hur")?.fallbackName)
+        assertEquals("Mohawk (Canada)", localeFor("moh-CA")?.fallbackName)
         // No CLDR name exists for Squamish, so the name is the ISO 639-3 reference name.
-        assertEquals("Squamish", localeFor("squ")?.displayName)
+        assertEquals("Squamish", localeFor("squ")?.fallbackName)
     }
 
     @Test
@@ -97,7 +97,7 @@ class CanadianIndigenousLanguagesTest {
         assertEquals("Mohawk", mohawk.localizedDisplayName(displayIn = english))
         val inFrench = mohawk.localizedDisplayNameOrNull(displayIn = french)
         assertNotNull(inFrench, "expected a French name for moh, from the platform or the supplement")
-        assertNotEquals(mohawk.displayName, inFrench)
+        assertNotEquals(mohawk.fallbackName, inFrench)
     }
 
     @Test

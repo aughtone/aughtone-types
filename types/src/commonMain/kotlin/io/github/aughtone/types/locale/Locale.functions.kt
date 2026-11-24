@@ -134,19 +134,32 @@ internal fun scriptSubtagOf(parts: List<String>): String? =
  * @see localeFor
  * @see currentNativeLocale
  */
-fun resolveLocale(languageTag: String): Locale? {
+fun resolveLocale(languageTag: String): Locale? =
+    resolveShippedLocale(languageTag) ?: localeForNative(withRegionScript(normalizeLanguageTag(languageTag)))
+
+/** [resolveLocale] without its final platform lookup: a shipped locale, or `null`. */
+internal fun resolveShippedLocale(languageTag: String): Locale? {
     val normalized = normalizeLanguageTag(languageTag)
     localeFor(normalized)?.let { return it }
-    val requested = withRegionScript(normalized)
-    var parts = requested.split('-')
+    var parts = withRegionScript(normalized).split('-')
     // A requested script is part of what was asked for; stepping below it would answer in another one.
     val floor = if (scriptSubtagOf(parts) != null) 2 else 1
     while (parts.size >= floor && parts.first().isNotEmpty()) {
         localeFor(parts.joinToString("-"))?.let { return it }
         parts = parts.dropLast(1)
     }
-    return localeForNative(requested)
+    return null
 }
+
+/**
+ * The locale for a tag the device reported, or for [fallbackTag] when it reported none, as every
+ * target's [currentNativeLocale] returns it. A tag resolving to a shipped locale gives that locale;
+ * any other well-formed tag keeps its own codes and the English name [parseLocale] gives it, rather
+ * than whatever the platform's lookup would have stored. `null` when neither tag is well formed.
+ */
+internal fun currentLocaleFrom(deviceTag: String?, fallbackTag: String?): Locale? =
+    deviceTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
+        ?: fallbackTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
 
 /**
  * [normalized] with the script its region implies written into it, when the tag names no script and
@@ -168,16 +181,26 @@ private fun withRegionScript(normalized: String): String {
  * pre-defined display names and metadata).
  *
  * If no exact match is found, it normalizes the tag's casing (language lowercase,
- * script Titlecase, region UPPERCASE) and manually parses it into its components,
- * creating a new [Locale] instance.
+ * script Titlecase, region UPPERCASE) and parses it into its components. The new locale's English
+ * name is composed from this library's own names for the language, script and region — the shipped
+ * locales', then CLDR's English names, bundled — so `kok-IN` is "Konkani (India)" on every target.
+ * Where those leave a subtag unnamed, the platform's English name is used if it has one, and the
+ * code itself if not: `en-XX` is "English (XX)". [Locale.displayName] still names it in the user's
+ * language where anything can.
  *
  * @param languageTag The IETF BCP 47 language tag (e.g., "en-US", "zh-Hans-CN").
  * @return A [Locale] instance representing the provided tag.
  */
-fun parseLocale(languageTag: String): Locale {
-    val existing = localeFor(languageTag)
-    if (existing != null) return existing
+fun parseLocale(languageTag: String): Locale =
+    localeFor(languageTag) ?: parsedLocale(languageTag)
 
+/** [languageTag] parsed into its codes and given an English name, or `null` if its language subtag is not 2 to 8 letters. */
+internal fun libraryNamedLocale(languageTag: String): Locale? =
+    parsedLocale(languageTag).takeIf { locale ->
+        locale.languageCode.length in 2..8 && locale.languageCode.all { it in 'a'..'z' }
+    }
+
+private fun parsedLocale(languageTag: String): Locale {
     val normalized = normalizeLanguageTag(languageTag)
     val parts = normalized.split('-')
     val language = parts.getOrNull(0) ?: ""
@@ -200,14 +223,74 @@ fun parseLocale(languageTag: String): Locale {
             else -> variants.add(part)
         }
     }
-
-    return Locale(
+    val variant = if (variants.isEmpty()) null else variants.joinToString("-")
+    val (composed, complete) = composedEnglishName(language, script, region, variant)
+    val locale = Locale(
         languageCode = language,
         scriptCode = script,
         regionCode = region,
-        variantCode = if (variants.isEmpty()) null else variants.joinToString("-"),
-        displayName = normalized
+        variantCode = variant,
+        displayName = composed,
     )
+    if (complete) return locale
+    // The bundled names left a code showing; the platform may know it in English.
+    val platformName = localizedDisplayNameForNative(locale, englishReader) ?: return locale
+    return Locale(language, region, script, variant, displayName = platformName)
+}
+
+private val englishReader: Locale by lazy { Locale("en", displayName = "English") }
+
+/**
+ * An English name for a locale from this library's own data, in CLDR's "Language (Script, Region,
+ * variant)" shape, and whether every subtag was named. Each subtag is named first as the shipped
+ * locales name it, so a composed name agrees with the table, then from CLDR's English names
+ * ([EnglishSubtagNames]), and failing both by its code.
+ */
+internal fun composedEnglishName(language: String, script: String?, region: String?, variant: String?): Pair<String, Boolean> {
+    val shipped = shippedSubtagNames
+    var complete = true
+    fun name(code: String, vararg tables: Map<String, String>): String =
+        tables.firstNotNullOfOrNull { it[code] } ?: code.also { complete = false }
+    val languageName = name(language, shipped.languages, EnglishSubtagNames.languages)
+    val qualifiers = listOfNotNull(
+        script?.let { name(it, shipped.scripts, EnglishSubtagNames.scripts) },
+        region?.let { name(it, shipped.regions, EnglishSubtagNames.regions) },
+        variant,
+    )
+    val composed = if (qualifiers.isEmpty()) languageName else "$languageName (${qualifiers.joinToString(", ")})"
+    return composed to complete
+}
+
+/** English names for language, script and region subtags, as the shipped locales' display names give them. */
+internal class ShippedSubtagNames(
+    val languages: Map<String, String>,
+    val scripts: Map<String, String>,
+    val regions: Map<String, String>,
+)
+
+// Read from the shipped display names, which follow "Language (Script, Region)": "Serbian (Latin)",
+// "Chinese (Traditional, Hong Kong)", "Spanish (Latin America)". A script is named only where an
+// entry spells it out, so am, whose script is implied, names none. ShippedSubtagNamesTest holds every
+// entry to the names read here.
+internal val shippedSubtagNames: ShippedSubtagNames by lazy {
+    val languages = mutableMapOf<String, String>()
+    val scripts = mutableMapOf<String, String>()
+    val regions = mutableMapOf<String, String>()
+    for (locale in localeResourceMap.values.sortedBy { it.languageTag }) {
+        val name = locale.fallbackName
+        languages.getOrPut(locale.languageCode) { name.substringBefore(" (") }
+        if (locale.variantCode != null || !name.endsWith(")") || " (" !in name) continue
+        val qualifiers = name.substringAfter(" (").dropLast(1).split(", ")
+        val region = locale.regionCode
+        val script = locale.scriptCode
+        if (region != null) {
+            regions.getOrPut(region) { qualifiers.last() }
+            if (script != null && qualifiers.size == 2) scripts.getOrPut(script) { qualifiers.first() }
+        } else if (script != null && qualifiers.size == 1) {
+            scripts.getOrPut(script) { qualifiers.single() }
+        }
+    }
+    ShippedSubtagNames(languages, scripts, regions)
 }
 
 /**
@@ -239,10 +322,17 @@ expect fun localeForNative(languageTag: String): Locale?
  * variables on Linux, where the `C` and `POSIX` locales count as reporting nothing. There is no shared implementation behind
  * them, so the tag a platform reports, and whether it reports one at all, differ.
  *
+ * What they report is handled the same way everywhere. A tag that resolves to a shipped locale, as
+ * [resolveLocale] would find it, gives that locale. Any other well-formed tag keeps the device's own
+ * codes, as [parseLocale] parses it: a device set to Konkani in India gives `kok-IN`. So
+ * [Locale.current] always equals [localeFor] of its own tag when that tag is shipped, and its
+ * [Locale.displayName] is in the device's language wherever anything can name it there, "कोंकणी
+ * (भारत)" for that device on the JVM.
+ *
  * @param fallbackTag An optional IETF BCP 47 language tag to fall back to when the platform reports
- *        nothing. It is resolved the same way any tag is, so an unrecognised one still yields `null`.
- * @return The current native [Locale], the resolved [fallbackTag] if the platform gave nothing, or
- *         `null` if neither could be resolved.
+ *        nothing, handled the same way as a reported tag. Only a malformed one yields `null`.
+ * @return The current native [Locale], the [fallbackTag]'s locale if the platform gave nothing, or
+ *         `null` if neither gave a well-formed tag.
  * @see Locale.current
  * @see Locale.currentOrNull
  */
@@ -256,45 +346,53 @@ expect fun currentNativeLocale(fallbackTag: String? = null): Locale?
 fun availableLocales(): List<Locale> = localeResourceMap.values.toList()
 
 /**
- * Returns a list of [Locale]s whose display name contains the specified [name].
+ * Returns a list of [Locale]s whose name contains the specified [name], in English or in the user's
+ * language, so "French" and "français" both find `fr`.
  *
- * @param name The name to search for within the locale's display name.
+ * @param name The name to search for within the locale's English name or its [Locale.displayName].
  * @param ignoreCase `true` to ignore character case when matching. Defaults to `true`.
  * @return A list of matching [Locale]s.
  */
 fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
-    availableLocales().filter { it.displayName.contains(name, ignoreCase) }
+    availableLocales().filter {
+        it.fallbackName.contains(name, ignoreCase) || it.displayName.contains(name, ignoreCase)
+    }
 
 /**
- * Returns the display name of this [Locale], localized for the language of [displayIn].
+ * Returns the name of this [Locale] in the language of [displayIn].
  *
- * Resolution is delegated to the platform's own CLDR data via [localizedDisplayNameForNative]:
- * `java.util.Locale` on JVM/Android, `NSLocale` on Apple platforms, and `Intl.DisplayNames`
- * on JS/WasmJS, and a bundled table on Linux and Windows. When no localized name is available —
- * a pairing neither the platform nor the bundled data can name, or an unknown language code — this
- * falls back to the English [Locale.displayName].
+ * The name comes from the first of these that has one:
  *
- * **Warning:** Because names come from the underlying OS, the exact wording may vary
- * slightly between platforms and OS versions, and the English fallback is silent — a returned
- * name may be the English one rather than a translation. Use [localizedDisplayNameOrNull] to tell
- * those apart. See ADR 0003 for the rationale and tradeoffs.
+ * 1. **This library's own names.** In English, the shipped locale table's name; in any other
+ *    language, the bundled translations. Where they have a name it is the same on every target.
+ * 2. **The platform's name**, from its own CLDR data: `java.util.Locale` on JVM/Android, `NSLocale`
+ *    on Apple platforms, `Intl.DisplayNames` on JS/WasmJS, and the bundled full table on Linux and
+ *    Windows.
+ * 3. **An English name**: the shipped table's, or the one the locale was built with.
+ *
+ * Steps 1 and 2 are [localizedDisplayNameOrNull]; this adds the English fallback.
+ *
+ * **Warning:** Where a name comes from the platform, the exact wording may vary between platforms
+ * and OS versions, and the English fallback is silent — a returned name may be the English one
+ * rather than a translation. Use [localizedDisplayNameOrNull] to tell those apart. See ADR 0003 for
+ * the rationale and tradeoffs.
  *
  * @param displayIn The locale whose language the name should be rendered in.
  * Defaults to [Locale.current].
- * @return The localized display name, or the English [Locale.displayName] as a fallback.
+ * @return The localized display name, or an English name as a fallback.
+ * @see Locale.displayName
  * @see localizedDisplayNameForNative
  */
 fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
-    localizedDisplayNameOrNull(displayIn) ?: displayName
+    localizedDisplayNameOrNull(displayIn) ?: englishName()
 
 /**
- * Returns the name of this locale in the language of [displayIn], or `null` when the platform has
- * no localized name for that pairing.
+ * Returns the name of this locale in the language of [displayIn], or `null` when neither this
+ * library nor the platform has one for that pairing.
  *
- * The same lookup as [localizedDisplayName], without the English fallback. That fallback is the
- * reason this exists: it returns a real English name, so a caller cannot tell a genuine French name
- * from a silent miss, and the miss is not rare. Coverage depends on the platform's own CLDR data
- * and the bundled names behind it, some pairings have neither, and the fallback hides each of them.
+ * The same lookup as [localizedDisplayName], without the English fallback: this library's own name
+ * first, then the platform's. That fallback is the reason this exists: it returns a real English
+ * name, so a caller cannot tell a genuine French name from a silent miss, and the miss is not rare.
  *
  * Use this wherever showing the wrong language matters more than showing nothing: to fall back to
  * something of your own, to mark the entry, or to leave it out. Use [localizedDisplayName] when any
@@ -303,20 +401,32 @@ fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
  * @param displayIn The locale whose language the name should be rendered in.
  *   Defaults to [Locale.current], which throws if the platform cannot resolve one — pass a locale
  *   explicitly, or [Locale.currentOrNull], if that is not acceptable here.
- * @return The localized name, or `null` if the platform could not provide one.
+ * @return The localized name, or `null` if nothing could provide one.
  * @see localizedDisplayName
  */
-fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): String? =
-    localizedDisplayNameForNative(this, displayIn)
-        ?: LocaleDisplayNameSupplement.nameFor(displayIn.languageCode, languageTag)
+fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): String? {
+    val language = displayIn.languageCode
+    val bundled = if (language == "en") {
+        localeFor(languageTag)?.fallbackName
+    } else {
+        LocaleDisplayNameSupplement.nameFor(language, languageTag)
+    }
+    return bundled ?: localizedDisplayNameForNative(this, displayIn)
+}
+
+/**
+ * This locale's English name: the shipped table's when the library ships it, otherwise the name it
+ * was built with, which for a parsed locale is the English name [parseLocale] gave it.
+ */
+internal fun Locale.englishName(): String = localeFor(languageTag)?.fallbackName ?: fallbackName
 
 /**
  * Retrieves the display name of [locale], localized for the language of [displayIn],
  * using the native platform's CLDR data.
  *
  * This is an `expect` function, requiring a platform-specific implementation. Every platform returns
- * `null` for a pair its data cannot name, which is what [Locale.localizedDisplayNameOrNull] reports
- * and what [Locale.localizedDisplayName] replaces with the English name.
+ * `null` for a pair its data cannot name. [Locale.localizedDisplayNameOrNull] consults it only after
+ * this library's own names, and [Locale.localizedDisplayName] replaces a miss with the English name.
  *
  * **Linux and Windows are the exception, and do not consult platform data at all.** Linux ships no
  * CLDR, and Windows names a locale only in the user's interface language, so neither can name an

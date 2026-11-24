@@ -87,15 +87,16 @@ class LocaleSnapshotParityTest {
         val snapshot = snapshot()
         val differing = localeResourceMap.keys
             .filter { it in snapshot }
-            .filter { localeResourceMap.getValue(it) != snapshot.getValue(it) }
+            // Field by field, not ==: Locale equality is the tag alone, so it would miss a changed name.
+            .filter { fieldsOf(localeResourceMap.getValue(it)) != fieldsOf(snapshot.getValue(it)) }
             .sorted()
         if (differing.isNotEmpty()) {
             fail(
                 buildString {
                     append("Locale snapshot disagrees with localeResourceMap for ${differing.size} tag(s):")
                     differing.take(20).forEach { tag ->
-                        append("\n  $tag\n    shipped : ${localeResourceMap.getValue(tag)}")
-                        append("\n    snapshot: ${snapshot.getValue(tag)}")
+                        append("\n  $tag\n    shipped : ${fieldsOf(localeResourceMap.getValue(tag))}")
+                        append("\n    snapshot: ${fieldsOf(snapshot.getValue(tag))}")
                     }
                     if (differing.size > 20) append("\n  ... and ${differing.size - 20} more.")
                     append("\n  Regenerate the snapshot from the Kotlin table; see docs/reference/README.md.")
@@ -103,4 +104,8 @@ class LocaleSnapshotParityTest {
             )
         }
     }
+
+    private fun fieldsOf(locale: Locale) = listOf(
+        locale.languageCode, locale.regionCode, locale.scriptCode, locale.variantCode, locale.fallbackName,
+    )
 }

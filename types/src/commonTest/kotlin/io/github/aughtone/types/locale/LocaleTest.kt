@@ -15,7 +15,7 @@ class LocaleTest {
         assertNotNull(locale)
         assertEquals("en", locale.languageCode)
         assertEquals("US", locale.regionCode)
-        assertEquals("English (United States)", locale.displayName)
+        assertEquals("English (United States)", locale.fallbackName)
     }
 
     @Test
@@ -24,7 +24,7 @@ class LocaleTest {
         assertNotNull(locale)
         assertEquals("fr", locale.languageCode)
         assertNull(locale.regionCode)
-        assertEquals("French", locale.displayName)
+        assertEquals("French", locale.fallbackName)
     }
 
     @Test
@@ -40,7 +40,7 @@ class LocaleTest {
         assertEquals("zh", locale.languageCode)
         assertEquals("Hans", locale.scriptCode)
         assertNull(locale.regionCode)
-        assertEquals("Chinese (Simplified)", locale.displayName)
+        assertEquals("Chinese (Simplified)", locale.fallbackName)
     }
     
     @Test
@@ -48,7 +48,7 @@ class LocaleTest {
         val locale = resolveLocale("en-XX")
         assertNotNull(locale)
         assertEquals("en", locale.languageCode)
-        assertEquals("English", locale.displayName)
+        assertEquals("English", locale.fallbackName)
     }
 
     @Test
@@ -56,7 +56,7 @@ class LocaleTest {
         val locale = parseLocale("en-US")
         assertEquals("en", locale.languageCode)
         assertEquals("US", locale.regionCode)
-        assertEquals("English (United States)", locale.displayName)
+        assertEquals("English (United States)", locale.fallbackName)
     }
 
     @Test
@@ -64,7 +64,8 @@ class LocaleTest {
         val locale = parseLocale("en-XX")
         assertEquals("en", locale.languageCode)
         assertEquals("XX", locale.regionCode)
-        assertEquals("en-XX", locale.displayName)
+        // Named from the library's own data: English is shipped, XX is no region it names.
+        assertEquals("English (XX)", locale.fallbackName)
     }
 
     @Test
@@ -88,8 +89,15 @@ class LocaleTest {
         } catch (e: IllegalArgumentException) {
             return
         }
-        // resolveLocale, since script-bearing tags like zh-Hans-CN resolve by stepdown.
-        assertNotNull(resolveLocale(currentLocale.languageTag))
+        // A device set to a shipped locale gets it; one set to anything else, such as kok-IN, keeps
+        // its codes and is named from library data, exactly as parseLocale names it.
+        val shipped = resolveShippedLocale(currentLocale.languageTag)
+        if (shipped != null) {
+            assertEquals(shipped, currentLocale)
+            assertEquals(shipped.displayName, currentLocale.displayName)
+        } else {
+            assertEquals(parseLocale(currentLocale.languageTag).displayName, currentLocale.displayName)
+        }
     }
 
     @Test
@@ -220,7 +228,7 @@ class LocaleTest {
         // Unknown locales have no CLDR data on any platform, so the English
         // displayName fallback must be returned.
         val unknown = parseLocale("zz-ZZ")
-        assertEquals(unknown.displayName, unknown.localizedDisplayName(displayIn = unknown))
+        assertEquals(unknown.fallbackName, unknown.localizedDisplayName(displayIn = unknown))
     }
 
     @Test
@@ -236,7 +244,7 @@ class LocaleTest {
     fun `test localesByName filters correctly`() {
         val englishLocales = localesByName("English")
         assertTrue(englishLocales.isNotEmpty(), "Should find locales with 'English' in the name")
-        assertTrue(englishLocales.all { it.displayName.contains("English", ignoreCase = true) })
+        assertTrue(englishLocales.all { it.fallbackName.contains("English", ignoreCase = true) || it.displayName.contains("English", ignoreCase = true) })
 
         val caseInsensitiveLocales = localesByName("english", ignoreCase = true)
         assertEquals(englishLocales.size, caseInsensitiveLocales.size)

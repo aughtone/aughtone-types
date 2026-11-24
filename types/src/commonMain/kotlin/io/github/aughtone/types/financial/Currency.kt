@@ -4,17 +4,34 @@ import io.github.aughtone.types.locale.Locale
 import io.github.aughtone.types.number.BigDecimal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Represents a currency as defined by the ISO 4217 standard.
  *
- * This data class provides a comprehensive representation of a currency, including its
+ * This class provides a comprehensive representation of a currency, including its
  * alphabetic code, numeric code, decimal precision, and associated metadata.
  *
  * It is primarily used by the [Money] class to handle scaling, rounding, and formatting
  * of monetary values across different regions.
  *
- * @property code The three-letter ISO 4217 alphabetic currency code (e.g., "USD", "EUR", "JPY").
+ * **Identity is the ISO 4217 [code].** ISO 4217 makes the alphabetic code the identity of a
+ * currency; [name] and [symbol] are how it is presented, and [number], [digits], [obsolete] and
+ * [replacedBy] are facts about the currency the code already names. Two instances carrying `"USD"`
+ * describe the same money however they were built — from the bundled resource map, from a platform
+ * lookup, or decoded from a payload someone else wrote with a different `name` or `symbol` — so they
+ * compare equal, sit in one bucket of a `Set`, and act as one map key. This is the same principle the
+ * URI types and [Locale] follow: equality is what the governing specification says identifies the
+ * value, not a field-by-field comparison. Compare the individual properties when a presentation
+ * difference is what you actually care about.
+ *
+ * **Codes are uppercased on the way in**, so `"usd"` is `USD`, [replacedBy] included, however the
+ * value was made, including when it is decoded.
+ *
+ * This is not a data class: `copy` could change the code and keep a name and symbol that belong to
+ * another currency, and positional destructuring of seven fields means nothing. Build one from the
+ * companion's `invoke`, which reads like a constructor call, or look one up with [currencyFor].
+ *
  * @property number The three-digit ISO 4217 numeric currency code (e.g., 840, 978, 392).
  * @property digits The number of decimal digits used to represent the fractional part of the currency.
  *                  This defines the scale factor (`10^digits`) used to convert raw [BigDecimal]
@@ -22,12 +39,13 @@ import kotlinx.serialization.Serializable
  * @property name The full human-readable name of the currency (e.g., "US Dollar", "Euro").
  * @property symbol The symbol used to represent the currency (e.g., "$", "€", "¥").
  * @property obsolete A flag indicating if the currency is no longer in active use.
- * @property replacedBy The ISO 4217 code of the currency that replaced this one, if obsolete.
  */
 @Serializable
-data class Currency(
+class Currency private constructor(
+    // The wire carries the codes as they were written; the public properties below uppercase them,
+    // so a payload with "usd" decodes to "USD" without a custom serializer.
     @SerialName("code")
-    val code: String,
+    private val encodedCode: String,
     @SerialName("number")
     val number: Int,
     @SerialName("digits")
@@ -39,24 +57,17 @@ data class Currency(
     @SerialName("obsolete")
     val obsolete: Boolean = false,
     @SerialName("replacedBy")
-    val replacedBy: String? = null,
+    private val encodedReplacedBy: String? = null,
 ) {
-    /**
-     * Two currencies are equal when their ISO 4217 [code] matches, and nothing else takes part.
-     *
-     * ISO 4217 makes the alphabetic code the identity of a currency; [name] and [symbol] are how it
-     * is presented, and [number], [digits], [obsolete] and [replacedBy] are facts about the currency
-     * the code already names. Two instances carrying `"USD"` describe the same money however they were
-     * built — from the bundled resource map, from a platform lookup, or decoded from a payload someone
-     * else wrote with a different `name` or `symbol` — so they compare equal, sit in one bucket of a
-     * `Set`, and act as one map key.
-     *
-     * This is the same principle the URI types follow: equality is what the governing specification
-     * says identifies the value, not a field-by-field comparison. Compare the individual properties
-     * when a presentation difference is what you actually care about.
-     *
-     * Note the consequence for `copy`: `usd.copy(symbol = "US$")` is equal to `usd`.
-     */
+    /** The three-letter ISO 4217 alphabetic currency code, uppercase (e.g., "USD", "EUR", "JPY"). */
+    @Transient
+    val code: String = encodedCode.uppercase()
+
+    /** The ISO 4217 code of the currency that replaced this one, uppercase, if obsolete. */
+    @Transient
+    val replacedBy: String? = encodedReplacedBy?.takeIf { it.isNotBlank() }?.uppercase()
+
+    /** Two currencies are equal when their [code] is, and nothing else takes part; see [Currency]. */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Currency) return false
@@ -69,6 +80,9 @@ data class Currency(
      * every hash-based collection would misbehave.
      */
     override fun hashCode(): Int = code.hashCode()
+
+    /** The [code]. */
+    override fun toString(): String = code
 
     /**
      * The scale factor used to convert the arbitrary-precision [BigDecimal] value to
@@ -83,6 +97,35 @@ data class Currency(
         }
 
     companion object {
+        /**
+         * Creates a [Currency]. Codes are uppercased; see [Currency].
+         *
+         * @param code The three-letter ISO 4217 alphabetic currency code.
+         * @param number The three-digit ISO 4217 numeric currency code.
+         * @param digits The number of decimal digits in the currency's minor unit.
+         * @param name The full human-readable name of the currency.
+         * @param symbol The symbol used to represent the currency.
+         * @param obsolete Whether the currency is no longer in active use.
+         * @param replacedBy The ISO 4217 code of the currency that replaced this one, if obsolete.
+         */
+        operator fun invoke(
+            code: String,
+            number: Int,
+            digits: Int,
+            name: String,
+            symbol: String,
+            obsolete: Boolean = false,
+            replacedBy: String? = null,
+        ): Currency = Currency(
+            encodedCode = code,
+            number = number,
+            digits = digits,
+            name = name,
+            symbol = symbol,
+            obsolete = obsolete,
+            encodedReplacedBy = replacedBy,
+        )
+
         /**
          * Returns the [Currency] associated with the system's current default locale.
          *

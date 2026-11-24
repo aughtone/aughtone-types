@@ -47,6 +47,17 @@ There is no overload with fewer parameters. Supply `nil` for the optional ones.
 
 Note what the last line costs you: `Locale.Companion.shared.current` **throws** when the platform cannot resolve a locale, and in Swift you are forced to write it explicitly wherever Kotlin would have defaulted it. `Locale.Companion.shared.currentOrNull` returns `nil` instead, which is usually what you want at a call site you did not choose to make.
 
+## `Locale` and `Currency` have no initializer
+
+Neither type exposes a constructor, so there is no `Locale(...)` or `Currency(...)` initializer in Swift. Kotlin's `Locale("en", "US", displayName = ...)` is a call to the companion's `invoke`, and Swift reaches it through the companion, with every argument supplied:
+
+```swift
+let locale = Locale.Companion.shared.invoke(languageCode: "en", regionCode: "US", scriptCode: nil, variantCode: nil, displayName: "English (United States)")
+let usd = Currency.Companion.shared.invoke(code: "USD", number: 840, digits: 2, name: "US Dollar", symbol: "$", obsolete: false, replacedBy: nil)
+```
+
+Prefer a lookup where one exists, since a shipped locale or currency carries its proper name: `Locale_functionsKt.localeFor(languageTag:)`, `Locale_functionsKt.parseLocale(languageTag:)` and `Currency_functionsKt.currencyFor(currencyCode:)`. Neither type has `doCopy` any more, so build a new value rather than copying one.
+
 ## Overloads that differ only by number type gain a trailing underscore
 
 `Money.div` takes a `Double` in one overload and a `Long` in another. Objective-C cannot express that, so the second is renamed:

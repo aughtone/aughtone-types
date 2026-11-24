@@ -32,7 +32,9 @@ actual fun localeForNative(languageTag: String): Locale? {
         regionCode = parsed.regionCode,
         scriptCode = parsed.scriptCode,
         variantCode = parsed.variantCode,
-        displayName = javaLocale.displayName
+        // English, not the device language the no-argument form uses: this is the locale's stored
+        // English name, and Locale.displayName finds the name in the reader's language itself.
+        displayName = javaLocale.getDisplayName(JavaLocale.ENGLISH)
     )
 }
 
@@ -73,5 +75,5 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
             append(variant)
         }
     }
-    return resolveLocale(tag) ?: fallbackTag?.let { resolveLocale(it) } ?: parseLocale(tag)
+    return currentLocaleFrom(tag, fallbackTag)
 }

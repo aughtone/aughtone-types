@@ -33,11 +33,18 @@ Compiled into: `io.github.aughtone.types.locale.scriptByLanguageRegion` (`Locale
 
 A pair is kept only when its likely script differs from the language's own likely script, so `zh-MO` → `Hant` is kept and `zh-SG` → `Hans` is not. 45 pairs qualify. `resolveLocale` reads the script from here when a tag names a region and no script (#50). ICU4J 78.3 is the release carrying CLDR 48, matching the display-name data's 48.2.0; ICU4J 79 carries CLDR 49. `RegionScriptJvmTest` recomputes the table from ICU4J, which is a JVM test dependency only, and fails when the shipped languages or the data change.
 
+## English language, script and region names
+
+Source: Unicode CLDR 48.2.0, `cldr-localenames-full`, the pinned package below, `main/en/languages.json`, `scripts.json` and `territories.json`, 2026-11-24
+Compiled into: `io.github.aughtone.types.locale.EnglishSubtagNames` (`EnglishSubtagNames.kt`)
+
+637 languages, 213 scripts and 295 regions. Only plain subtags are kept: language codes of two or three letters, four-letter script codes, and two-letter or three-digit region codes, with no `-alt-` forms and no language-region keys such as `en_GB`. They name a locale this library does not ship, so `kok-IN` is "Konkani (India)" on every target, Linux included, rather than its codes. The shipped locales' own names for a subtag take precedence, so a composed name agrees with the table. To regenerate, read those three files from the package, apply the same filters, sort by code, and pack each table as one `code\u0001name…` string; `DisplayNameOrderTest` pins the three counts.
+
 ## `UNICODE-LICENSE-V3.txt` — localized display names
 
 Source: Unicode CLDR, via the npm package `cldr-localenames-full`
 Pinned: version **48.2.0**, integrity `sha512-4o0paYDz0UXhfhChAVFkmVl2CP0YTSEqE6WrC0fNafaSC5u5DAXphxH3SZ1Ujczarikr8DToKZfiok6EqWLdNQ==`
-Compiled into: `LocaleDisplayNameSupplement` (all targets) and `LocaleDisplayNameTable` (Linux only)
+Compiled into: `LocaleDisplayNameSupplement` (all targets), `LocaleDisplayNameTable` (Linux and Windows) and `EnglishSubtagNames` (all targets)
 
 The licence file is vendored here rather than the data, because the data is 1.9 MB and the package is reproducible from its version and integrity hash. Attribution is in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
 

@@ -8,7 +8,7 @@ import platform.windows.GetLocaleInfoEx
 import platform.windows.GetUserDefaultLocaleName
 import platform.windows.IsValidLocaleName
 import platform.windows.LOCALE_NAME_MAX_LENGTH
-import platform.windows.LOCALE_SLOCALIZEDDISPLAYNAME
+import platform.windows.LOCALE_SENGLISHDISPLAYNAME
 import platform.windows.WCHARVar
 
 /**
@@ -26,14 +26,16 @@ private fun userLocaleName(): String? = memScoped {
 }
 
 /**
- * The name of the locale [localeName] in the user's interface language, or `null` if Windows has none.
+ * The English name of the locale [localeName], or `null` if Windows has none. English, not the
+ * user's interface language: this is the locale's stored name, and `Locale.displayName` finds the
+ * name in the reader's language itself.
  */
 @OptIn(ExperimentalForeignApi::class)
-private fun windowsDisplayName(localeName: String): String? = memScoped {
-    val length = GetLocaleInfoEx(localeName, LOCALE_SLOCALIZEDDISPLAYNAME.toUInt(), null, 0)
+private fun windowsEnglishName(localeName: String): String? = memScoped {
+    val length = GetLocaleInfoEx(localeName, LOCALE_SENGLISHDISPLAYNAME.toUInt(), null, 0)
     if (length == 0) return null
     val buffer = allocArray<WCHARVar>(length)
-    if (GetLocaleInfoEx(localeName, LOCALE_SLOCALIZEDDISPLAYNAME.toUInt(), buffer, length) == 0) return null
+    if (GetLocaleInfoEx(localeName, LOCALE_SENGLISHDISPLAYNAME.toUInt(), buffer, length) == 0) return null
     buffer.toKString().takeIf { it.isNotBlank() }
 }
 
@@ -43,7 +45,7 @@ actual fun localeForNative(languageTag: String): Locale? {
     // Windows 10 and later answer GetLocaleInfoEx for any well-formed name, with placeholder data for
     // one they do not know, so ask first whether Windows knows the locale, and report a miss instead.
     if (IsValidLocaleName(parsed.languageTag) == 0) return null
-    val displayName = windowsDisplayName(parsed.languageTag) ?: return null
+    val displayName = windowsEnglishName(parsed.languageTag) ?: return null
     return Locale(
         languageCode = parsed.languageCode,
         regionCode = parsed.regionCode,
@@ -54,6 +56,5 @@ actual fun localeForNative(languageTag: String): Locale? {
 }
 
 actual fun currentNativeLocale(fallbackTag: String?): Locale? {
-    val tag = userLocaleName() ?: fallbackTag ?: return null
-    return resolveLocale(tag) ?: fallbackTag?.let { resolveLocale(it) } ?: parseLocale(tag)
+    return currentLocaleFrom(userLocaleName(), fallbackTag)
 }

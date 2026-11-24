@@ -48,7 +48,7 @@ class TableEmitterTest {
 
 **It must call `localizedDisplayNameOrNull`, not `localizedDisplayName`.** The latter falls back to English, so the emitter would record English as though it were a translation and the table would grow by thousands of useless entries.
 
-**Comment out the supplement lookup first.** `localizedDisplayNameOrNull` consults the supplement, so leaving it in place makes the emitter read back the table it is generating. The second run would then look complete regardless of what the platforms actually have.
+**Comment out the bundled lookup first.** `localizedDisplayNameOrNull` consults the bundled names before the platform — the supplement, and for English the shipped table — so leaving it in place makes the emitter read back the table it is generating. The second run would then look complete regardless of what the platforms actually have.
 
 **2. Run it on every target that can run:**
 
@@ -72,7 +72,7 @@ The Linux and Windows targets and `iosX64` cannot execute on an arm64 macOS host
 
 **When only adding locales, leave existing pairs alone.** Platform data drifts between runs, so a full regeneration rewrites a handful of established platform-filled names for no reason. Recompose everything, check that the existing pairs come out unchanged apart from that drift, and then ship the existing entries as they were plus the new pairs.
 
-**5. Drop every name equal to the locale's English `displayName`.** CLDR answers many untranslated entries with the English word, and those add bytes to produce exactly what the English fallback already produces. Around a third of candidates go this way. Keeping them would also make `localizedDisplayNameOrNull` return English while implying a translation exists.
+**5. Drop every name equal to the locale's English name**, the shipped table's (`localizedDisplayName(displayIn = english)`; `displayName` itself follows the device's language). CLDR answers many untranslated entries with the English word, and those add bytes to produce exactly what the English fallback already produces. Around a third of candidates go this way. Keeping them would also make `localizedDisplayNameOrNull` return English while implying a translation exists.
 
 **6. Emit the two files.** Both hold one packed string per display language — `tag\u0001name\u0001tag\u0001name…`, sorted by tag — not one declaration per name. That matters: Kotlin/Native compiles a handful of large literals far more comfortably than tens of thousands of small ones.
 
