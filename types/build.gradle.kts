@@ -127,6 +127,11 @@ kotlin {
                 api(libs.kotlinx.serialization.json)
             }
         }
+        // ICU's likely-subtags data, to check the region-script table against. Test only: it never
+        // reaches the published artifact.
+        jvmTest.dependencies {
+            implementation(libs.icu4j)
+        }
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)

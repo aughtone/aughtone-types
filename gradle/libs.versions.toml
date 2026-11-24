@@ -13,6 +13,7 @@ vanniktech = "0.37.0"
 kotlinBrowser = "2026.9.3"
 ionspin-bignum ="0.3.10"
 kotlinx-benchmark = "0.5.0"
+icu4j = "78.3"
 
 [libraries]
 kotlin-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlinBrowser" }
@@ -20,6 +21,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "ionspin-bignum" }
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinx-benchmark" }
 

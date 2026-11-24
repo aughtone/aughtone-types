@@ -122,8 +122,10 @@ internal fun scriptSubtagOf(parts: List<String>): String? =
  * keeping the requested script, Windows does so for a locale it knows and returns `null` otherwise,
  * and JavaScript, Wasm and Linux return `null`.
  *
- * Only a script named in the tag is kept. One merely implied by the region is not considered, so
- * `zh-MO` still falls back to Simplified `zh`.
+ * A tag with a region but no script is read as naming the script CLDR expects for that language and
+ * region, where it differs from the language's default, so `zh-MO` finds Traditional `zh-Hant` rather
+ * than Simplified `zh`, and `pa-PK` behaves as `pa-Arab-PK`. A script named in the tag always wins
+ * over the one its region implies, and a tag matching a shipped locale exactly returns that locale.
  *
  * The [languageTag] should be a valid IETF BCP 47 language tag.
  *
@@ -134,14 +136,28 @@ internal fun scriptSubtagOf(parts: List<String>): String? =
  */
 fun resolveLocale(languageTag: String): Locale? {
     val normalized = normalizeLanguageTag(languageTag)
-    var parts = normalized.split('-')
+    localeFor(normalized)?.let { return it }
+    val requested = withRegionScript(normalized)
+    var parts = requested.split('-')
     // A requested script is part of what was asked for; stepping below it would answer in another one.
     val floor = if (scriptSubtagOf(parts) != null) 2 else 1
     while (parts.size >= floor && parts.first().isNotEmpty()) {
         localeFor(parts.joinToString("-"))?.let { return it }
         parts = parts.dropLast(1)
     }
-    return localeForNative(normalized)
+    return localeForNative(requested)
+}
+
+/**
+ * [normalized] with the script its region implies written into it, when the tag names no script and
+ * the region's script differs from the language's default: `zh-MO` becomes `zh-Hant-MO`. Any other
+ * tag comes back unchanged.
+ */
+private fun withRegionScript(normalized: String): String {
+    val parts = normalized.split('-')
+    if (parts.size < 2 || scriptSubtagOf(parts) != null) return normalized
+    val script = scriptByLanguageRegion["${parts[0]}-${parts[1]}"] ?: return normalized
+    return (listOf(parts[0], script) + parts.drop(1)).joinToString("-")
 }
 
 /**

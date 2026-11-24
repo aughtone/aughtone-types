@@ -26,6 +26,13 @@ Compiled into: `io.github.aughtone.types.locale.languageAliasMap` (`LanguageAlia
 
 An alias is kept only when CLDR's replacement is a bare language code this library ships, so `eng` → `en` is kept and `cnr` → `sr-ME` is not. That covers ISO 639-2/T and 639-2/B codes, deprecated codes such as `mol`, and the member CLDR treats as its macrolanguage, such as `cmn` → `zh` and `cwd` → `cr`. Four codes are kept by hand in `legacyLanguageCodes` instead and left out of the generated file: `iku`, `ike` and `ikt`, which resolve to `iu` (#40), and `tgl`, which goes to `tl` because CLDR's replacement `fil` ships as a separate locale. To regenerate, canonicalize `aaa`…`zzz` with `Intl.getCanonicalLocales` and apply the same filter.
 
+## Script by language and region
+
+Source: Unicode CLDR 48.0 likely subtags, read through ICU4J 78.3 for every shipped language and every ISO 3166 country, 2026-11-24
+Compiled into: `io.github.aughtone.types.locale.scriptByLanguageRegion` (`LocaleRegionScript.kt`)
+
+A pair is kept only when its likely script differs from the language's own likely script, so `zh-MO` → `Hant` is kept and `zh-SG` → `Hans` is not. 45 pairs qualify. `resolveLocale` reads the script from here when a tag names a region and no script (#50). ICU4J 78.3 is the release carrying CLDR 48, matching the display-name data's 48.2.0; ICU4J 79 carries CLDR 49. `RegionScriptJvmTest` recomputes the table from ICU4J, which is a JVM test dependency only, and fails when the shipped languages or the data change.
+
 ## `UNICODE-LICENSE-V3.txt` — localized display names
 
 Source: Unicode CLDR, via the npm package `cldr-localenames-full`
