@@ -3,9 +3,9 @@ name: io-github-aughtone-types
 description: >-
   Hold money without losing cents to Double: ISO 4217 currency by code or
   locale, minor units, banker's half-even rounding. Shared value types for
-  Kotlin Multiplatform — JVM, Android, iOS, JS, Wasm, Linux — identical on
-  each. Arbitrary-precision decimals and big integers off the JVM; GPS
-  latitude and longitude, distance between two points, move a point by
+  Kotlin Multiplatform — JVM, Android, iOS, macOS, JS, Wasm, Linux, Windows —
+  alike on each. Arbitrary-precision decimals and big integers off the JVM;
+  GPS latitude and longitude, distance between two points, move a point by
   distance and bearing; distance, speed, altitude and compass heading with
   accuracy; GeoJSON points, polygons and features validated on decode, with
   winding order and bounding boxes; parse and compare URLs, URIs, URNs and
@@ -89,7 +89,7 @@ when (val result = runOutcome { url(userInput) }) {
 
 **URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. The symptom is a count that comes out lower than expected: `distinct()`, a `Set` or a map key collapses values you can see are textually different, and two URNs differing only after `?+` or `#` become one entry. The value you supplied is preserved and serialized unchanged — only the comparison is normalized.
 
-**`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not — including on Linux, which has no system CLDR and answers entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
+**`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not — including on Linux, which has no system CLDR, and Windows, which names a locale only in the user's interface language; both answer entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
 
 **A three-letter language code becomes the two-letter one.** `parseLocale("eng-US").languageTag` is `"en-US"`, and `fre`, `ger` or `cre` come back as `fr`, `de` or `cr`, because BCP 47 requires the shortest code. The symptom is a tag you stored as text no longer matching the one you get back, so compare `Locale` values or normalize both sides through `parseLocale`. A language with only a three-letter code, such as `hur` or `moh`, keeps it.
 
@@ -162,7 +162,7 @@ It does no I/O, has no networking, and reads no files or resources at runtime.
 
 ## Calling it from other languages
 
-**Kotlin is the consumer surface, on every target.** Kotlin callers need nothing beyond this file, whether they are on the JVM, Android, Kotlin/JS, Kotlin/Wasm, a native Apple target or Linux.
+**Kotlin is the consumer surface, on every target.** Kotlin callers need nothing beyond this file, whether they are on the JVM, Android, Kotlin/JS, Kotlin/Wasm, a native Apple target, Linux or Windows.
 
 **Swift callers need one more page,** because the export renames and reshapes things, and because nothing here is annotated `@Throws` — a Kotlin exception reaching the Objective-C boundary terminates the process rather than becoming a Swift error, so the non-throwing forms are the only ones a Swift caller can recover from:
 

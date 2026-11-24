@@ -3,7 +3,7 @@
 Two generated files carry locale display names, and this is how to rebuild them:
 
 - `types/src/commonMain/kotlin/io/github/aughtone/types/locale/LocaleDisplayNameSupplement.kt` — names for pairs some platform cannot produce.
-- `types/src/linuxMain/kotlin/io/github/aughtone/types/locale/LocaleDisplayNameTable.kt` — the whole matrix, for Linux, which has no system CLDR.
+- `types/src/bundledNamesMain/kotlin/io/github/aughtone/types/locale/LocaleDisplayNameTable.kt` — the whole matrix, for Linux, which has no system CLDR, and Windows, which names a locale only in the user's interface language.
 
 Do this when a coverage test fails, which is the signal that a platform's CLDR has moved, or when the shipped locale set changes. [ADR-0005](../decisions/completeness-over-consistency-for-display-names.md) explains why the tables exist and why they hold what they do.
 
@@ -58,7 +58,7 @@ class TableEmitterTest {
 
 **`--continue` is required.** With the supplement lookup commented out, other display-name tests on the JVM and JS fail, and without it the first failing task stops the targets after it from running at all.
 
-`linuxX64` and `iosX64` cannot execute on an arm64 macOS host, and they do not need to: Linux consumes the merged table rather than contributing to it, and the iOS targets share `appleMain`.
+The Linux and Windows targets and `iosX64` cannot execute on an arm64 macOS host, and they do not need to: Linux and Windows consume the merged table rather than contributing to it, and the iOS targets share `appleMain`.
 
 **3. Harvest from the test XML**, at `types/build/test-results/<task>/*TableEmitter*.xml`, reading every `<system-out>` section. Each row is `N|displayLanguage|languageTag|name`. **The browser targets prefix the first line of each `println` with `[log] `**, so strip it, or the first row of the batch is lost and the count check below fails by one.
 
@@ -79,13 +79,13 @@ class TableEmitterTest {
 **Emit `size` as a `by lazy` count over the payload, never as a literal.** Both files derive it today, and it must stay derived. A literal written by the generator went stale in both files at once — each declared one number while its own header comment declared another — and nothing caught it, because at the time nothing read either. A derived count cannot disagree with what it counts.
 
 - The **supplement** holds the names for pairs at least one platform's raw harvest lacks.
-- The **Linux table** holds every pair any platform can name.
+- The **Linux and Windows table** holds every pair any platform can name.
 
 **7. Remove the emitter, restore the supplement lookup, and run `./gradlew check`.**
 
 **8. Update the baselines.** `JvmCoverageTest` and `AppleCoverageTest` each hold two baselines — the platform's own gap count, and how many pairs remain untranslated after the supplement — and `LocaleDisplayNameSupplementTest` pins the supplement's derived size and the display-language count exactly. The coverage baselines are **tolerant**, within 5%, because they measure host data: a different OS, simulator runtime or JDK reports slightly different counts, and an exact pin failed a release on CI over a drift of six pairs. Every run prints the actual counts, so watch the logs for drift. Change a baseline only once you have looked at what moved.
 
-The Linux table's `size` is **not** pinned by any test, because there is no `linuxTest` source set and `linuxX64` cannot execute on an arm64 macOS host anyway. It is derived from the payload, so it cannot contradict the file it lives in, but nothing asserts the payload itself.
+The Linux and Windows table's `size` is **not** pinned by any test, because there is no `linuxTest` source set and neither the Linux nor the Windows targets can execute on an arm64 macOS host anyway. It is derived from the payload, so it cannot contradict the file it lives in, but nothing asserts the payload itself.
 
 ## What to expect
 

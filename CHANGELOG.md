@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Native desktop targets: `macosArm64`, `linuxArm64` and `mingwX64`**, joining `linuxX64`, so command-line tools and native desktop apps can depend on the library. macOS answers from the platform's own locale and currency data, as iOS does; Linux on arm64 answers from the same bundled display-name table as on x64. Windows takes the user's locale and looks locales up through its own locale API, and names them from the bundled table Linux uses, because Windows can name a locale only in the user's interface language. There is no `macosX64`, which Kotlin is retiring.
+
 ## [4.2.0] - 2026-11-09
 
 A minor release. Canadian Indigenous languages join `Locale`, three-letter language codes normalize to their two-letter form, and a locale's currency comes from its country. Nothing is renamed or removed, but several results change **without a compile error**: a tag stored as text may no longer match the one that comes back, `en-IN` now has a currency, and a few display names now report `null` rather than English.
