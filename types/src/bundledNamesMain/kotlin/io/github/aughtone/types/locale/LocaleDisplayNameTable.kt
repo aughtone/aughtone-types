@@ -3,10 +3,12 @@ package io.github.aughtone.types.locale
 import io.github.aughtone.types.util.LazyMap
 
 /**
- * Every locale name in every display language this library ships, for Linux.
+ * Every locale name in every display language this library ships, for Linux and Windows.
  *
- * Linux has no system CLDR at all, so there is nothing to supplement — this is the whole matrix,
- * and it ships only in the Linux artifact.
+ * Neither can name an arbitrary locale in an arbitrary language. Linux has no system CLDR at all,
+ * and Windows' own locale API names a locale only in the user's interface language, so there is
+ * nothing to supplement — this is the whole matrix, and it ships only in the Linux and Windows
+ * artifacts.
  *
  * Generated from Unicode CLDR 48.2.0, with names for pairs CLDR lacks taken from platform CLDR
  * implementations. Do not edit by hand — regenerate with the procedure in

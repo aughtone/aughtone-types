@@ -2,7 +2,7 @@
 
 A Kotlin Multiplatform library of strongly-typed, shareable data types — money and currency, locales, coordinates and telemetry, GeoJSON geometry, RFC-compliant identifiers, and arbitrary-precision math. It exists because KMP projects kept redefining the same types incompatibly; these are the shared ones, with no platform-specific API leaking through.
 
-Targets: Android, JVM, iOS, JS, Wasm and Linux.
+Targets: Android, JVM, iOS, macOS (arm64), JS, Wasm, Linux (x64 and arm64) and Windows (x64).
 
 ## 📥 Installation
 
@@ -123,7 +123,7 @@ So the goal here is **completeness** — every locale gets a name in the reader'
 - **`localizedDisplayName` never returns `null`** — the worst case is the English `displayName`. That fallback is silent, so use **`localizedDisplayNameOrNull`** when showing the wrong language matters more than showing nothing: it returns `null` where the platform has no data, instead of quietly handing back English.
 - **Coverage varies by platform and the holes differ.** The platforms lack different pairs — the JVM has no Inuktitut, Apple has some; Apple is thin on Igbo where the JVM is not — and a bundled table fills what one platform has and another lacks.
 - **Some languages cannot be a display language yet.** No platform and no CLDR release has display data in most Canadian Indigenous languages, so a name rendered *in* Halkomelem or Mohawk is almost always the English one. Names *of* them in other languages are available.
-- **Linux has no system CLDR at all**, so it answers from a bundled copy of the whole matrix.
+- **Linux has no system CLDR at all, and Windows names a locale only in the user's interface language**, so both answer from a bundled copy of the whole matrix.
 - **Browsers need `Intl.DisplayNames`**, available since roughly 2020; older environments fall back to English.
 
 See [ADR-0005](docs/knowledge/decisions/completeness-over-consistency-for-display-names.md) for the decision and the measurements, [ADR-0003](docs/knowledge/decisions/localized-display-names-via-platform-cldr.md) for the original delegation rationale, and issue [#20](https://github.com/aughtone/aughtone-types/issues/20) for gap-filling work.

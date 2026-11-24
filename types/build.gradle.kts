@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -86,10 +87,33 @@ kotlin {
         }
     }
 
-    // XXX need to come back to this.
-    //  Getting it to work for linux may be complex.
-    //  We'll probably need to load external data.
+    // Linux has no system CLDR, so its display names come from a bundled table
+    // (see docs/knowledge/research/delivering-display-names-where-the-platform-has-no-cldr.md).
     linuxX64()
+    linuxArm64()
+
+    // Native Windows. Its locale API names a locale only in the user's interface language, so it
+    // takes its display names from the same bundled table as Linux, and the rest from Windows itself.
+    mingwX64()
+
+    // Native macOS, for command-line tools and native desktop apps. It shares appleMain with iOS, so it
+    // takes the platform's own locale and currency data and needs no code of its own.
+    macosArm64()
+
+    // The default hierarchy, plus one source set for the targets that answer display names from the
+    // bundled table: Linux and Windows. The table is large, so it must not reach commonMain, where
+    // every artifact would carry it.
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("native") {
+                group("bundledNames") {
+                    withLinux()
+                    withMingw()
+                }
+            }
+        }
+    }
 
     sourceSets {
         val wasmJsMain by getting {

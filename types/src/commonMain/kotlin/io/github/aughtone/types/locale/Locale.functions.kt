@@ -197,7 +197,7 @@ fun parseLocale(languageTag: String): Locale {
  * Retrieves a native [Locale] instance for a given language tag.
  *
  * This function is an `expect` function, requiring a platform-specific implementation
- * to look up locale information using the native APIs of the target platform (e.g., JVM, Android, iOS).
+ * to look up locale information using the native APIs of the target platform (e.g., JVM, Android, Apple platforms and Windows).
  * On platforms where a native lookup is not possible or practical (like Linux or Web), this function
  * should fall back to the strict [localeFor] lookup. Implementations must not call
  * [resolveLocale], which itself delegates to this function and would recurse.
@@ -218,8 +218,8 @@ expect fun localeForNative(languageTag: String): Locale?
  *
  * This `expect` function is implemented once per platform, each querying whatever its system
  * exposes — `java.util.Locale` on the JVM and Android, `NSLocale` on Apple targets, `Intl` in a
- * browser, and the `LC_ALL`, `LC_MESSAGES` and `LANG` environment variables on Linux, where the
- * `C` and `POSIX` locales count as reporting nothing. There is no shared implementation behind
+ * browser, the user's locale on Windows, and the `LC_ALL`, `LC_MESSAGES` and `LANG` environment
+ * variables on Linux, where the `C` and `POSIX` locales count as reporting nothing. There is no shared implementation behind
  * them, so the tag a platform reports, and whether it reports one at all, differ.
  *
  * @param fallbackTag An optional IETF BCP 47 language tag to fall back to when the platform reports
@@ -253,9 +253,9 @@ fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
  *
  * Resolution is delegated to the platform's own CLDR data via [localizedDisplayNameForNative]:
  * `java.util.Locale` on JVM/Android, `NSLocale` on Apple platforms, and `Intl.DisplayNames`
- * on JS/WasmJS. When the platform has no localized name available (for example on Linux,
- * which ships no native locale-name data, or for unknown language codes), this falls back
- * to the English [Locale.displayName].
+ * on JS/WasmJS, and a bundled table on Linux and Windows. When no localized name is available —
+ * a pairing neither the platform nor the bundled data can name, or an unknown language code — this
+ * falls back to the English [Locale.displayName].
  *
  * **Warning:** Because names come from the underlying OS, the exact wording may vary
  * slightly between platforms and OS versions, and the English fallback is silent — a returned
@@ -276,9 +276,8 @@ fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
  *
  * The same lookup as [localizedDisplayName], without the English fallback. That fallback is the
  * reason this exists: it returns a real English name, so a caller cannot tell a genuine French name
- * from a silent miss, and the miss is not rare. Coverage depends on the platform's own CLDR data,
- * a small fraction of pairings have none, and Linux ships no data at all — so every name is a miss
- * there and the fallback hides it completely.
+ * from a silent miss, and the miss is not rare. Coverage depends on the platform's own CLDR data
+ * and the bundled names behind it, some pairings have neither, and the fallback hides each of them.
  *
  * Use this wherever showing the wrong language matters more than showing nothing: to fall back to
  * something of your own, to mark the entry, or to leave it out. Use [localizedDisplayName] when any
@@ -302,9 +301,10 @@ fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): Strin
  * `null` for a pair its data cannot name, which is what [Locale.localizedDisplayNameOrNull] reports
  * and what [Locale.localizedDisplayName] replaces with the English name.
  *
- * **Linux is the exception, and does not consult platform data at all.** It ships no CLDR, so there
- * is nothing to query: that target answers from a bundled table holding the whole matrix. It is
- * therefore no more likely to return `null` than any other platform — before 4.1.0 it returned
+ * **Linux and Windows are the exception, and do not consult platform data at all.** Linux ships no
+ * CLDR, and Windows names a locale only in the user's interface language, so neither can name an
+ * arbitrary pair: those targets answer from a bundled table holding the whole matrix. They are
+ * therefore no more likely to return `null` than any other platform — before 4.1.0 Linux returned
  * `null` for everything.
  *
  * **Warning:** The results of this function vary between platforms, and not slightly. Of the pairs
