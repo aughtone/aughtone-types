@@ -412,14 +412,24 @@ fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
  * rather than a translation. Use [localizedDisplayNameOrNull] to tell those apart. See ADR-0005 and
  * ADR-0006 for the rationale and tradeoffs.
  *
+ * With [LanguageDisplay.Dialect], CLDR's dedicated name for a regional variant comes first where it
+ * has one, "Canadian French" rather than "French (Canada)"; it is bundled, so it is the same on every
+ * target. A locale with no dialect name is named exactly as with [LanguageDisplay.Standard].
+ *
  * @param displayIn The locale whose language the name should be rendered in.
  * Defaults to [Locale.current].
+ * @param languageDisplay The standard form, the default, or the dialect form where one exists.
  * @return The localized display name, or an English name as a fallback.
  * @see Locale.displayName
  * @see localizedDisplayNameForNative
  */
-fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
-    localizedDisplayNameOrNull(displayIn) ?: englishName()
+fun Locale.localizedDisplayName(
+    displayIn: Locale = Locale.current,
+    languageDisplay: LanguageDisplay = LanguageDisplay.Standard,
+): String =
+    localizedDisplayNameOrNull(displayIn, languageDisplay)
+        ?: (if (languageDisplay == LanguageDisplay.Dialect) dialectName(englishReaderTag) else null)
+        ?: englishName()
 
 /**
  * Returns the name of this locale in the language of [displayIn], or `null` when neither this
@@ -436,10 +446,18 @@ fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
  * @param displayIn The locale whose language the name should be rendered in.
  *   Defaults to [Locale.current], which throws if the platform cannot resolve one — pass a locale
  *   explicitly, or [Locale.currentOrNull], if that is not acceptable here.
+ * @param languageDisplay The standard form, the default, or the dialect form where one exists; see
+ *   [localizedDisplayName].
  * @return The localized name, or `null` if nothing could provide one.
  * @see localizedDisplayName
  */
-fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): String? {
+fun Locale.localizedDisplayNameOrNull(
+    displayIn: Locale = Locale.current,
+    languageDisplay: LanguageDisplay = LanguageDisplay.Standard,
+): String? {
+    if (languageDisplay == LanguageDisplay.Dialect) {
+        bundledNamesLanguage(displayIn)?.let { dialectName(it) }?.let { return it }
+    }
     // Name the shipped locale this one matches, so a zh-TW built without its script is named as the
     // shipped Traditional zh-TW is, by the bundled tables and the platform alike.
     val shipped = localeFor(languageTag)
@@ -458,6 +476,12 @@ fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): Strin
  * was built with, which for a parsed locale is the English name [parseLocale] gave it.
  */
 internal fun Locale.englishName(): String = localeFor(languageTag)?.fallbackName ?: fallbackName
+
+/** CLDR's dialect name for this locale in [displayLanguage], from the bundled table, or `null`. */
+private fun Locale.dialectName(displayLanguage: String): String? =
+    LocaleDialectNames.nameFor(displayLanguage, localeFor(languageTag)?.languageTag ?: languageTag)
+
+private const val englishReaderTag = "en"
 
 
 /**

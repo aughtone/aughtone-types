@@ -43,7 +43,7 @@ Coordinates(latitude: 45.42, longitude: -75.69, accuracy: nil)
 locale.localizedDisplayName(displayIn: Locale.Companion.shared.current)
 ```
 
-There is no overload with fewer parameters. Supply `nil` for the optional ones.
+There is no overload with fewer parameters. Supply `nil` for the optional ones, and the default explicitly where there is one: `locale.localizedDisplayName(displayIn: reader, languageDisplay: .standard)`.
 
 Note what the last line costs you: `Locale.Companion.shared.current` **throws** when the platform cannot resolve a locale, and in Swift you are forced to write it explicitly wherever Kotlin would have defaulted it. `Locale.Companion.shared.currentOrNull` returns `nil` instead, which is usually what you want at a call site you did not choose to make.
 

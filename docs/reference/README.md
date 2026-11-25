@@ -40,11 +40,18 @@ Compiled into: `io.github.aughtone.types.locale.EnglishSubtagNames` (`EnglishSub
 
 637 languages, 213 scripts and 295 regions. Only plain subtags are kept: language codes of two or three letters, four-letter script codes, and two-letter or three-digit region codes, with no `-alt-` forms and no language-region keys such as `en_GB`. They name a locale this library does not ship, so `kok-IN` is "Konkani (India)" on every target, Linux included, rather than its codes. The shipped locales' own names for a subtag take precedence, so a composed name agrees with the table. To regenerate, read those three files from the package, apply the same filters, sort by code, and pack each table as one `code\u0001name…` string; `DisplayNameOrderTest` pins the three counts.
 
+## Dialect names
+
+Source: Unicode CLDR 48.2.0, `cldr-localenames-full`, the pinned package below, each display language's `main/<language>/languages.json`, 2026-11-24
+Compiled into: `io.github.aughtone.types.locale.LocaleDialectNames` (`LocaleDialectNames.kt`)
+
+1,015 names: the keys of each shipped display language's `languages` table that are a language with a region or script (`fr-CA`, `zh-Hant`) and are themselves a shipped locale tag, without `-alt-` forms. That is 15 locales across 88 display languages; `tl` is read from `fil`. They back `LanguageDisplay.Dialect`. To regenerate, apply the same filter to the package, sort each display language's entries by tag, and pack them one string per display language as `tag\u0001name…`. `DialectNameTest` pins the count, and `DialectNamesJvmTest` checks every name against ICU4J's dialect handling for the same CLDR major release.
+
 ## `UNICODE-LICENSE-V3.txt` — localized display names
 
 Source: Unicode CLDR, via the npm package `cldr-localenames-full`
 Pinned: version **48.2.0**, integrity `sha512-4o0paYDz0UXhfhChAVFkmVl2CP0YTSEqE6WrC0fNafaSC5u5DAXphxH3SZ1Ujczarikr8DToKZfiok6EqWLdNQ==`
-Compiled into: `LocaleDisplayNameSupplement` (all targets), `LocaleDisplayNameTable` (Linux and Windows) and `EnglishSubtagNames` (all targets)
+Compiled into: `LocaleDisplayNameSupplement` (all targets), `LocaleDisplayNameTable` (Linux and Windows), `EnglishSubtagNames` and `LocaleDialectNames` (all targets)
 
 The licence file is vendored here rather than the data, because the data is 1.9 MB and the package is reproducible from its version and integrity hash. Attribution is in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
 
