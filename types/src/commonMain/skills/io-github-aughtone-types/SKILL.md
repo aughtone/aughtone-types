@@ -17,7 +17,7 @@ description: >-
   km", "$12.50" or "3 days ago" use io.github.aughtone:format-readable.
 license: Apache-2.0
 metadata:
-  version: "4.2.0"
+  version: "4.3.0"
   repository: https://github.com/aughtone/aughtone-types
 ---
 
@@ -156,6 +156,24 @@ Then the renames, all of which the compiler finds, because the old names cease t
 - **Some display names that were English now report `null`** from `localizedDisplayNameOrNull`, where a platform had no name of its own in Tibetan, Inuktitut, Sundanese, Tajik or Javanese.
 - **On Linux, `Locale.current` reads `LC_ALL`, `LC_MESSAGES` and `LANG`**, in that order, and throws under `LANG=C` or `POSIX`, where it used to return a locale with the language `c`.
 - **Cree, Ojibwe, Inupiaq and 22 three-letter-only Canadian Indigenous languages** are new locales. Nothing is removed and nothing is renamed.
+
+**Changed shape in 4.3.0**, which the compiler finds, except where marked:
+
+- **`Locale` and `Currency` are not data classes.** `copy` and `componentN` are gone; build a new value with `Locale(...)` or `Currency(...)`, which call the companion's `invoke` and take the same arguments. Code already compiled against 4.2 keeps linking unless it calls `copy` or `componentN`. In Swift, construction is `Locale.Companion.shared.invoke(...)`.
+- **In Swift, throwing calls are `throws`**, so a call to `url(value:)`, `Money.plus(other:)` or a validating constructor needs `try`. The number overloads lost their trailing underscores: `div(scalar_:)` is `div(count:)`, `plus(scalar_:)` is `plus(minorUnits:)`, and the `Int` and `Long` forms of `toDistance` and its siblings are not exported.
+- **`localizedDisplayName` and `localizedDisplayNameOrNull` take a `languageDisplay` argument**, defaulting to the standard form, so Kotlin calls are unchanged and Swift calls pass it.
+
+**Changed behaviour in 4.3.0**, with no compile error:
+
+- **`Locale.displayName` is in the user's current language**, not English, and follows it when it changes. Code, tests or snapshots expecting English need `localizedDisplayName(displayIn = …)` with a fixed language.
+- **`Locale` equality is the language tag alone**, so two locales named differently are one value. Codes are case-normalized on construction and decoding: `Locale("EN", "us", …)` is `en-US`, and a blank region, script or variant is absent. `toString()` is the tag, and `Currency.toString()` the code.
+- **Plain `sr` and `sr-RS` are Serbian in Cyrillic**, where they were Latin; Latin Serbian is `sr-Latn` and `sr-Latn-RS`, and `sh`, `hbs` and `sr-ME` resolve to it.
+- **A language-region tag resolves in its region's script**: `zh-MO`, and `zh-US`, `zh-GB` and `zh-AU`, give Traditional `zh-Hant`; `pa-PK` is Arabic-script Punjabi.
+- **`Locale.current` keeps the device's region**, so `en-ZW` is English in Zimbabwe with its currency, not plain `en`, and may be a locale `availableLocales()` does not list. A locale the library does not ship keeps its codes and gets a real English name, "Konkani (India)", rather than its tag.
+- **`BigDecimal.toString()` writes what `java.math.BigDecimal` does**, so a negative scale or a value below `0.000001` prints in scientific notation; `toPlainString()` is new.
+- **`Url` refuses an invalid scheme, an empty host or a port outside 0..65535** when constructed and when decoded, so a payload carrying one fails to decode. `Distance` refuses a negative accuracy.
+
+**Added in 4.3.0:** macOS arm64, Linux arm64 and Windows targets; `zh-Hant`, `sr-Latn`, `sr-Latn-RS`, `iu-Latn` and `iu-Latn-CA` locales; `LanguageDisplay` for the dialect form; `BigDecimal.toPlainString()`.
 
 **Earlier renames still worth knowing**, because code and training data predate them:
 

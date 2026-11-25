@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.3.0] - 2026-11-24
+
+A minor release that breaks source compatibility, deliberately, to fix how locales are identified and named. `Locale` and `Currency` are no longer data classes, so `copy` and `componentN` are gone, though code compiled against 4.2 keeps linking unless it calls them. Several results change **without a compile error**: `Locale.displayName` follows the user's language instead of being English, locale equality ignores the name, plain `sr` is Cyrillic, `Locale.current` keeps the device's region, a region can imply a script, and `BigDecimal.toString()` matches `java.math.BigDecimal`. In Swift, throwing calls are now `throws` and some labels changed. New targets: macOS arm64, Linux arm64 and Windows.
 
 ### Changed
 
