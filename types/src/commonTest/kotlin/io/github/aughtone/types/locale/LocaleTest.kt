@@ -89,14 +89,12 @@ class LocaleTest {
         } catch (e: IllegalArgumentException) {
             return
         }
-        // A device set to a shipped locale gets it; one set to anything else, such as kok-IN, keeps
-        // its codes and is named from library data, exactly as parseLocale names it.
-        val shipped = resolveShippedLocale(currentLocale.languageTag)
-        if (shipped != null) {
+        // Whatever the device reported, the current locale is stable: its own tag gives it back. A
+        // shipped tag gives the shipped locale, name and all.
+        assertEquals(currentLocale, currentLocaleFrom(currentLocale.languageTag, fallbackTag = null))
+        localeFor(currentLocale.languageTag)?.let { shipped ->
             assertEquals(shipped, currentLocale)
-            assertEquals(shipped.displayName, currentLocale.displayName)
-        } else {
-            assertEquals(parseLocale(currentLocale.languageTag).displayName, currentLocale.displayName)
+            assertEquals(shipped.fallbackName, currentLocale.fallbackName)
         }
     }
 

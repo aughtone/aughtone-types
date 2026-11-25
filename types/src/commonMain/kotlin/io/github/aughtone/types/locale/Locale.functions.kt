@@ -154,9 +154,11 @@ internal fun resolveShippedLocale(languageTag: String): Locale? {
 
 /**
  * The locale for a tag the device reported, or for [fallbackTag] when it reported none, as every
- * target's [currentNativeLocale] returns it. A tag resolving to a shipped locale gives that locale;
- * any other well-formed tag keeps its own codes and the English name [parseLocale] gives it, rather
- * than whatever the platform's lookup would have stored. `null` when neither tag is well formed.
+ * target's [currentNativeLocale] returns it. A tag resolving to a shipped locale gives that locale,
+ * unless the match dropped the device's region: then the shipped locale's language and script are
+ * kept with the device's region, so `en-ZW` is English in Zimbabwe rather than plain `en`, and still
+ * has a country to take a currency from. Any other well-formed tag keeps its own codes and the English
+ * name [parseLocale] gives it. `null` when neither tag is well formed.
  */
 internal fun currentLocaleFrom(deviceTag: String?, fallbackTag: String?): Locale? {
     // Every Locale.displayName read asks for the current locale, and a sort compares names many
@@ -164,10 +166,18 @@ internal fun currentLocaleFrom(deviceTag: String?, fallbackTag: String?): Locale
     // device language is a different tag and is resolved afresh. Benign race: two threads may both
     // resolve, and either result is correct.
     lastCurrentLocale?.let { if (it.deviceTag == deviceTag && it.fallbackTag == fallbackTag) return it.locale }
-    val locale = deviceTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
-        ?: fallbackTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
+    val locale = deviceTag?.let { localeKeepingRegion(it) } ?: fallbackTag?.let { localeKeepingRegion(it) }
     lastCurrentLocale = CurrentLocaleMemo(deviceTag, fallbackTag, locale)
     return locale
+}
+
+/** The shipped locale [tag] resolves to, with [tag]'s region kept if the match dropped it. */
+private fun localeKeepingRegion(tag: String): Locale? {
+    val device = libraryNamedLocale(tag)
+    val shipped = resolveShippedLocale(tag) ?: return device
+    val region = device?.regionCode ?: return shipped
+    if (shipped.regionCode == region) return shipped
+    return englishNamedLocale(shipped.languageCode, shipped.scriptCode, region, variant = null)
 }
 
 private class CurrentLocaleMemo(val deviceTag: String?, val fallbackTag: String?, val locale: Locale?)
@@ -237,6 +247,15 @@ private fun parsedLocale(languageTag: String): Locale {
         }
     }
     val variant = if (variants.isEmpty()) null else variants.joinToString("-")
+    return englishNamedLocale(language, script, region, variant)
+}
+
+/**
+ * A locale with these codes and an English name: composed from this library's names where they name
+ * every subtag, otherwise the platform's English name if it has one, otherwise the composition with
+ * the unnamed subtags left as codes.
+ */
+private fun englishNamedLocale(language: String, script: String?, region: String?, variant: String?): Locale {
     val (composed, complete) = composedEnglishName(language, script, region, variant)
     val locale = Locale(
         languageCode = language,
@@ -336,11 +355,12 @@ expect fun localeForNative(languageTag: String): Locale?
  * them, so the tag a platform reports, and whether it reports one at all, differ.
  *
  * What they report is handled the same way everywhere. A tag that resolves to a shipped locale, as
- * [resolveLocale] would find it, gives that locale. Any other well-formed tag keeps the device's own
- * codes, as [parseLocale] parses it: a device set to Konkani in India gives `kok-IN`. So
- * [Locale.current] always equals [localeFor] of its own tag when that tag is shipped, and its
- * [Locale.displayName] is in the device's language wherever anything can name it there, "कोंकणी
- * (भारत)" for that device on the JVM.
+ * [resolveLocale] would find it, gives that locale, keeping the device's region if the shipped one
+ * lacks it: `en-ZW` gives English in Zimbabwe, not plain `en`, so [io.github.aughtone.types.financial.Currency.current] still finds a
+ * country. Any other well-formed tag keeps the device's own codes, as [parseLocale] parses it: a
+ * device set to Konkani in India gives `kok-IN`. So [Locale.current] equals [localeFor] of its own
+ * tag whenever that tag is shipped, and its [Locale.displayName] is in the device's language wherever
+ * anything can name it there, "कोंकणी (भारत)" for that device on the JVM.
  *
  * @param fallbackTag An optional IETF BCP 47 language tag to fall back to when the platform reports
  *        nothing, handled the same way as a reported tag. Only a malformed one yields `null`.

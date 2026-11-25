@@ -71,6 +71,19 @@ class DisplayNameOrderTest {
     }
 
     @Test
+    fun `the device's region is kept when the shipped match lacks it`() {
+        val zimbabwe = currentLocaleFrom("en-ZW", fallbackTag = null)
+        assertEquals("en-ZW", zimbabwe?.languageTag)
+        assertEquals("English (Zimbabwe)", zimbabwe?.fallbackName)
+        assertEquals("zh-Hant-MO", currentLocaleFrom("zh-MO", fallbackTag = null)?.languageTag)
+        assertEquals("zh-Hant-US", currentLocaleFrom("zh-US", fallbackTag = null)?.languageTag)
+        assertEquals("sr-Latn-ME", currentLocaleFrom("sr-ME", fallbackTag = null)?.languageTag)
+        // A shipped match with the device's region is returned as shipped, even if a variant dropped.
+        assertEquals(localeFor("de-DE"), currentLocaleFrom("de-DE-1996", fallbackTag = null))
+        assertEquals(localeFor("en"), currentLocaleFrom("en", fallbackTag = null))
+    }
+
+    @Test
     fun `a remembered current locale is replaced when the device tag changes`() {
         assertEquals(localeFor("fr-CA"), currentLocaleFrom("fr-CA", fallbackTag = null))
         assertEquals(localeFor("de-DE"), currentLocaleFrom("de-DE", fallbackTag = null))

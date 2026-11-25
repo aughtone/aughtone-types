@@ -60,4 +60,13 @@ class CurrentLocaleEqualityJvmTest {
         withDefault("en-US") { assertEquals("German (Germany)", germany.displayName) }
         withDefault("fr-FR") { assertEquals("allemand (Allemagne)", germany.displayName) }
     }
+
+    @Test
+    fun `a device in a region the library does not ship keeps its region and its currency`() {
+        withDefault("en-ZW") {
+            assertEquals("en-ZW", Locale.current.languageTag)
+            assertEquals("ZW", Locale.current.regionCode)
+            assertEquals("ZWG", io.github.aughtone.types.financial.Currency.current.code)
+        }
+    }
 }
