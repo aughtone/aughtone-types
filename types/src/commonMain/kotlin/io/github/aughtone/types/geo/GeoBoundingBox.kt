@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCName::class)
+
 package io.github.aughtone.types.geo
 
 import kotlinx.serialization.SerialName
@@ -50,6 +52,7 @@ data class GeoBoundingBox(
      * @param bbox A list of coordinates.
      * @throws IllegalArgumentException if the list size is not 4 or 6.
      */
+    @Throws(IllegalArgumentException::class)
     constructor(bbox: List<Double>) : this(
         west = if (bbox.size == 4 || bbox.size == 6) bbox[0] else throw IllegalArgumentException("Bounding box must have either 4 or 6 coordinates (found ${bbox.size})"),
         south = bbox[1],
@@ -64,7 +67,8 @@ data class GeoBoundingBox(
      *
      * @param bbox An array of coordinates.
      */
-    constructor(bbox: DoubleArray) : this(bbox.toList())
+    @Throws(IllegalArgumentException::class)
+    constructor(@kotlin.native.ObjCName("values") bbox: DoubleArray) : this(bbox.toList())
 
     /**
      * Converts to a double array matching standard GeoJSON bbox format:

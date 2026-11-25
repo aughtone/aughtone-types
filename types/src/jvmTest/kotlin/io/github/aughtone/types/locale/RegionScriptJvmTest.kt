@@ -34,8 +34,6 @@ class RegionScriptJvmTest {
     fun `every language-region tag resolves in CLDR's likely script`() {
         val wrong = mutableListOf<String>()
         for (language in languages) {
-            // Plain sr ships in Latin, against CLDR's Cyrillic default, which #51 is to decide.
-            if (language == "sr") continue
             for (country in countries) {
                 val tag = "$language-$country"
                 val likely = likelyScript(tag).ifEmpty { continue }

@@ -1,5 +1,8 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCRefinement::class, kotlin.experimental.ExperimentalObjCName::class)
+
 package io.github.aughtone.types.number
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -13,7 +16,7 @@ import kotlin.math.floor
  * @property cents The value represented in cents (e.g., `100` represents $1.00).
  */
 @Serializable
-data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
+data class BankersValue(@SerialName("cents") private val cents: Long) : Comparable<BankersValue> {
 
     /** Adds another [BankersValue] to this value. */
     operator fun plus(other: BankersValue) = BankersValue(cents + other.cents)
@@ -26,6 +29,7 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
         BankersValue(bankersDivide(BigInteger.valueOf(cents).multiply(BigInteger.valueOf(other.cents)), HUNDRED))
 
     /** Computes the remainder (modulus) of dividing this value by another [BankersValue]. */
+    @Throws(ArithmeticException::class)
     operator fun rem(other: BankersValue) = BankersValue(cents % other.cents)
 
     /**
@@ -33,6 +37,7 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
      *
      * @throws ArithmeticException If [other] is zero.
      */
+    @Throws(ArithmeticException::class)
     operator fun div(other: BankersValue): BankersValue {
         if (other.cents == 0L) throw ArithmeticException("Division by zero")
         return BankersValue(bankersDivide(BigInteger.valueOf(cents).multiply(HUNDRED), BigInteger.valueOf(other.cents)))
@@ -43,6 +48,10 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
      *
      * @throws ArithmeticException If [other] is zero.
      */
+    @Throws(ArithmeticException::class)
+    // Hidden from Swift, where an Int converts to the Long form; both would otherwise export as
+    // div(other_:) and div(other__:).
+    @kotlin.native.HiddenFromObjC
     operator fun div(other: Int): BankersValue {
         if (other == 0) throw ArithmeticException("Division by zero")
         return BankersValue(bankersDivide(BigInteger.valueOf(cents), BigInteger.valueOf(other.toLong())))
@@ -53,7 +62,8 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
      *
      * @throws ArithmeticException If [other] is zero.
      */
-    operator fun div(other: Long): BankersValue {
+    @Throws(ArithmeticException::class)
+    operator fun div(@kotlin.native.ObjCName("count") other: Long): BankersValue {
         if (other == 0L) throw ArithmeticException("Division by zero")
         return BankersValue(bankersDivide(BigInteger.valueOf(cents), BigInteger.valueOf(other)))
     }
@@ -64,7 +74,8 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
      * @throws IllegalArgumentException If [other] is [Double.NaN] or infinite.
      * @throws ArithmeticException If [other] is zero.
      */
-    operator fun div(other: Double): BankersValue {
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
+    operator fun div(@kotlin.native.ObjCName("scalar") other: Double): BankersValue {
         require(!other.isNaN() && !other.isInfinite()) { "Cannot divide by NaN or Infinite double" }
         if (other == 0.0) throw ArithmeticException("Division by zero")
         return BankersValue(bankersRound(cents.toDouble() / other))
@@ -95,6 +106,7 @@ data class BankersValue(private val cents: Long) : Comparable<BankersValue> {
          *
          * @throws IllegalArgumentException If [dollars] is [Double.NaN] or infinite.
          */
+        @Throws(IllegalArgumentException::class)
         fun fromDouble(dollars: Double): BankersValue {
             require(!dollars.isNaN() && !dollars.isInfinite()) { "Cannot convert NaN or Infinite double" }
             // Route through the decimal string form so half-cent ties are detected exactly.

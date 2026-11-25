@@ -99,6 +99,8 @@ when (val result = runOutcome { url(userInput) }) {
 
 **`localizedDisplayName` and `displayName` fall back to English, silently.** Names come from this library's bundled names first and the platform's own CLDR after them — on Linux, which has no system CLDR, and Windows, which names a locale only in the user's interface language, both answer entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
 
+**Plain `sr` is Serbian in Cyrillic, as in CLDR.** Latin Serbian is `sr-Latn` and `sr-Latn-RS`, and `sh`, `hbs` and `sr-ME` resolve to it. Before 4.3.0 `sr` and `sr-RS` were Latin, so code or stored tags that meant Latin by `sr` now get Cyrillic: write `sr-Latn`.
+
 **A three-letter language code becomes the two-letter one.** `parseLocale("eng-US").languageTag` is `"en-US"`, and `fre`, `ger` or `cre` come back as `fr`, `de` or `cr`, because BCP 47 requires the shortest code. The symptom is a tag you stored as text no longer matching the one you get back, so compare `Locale` values or normalize both sides through `parseLocale`. A language with only a three-letter code, such as `hur` or `moh`, keeps it.
 
 **Never depend on the exact name.** Platforms disagree about wording on a large share of the names they all know — a browser and a native platform differ on roughly 40% — so `nl-BE` may be "Nederlands (België)" or "Vlaams" depending on where your code runs. Compare locales, never their rendered names, and keep them out of cache keys and snapshot tests.
@@ -172,7 +174,7 @@ It does no I/O, has no networking, and reads no files or resources at runtime.
 
 **Kotlin is the consumer surface, on every target.** Kotlin callers need nothing beyond this file, whether they are on the JVM, Android, Kotlin/JS, Kotlin/Wasm, a native Apple target, Linux or Windows.
 
-**Swift callers need one more page,** because the export renames and reshapes things, and because nothing here is annotated `@Throws` — a Kotlin exception reaching the Objective-C boundary terminates the process rather than becoming a Swift error, so the non-throwing forms are the only ones a Swift caller can recover from:
+**Swift callers need one more page,** because the export renames and reshapes things. Every throwing function and constructor is annotated `@Throws`, so it is `throws` in Swift; the exceptions are `Locale.current` and `Currency.current`, which are properties and still terminate the process on failure, so use `currentOrNull`:
 
 - [Calling it from Swift](references/swift.md)
 

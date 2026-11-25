@@ -67,6 +67,7 @@ enum class Winding {
  *
  * @param ringIndex 0 for the exterior ring, 1 and above for holes.
  */
+@Throws(IndexOutOfBoundsException::class)
 fun GeoPolygon.windingOf(ringIndex: Int = 0): Winding = windingOfRing(coordinates[ringIndex])
 
 internal fun windingOfRing(ring: List<List<Double>>): Winding {
@@ -107,6 +108,7 @@ internal fun rewindRings(rings: List<List<List<Double>>>): List<List<List<Double
  *
  * @throws IllegalArgumentException if a ring is structurally invalid, or is wound the wrong way.
  */
+@Throws(IllegalArgumentException::class)
 fun geoPolygon(
     coordinates: List<List<List<Double>>>,
     bbox: List<Double>? = null,
@@ -129,6 +131,7 @@ fun geoPolygon(
  *
  * Structural rules are still enforced; only the winding is forgiven.
  */
+@Throws(IllegalArgumentException::class)
 fun geoPolygonRewinding(
     coordinates: List<List<List<Double>>>,
     bbox: List<Double>? = null,

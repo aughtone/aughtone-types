@@ -9,8 +9,10 @@ package io.github.aughtone.types.locale
  * apart from Latin-script Inuktitut, and `fr-Latn-FR` could not be matched to `fr-FR`.
  *
  * Taken from the Unicode CLDR likely-subtags data, for every language that has a shipped locale with no
- * script. Wyandot (`wya`) has no likely-subtags entry and is written in Latin. Regenerate this when the
- * shipped locale set changes; `ScriptFallbackTest` fails when a language is missing.
+ * script, and for Chinese, whose locales all name one, because the bundled names for Chinese are in
+ * this script and [bundledNamesLanguage] has to know it. Wyandot (`wya`) has no likely-subtags entry
+ * and is written in Latin. Regenerate this when the shipped locale set changes; `ScriptFallbackTest`
+ * fails when a language is missing.
  */
 internal val defaultScriptByLanguage: Map<String, String> = mapOf(
     "af" to "Latn",
@@ -88,6 +90,7 @@ internal val defaultScriptByLanguage: Map<String, String> = mapOf(
     "so" to "Latn",
     "sq" to "Latn",
     "squ" to "Latn",
+    "sr" to "Cyrl",
     "str" to "Latn",
     "su" to "Latn",
     "sv" to "Latn",
@@ -99,6 +102,7 @@ internal val defaultScriptByLanguage: Map<String, String> = mapOf(
     "vi" to "Latn",
     "wya" to "Latn",
     "yo" to "Latn",
+    "zh" to "Hans",
     "zu" to "Latn",
 )
 
@@ -108,3 +112,18 @@ internal val defaultScriptByLanguage: Map<String, String> = mapOf(
  */
 internal val Locale.effectiveScriptCode: String?
     get() = scriptCode ?: defaultScriptByLanguage[languageCode]
+
+/**
+ * The display language to look this reader up under in the bundled name tables, or `null` when the
+ * bundled names cannot serve it.
+ *
+ * The bundled names for a language are written in that language's default script, from CLDR, so
+ * the Serbian names are Cyrillic and the Chinese names Simplified. A reader in another script —
+ * `sr-Latn`, `zh-Hant` — would get names it did not ask for, so it gets none here and the platform,
+ * then English, answers instead. A language whose default script is not recorded is served as is.
+ */
+internal fun bundledNamesLanguage(reader: Locale): String? {
+    val language = reader.languageCode
+    val tableScript = defaultScriptByLanguage[language] ?: return language
+    return language.takeIf { reader.effectiveScriptCode == tableScript }
+}

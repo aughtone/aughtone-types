@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCName::class)
+
 package io.github.aughtone.types.number
 
 import kotlinx.serialization.SerialName
@@ -28,19 +30,21 @@ data class BigDecimal(
      * Constructs a `BigDecimal` from its string representation.
      * @param value The string to parse.
      */
-    constructor(value: String) : this(parseString(value))
+    @Throws(IllegalArgumentException::class)
+    constructor(@kotlin.native.ObjCName("string") value: String) : this(parseString(value))
 
     /**
      * Constructs a `BigDecimal` from a `Double` value, preserving its binary precision.
      * @param value The double value.
      */
+    @Throws(IllegalArgumentException::class)
     constructor(value: Double) : this(valueOf(value))
 
     /**
      * Constructs a `BigDecimal` from a `Long` value.
      * @param value The long value.
      */
-    constructor(value: Long) : this(BigInteger.valueOf(value), 0)
+    constructor(@kotlin.native.ObjCName("integer") value: Long) : this(BigInteger.valueOf(value), 0)
 
     /**
      * Compares this value to [other] by numeric value, ignoring scale, so `2.0` and `2.00` compare
@@ -176,6 +180,7 @@ data class BigDecimal(
     operator fun plus(other: BigDecimal): BigDecimal = add(other)
     operator fun minus(other: BigDecimal): BigDecimal = subtract(other)
     operator fun times(other: BigDecimal): BigDecimal = multiply(other)
+    @Throws(ArithmeticException::class)
     operator fun div(other: BigDecimal): BigDecimal = divide(other)
     operator fun unaryMinus(): BigDecimal = BigDecimal(-this.unscaledValue, this.scale)
 
@@ -198,6 +203,7 @@ data class BigDecimal(
      * @throws ArithmeticException if [divisor] is zero, or if the quotient has a non-terminating
      *         decimal expansion and so has no exact representation.
      */
+    @Throws(ArithmeticException::class)
     fun divide(divisor: BigDecimal): BigDecimal {
         if (divisor.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
@@ -247,6 +253,7 @@ data class BigDecimal(
      * @throws ArithmeticException if [other] is zero, or if [roundingMode] is
      *         [RoundingMode.UNNECESSARY] and rounding would in fact be needed.
      */
+    @Throws(ArithmeticException::class)
     fun divide(other: BigDecimal, scale: Int, roundingMode: RoundingMode): BigDecimal {
         if (other.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
@@ -281,6 +288,7 @@ data class BigDecimal(
      * @return This value at [newScale].
      * @throws ArithmeticException if reaching [newScale] would discard a non-zero digit.
      */
+    @Throws(ArithmeticException::class)
     fun setScale(newScale: Int): BigDecimal {
         return setScale(newScale, RoundingMode.UNNECESSARY)
     }
@@ -294,6 +302,7 @@ data class BigDecimal(
      * @throws ArithmeticException if [roundingMode] is [RoundingMode.UNNECESSARY] and rounding
      *         would in fact be needed.
      */
+    @Throws(ArithmeticException::class)
     fun setScale(newScale: Int, roundingMode: RoundingMode): BigDecimal {
         if (newScale == this.scale) return this
         if (newScale > this.scale) {
@@ -343,6 +352,7 @@ data class BigDecimal(
             return BigDecimal(BigInteger.valueOf(value), scale)
         }
 
+        @Throws(IllegalArgumentException::class)
         fun valueOf(value: Double): BigDecimal {
             return parseString(value.toString())
         }
@@ -359,6 +369,7 @@ data class BigDecimal(
          * @return The exact decimal value of [value].
          * @throws ArithmeticException if [value] is `NaN` or infinite, neither of which is a decimal.
          */
+        @Throws(ArithmeticException::class)
         fun valueOfExact(value: Double): BigDecimal {
             if (value.isNaN() || value.isInfinite()) {
                 throw ArithmeticException("Cannot convert NaN or Infinite double to BigDecimal")
@@ -396,6 +407,7 @@ data class BigDecimal(
             }
         }
 
+        @Throws(IllegalArgumentException::class)
         fun parseString(value: String): BigDecimal {
             val clean = value.trim()
             val eIdx = clean.indexOfAny(charArrayOf('e', 'E'))

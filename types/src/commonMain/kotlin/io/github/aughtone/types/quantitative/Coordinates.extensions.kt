@@ -21,6 +21,7 @@ import kotlin.math.PI
  * @param deltaLongitude The change in longitude to apply.
  * @return A new [Coordinates] object with the updated latitude and longitude.
  */
+@Throws(IllegalArgumentException::class)
 fun Coordinates.add(deltaLatitude: Double, deltaLongitude: Double): Coordinates {
     return Coordinates(latitude + deltaLatitude, longitude + deltaLongitude)
 }

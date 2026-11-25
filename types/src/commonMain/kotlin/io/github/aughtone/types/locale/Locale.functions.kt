@@ -10,10 +10,10 @@ private val legacyLanguageCodes: Map<String, String> = mapOf(
     "ji" to "yi",
     // Moldavian, deprecated in favour of Romanian.
     "mo" to "ro",
-    // Serbo-Croatian, two- and three-letter. CLDR maps both to sr-Latn; Serbian ships here only in
-    // Latin script, under sr and sr-RS, so the language alone reaches it.
-    "sh" to "sr",
-    "hbs" to "sr",
+    // Serbo-Croatian, two- and three-letter. CLDR maps both to sr-Latn, and so does this library:
+    // plain sr is Cyrillic, so the script comes with the replacement unless the tag names its own.
+    "sh" to "sr-Latn",
+    "hbs" to "sr-Latn",
     // Inuktitut. iku is the ISO 639-2/3 code for the iu macrolanguage itself; ike (Eastern Canadian
     // Inuktitut) and ikt (Inuinnaqtun, Western) are its two ISO 639-3 members. This library carries
     // Inuktitut once, as iu, so all three resolve to it.
@@ -39,8 +39,9 @@ internal fun normalizeLanguageTag(languageTag: String): String {
     val parts = normalized.split('-')
     if (parts.isEmpty() || parts[0].isEmpty()) return ""
     return buildString {
-        val language = parts[0].lowercase().let { legacyLanguageCodes[it] ?: languageAliasMap[it] ?: it }
-        append(language)
+        val replacement = parts[0].lowercase().let { legacyLanguageCodes[it] ?: languageAliasMap[it] ?: it }
+        val language = replacement.substringBefore('-')
+        append(replacement.takeIf { scriptSubtagOf(parts) == null } ?: language)
         var afterSingleton = false
         for (i in 1 until parts.size) {
             val part = parts[i]
@@ -364,7 +365,9 @@ fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
  * The name comes from the first of these that has one:
  *
  * 1. **This library's own names.** In English, the shipped locale table's name; in any other
- *    language, the bundled translations. Where they have a name it is the same on every target.
+ *    language, the bundled translations, which are in that language's default script, so a reader
+ *    in another script, such as `sr-Latn` or `zh-Hant`, skips them. Where they have a name it is the
+ *    same on every target.
  * 2. **The platform's name**, from its own CLDR data: `java.util.Locale` on JVM/Android, `NSLocale`
  *    on Apple platforms, `Intl.DisplayNames` on JS/WasmJS, and the bundled full table on Linux and
  *    Windows.
@@ -409,7 +412,7 @@ fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): Strin
     val bundled = if (language == "en") {
         localeFor(languageTag)?.fallbackName
     } else {
-        LocaleDisplayNameSupplement.nameFor(language, languageTag)
+        bundledNamesLanguage(displayIn)?.let { LocaleDisplayNameSupplement.nameFor(it, languageTag) }
     }
     return bundled ?: localizedDisplayNameForNative(this, displayIn)
 }

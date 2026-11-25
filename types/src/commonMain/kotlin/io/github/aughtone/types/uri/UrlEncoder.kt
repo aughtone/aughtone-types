@@ -34,6 +34,7 @@ object UrlEncoder {
      * @return The percent-encoded string.
      * @throws IllegalArgumentException if [value] contains an unpaired surrogate.
      */
+    @Throws(IllegalArgumentException::class)
     fun encode(value: String): String = encodeInternal(value, ::isUnreserved, spaceAsPlus = false)
 
     /**
@@ -44,6 +45,7 @@ object UrlEncoder {
      * @return The form-encoded string.
      * @throws IllegalArgumentException if [value] contains an unpaired surrogate.
      */
+    @Throws(IllegalArgumentException::class)
     fun encodeFormData(value: String): String =
         encodeInternal(value, ::isFormSafe, spaceAsPlus = true)
 
@@ -100,6 +102,7 @@ object UrlEncoder {
      * @throws IllegalArgumentException if [value] contains a malformed percent
      * sequence or the decoded bytes are not valid UTF-8.
      */
+    @Throws(IllegalArgumentException::class)
     fun decode(value: String): String = decodeInternal(value, plusAsSpace = false)
 
     /**
@@ -111,6 +114,7 @@ object UrlEncoder {
      * @throws IllegalArgumentException if [value] contains a malformed percent
      * sequence or the decoded bytes are not valid UTF-8.
      */
+    @Throws(IllegalArgumentException::class)
     fun decodeFormData(value: String): String = decodeInternal(value, plusAsSpace = true)
 
     private fun decodeInternal(value: String, plusAsSpace: Boolean): String {

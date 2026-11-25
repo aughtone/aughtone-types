@@ -29,14 +29,15 @@ class ScriptFallbackTest {
 
     @Test
     fun `a tag naming another script does not find the locale`() {
-        assertNull(localeFor("iu-Latn-CA"))
-        assertNull(localeFor("iu-Latn"))
+        assertNull(localeFor("iu-Cyrl-CA"))
         assertNull(localeFor("ru-Latn-RU"))
+        // Latin-script Inuktitut ships under its own tags (#54), so it finds that, never syllabic iu.
+        assertEquals("Latn", localeFor("iu-Latn-CA")?.scriptCode)
     }
 
     @Test
     fun `resolving falls back within the requested script`() {
-        assertEquals(localeFor("sr"), resolveLocale("sr-Latn-ME"))
+        assertEquals(localeFor("sr-Latn"), resolveLocale("sr-Latn-ME"))
         assertEquals(localeFor("fr"), resolveLocale("fr-Latn-XK"))
         assertEquals(localeFor("zh-Hans"), resolveLocale("zh-Hans-MO"))
         assertEquals(localeFor("zh-Hant"), resolveLocale("zh-Hant-MO"))

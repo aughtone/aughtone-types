@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCRefinement::class, kotlin.experimental.ExperimentalObjCName::class)
+
 package io.github.aughtone.types.quantitative
 
 import kotlinx.serialization.SerialName
@@ -14,7 +16,7 @@ import kotlin.math.abs
  * @throws IllegalArgumentException if [meters] is negative.
  */
 @Serializable
-data class Distance(
+data class Distance @Throws(IllegalArgumentException::class) constructor(
     @SerialName("meters")
     val meters: Double,
     @SerialName("accuracy")
@@ -66,6 +68,7 @@ data class Distance(
      * @return A new Distance representing the difference, which may be zero.
      * @throws IllegalArgumentException if [other] is larger than this distance.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun minus(other: Distance): Distance {
         require(meters >= other.meters) {
             "Cannot subtract ${other.meters}m from ${meters}m: a Distance cannot be negative."
@@ -96,6 +99,7 @@ data class Distance(
      * @return The ratio of the two distances.
      * @throws ArithmeticException if [other] is zero.
      */
+    @Throws(ArithmeticException::class)
     operator fun div(other: Distance): Double {
         if (other.meters == 0.0) throw ArithmeticException("Division by zero")
         return meters / other.meters
@@ -116,7 +120,8 @@ data class Distance(
      * @throws ArithmeticException if [other] is zero.
      * @throws IllegalArgumentException if [other] is negative.
      */
-    operator fun div(other: Int): Distance {
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
+    operator fun div(@kotlin.native.ObjCName("count") other: Int): Distance {
         if (other == 0) throw ArithmeticException("Division by zero")
         require(other > 0) { "Cannot divide a Distance by $other: a Distance cannot be negative." }
         return Distance(meters / other.toDouble(), accuracy = accuracy)
@@ -131,6 +136,7 @@ data class Distance(
      * @return A new Distance representing the remainder.
      * @throws ArithmeticException if dividing by zero.
      */
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
     operator fun rem(other: Distance): Distance {
         if (other.meters == 0.0) throw ArithmeticException("Division by zero")
         return Distance(meters % other.meters, accuracy = null)
@@ -143,6 +149,8 @@ data class Distance(
  * @param accuracy The optional estimated accuracy of the distance measurement.
  * @return A [Distance] instance with this value as the number of meters.
  */
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Int.toDistance(accuracy: Float? = null) =
     Distance(meters = this.toDouble(), accuracy = accuracy)
 
@@ -152,6 +160,8 @@ fun Int.toDistance(accuracy: Float? = null) =
  * @param accuracy The optional estimated accuracy of the distance measurement.
  * @return A new [Distance] instance.
  */
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Long.toDistance(accuracy: Float? = null) =
     Distance(meters = this.toDouble(), accuracy = accuracy)
 
@@ -162,4 +172,5 @@ fun Long.toDistance(accuracy: Float? = null) =
  *                 If null, the accuracy is unknown.
  * @return A [Distance] object with this value as meters.
  */
+@Throws(IllegalArgumentException::class)
 fun Double.toDistance(accuracy: Float? = null) = Distance(meters = this, accuracy = accuracy)

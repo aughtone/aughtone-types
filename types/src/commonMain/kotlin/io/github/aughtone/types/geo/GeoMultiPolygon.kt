@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("MultiPolygon")
-data class GeoMultiPolygon(
+data class GeoMultiPolygon @Throws(IllegalArgumentException::class) constructor(
     val coordinates: List<List<List<List<Double>>>>,
     override val bbox: List<Double>? = null
 ) : GeoGeometry() {

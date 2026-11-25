@@ -38,7 +38,7 @@ class LanguageAliasTest {
 
     @Test
     fun `Serbo-Croatian's codes go to the Latin-script Serbian this library ships`() {
-        // CLDR maps sh and hbs to sr-Latn. Serbian ships here only in Latin script, as sr and sr-RS.
+        // CLDR maps sh and hbs to sr-Latn, and so does this library; plain sr is Cyrillic (#51).
         assertEquals("sr-Latn", localeFor("sh")?.languageTag)
         assertEquals("sr-Latn-RS", localeFor("sh-RS")?.languageTag)
         assertEquals("sr-Latn-RS", localeFor("hbs-RS")?.languageTag)

@@ -114,6 +114,7 @@ data class Uri(
      * @return A new [Urn] instance representing this URI as a URN.
      * @throws IllegalArgumentException if the resulting namespace is not a valid RFC 8141 NID.
      */
+    @Throws(IllegalArgumentException::class)
     fun toUrn(): Urn = if (':' in path) {
         Urn(namespace = path.substringBefore(':'), identity = path.substringAfter(':'))
     } else {
@@ -137,6 +138,7 @@ data class Uri(
      * @throws IllegalArgumentException if the authority contains an unterminated
      * IPv6 literal or a port that is not a decimal number.
      */
+    @Throws(IllegalArgumentException::class)
     fun toUrl(): Url {
         // authority = [userinfo "@"] host [":" port]
         val userInfo = if ('@' in authority) authority.substringBeforeLast('@') else ""

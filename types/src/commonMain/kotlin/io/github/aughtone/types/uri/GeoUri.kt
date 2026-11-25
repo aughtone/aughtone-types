@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
  * @throws IllegalArgumentException if a coordinate is out of range or the uncertainty is negative.
  */
 @Serializable
-data class GeoUri(
+data class GeoUri @Throws(IllegalArgumentException::class) constructor(
     @SerialName("latitude")
     val latitude: Double,
     @SerialName("longitude")

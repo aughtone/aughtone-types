@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCRefinement::class)
+
 package io.github.aughtone.types.quantitative
 
 import kotlinx.serialization.SerialName
@@ -14,7 +16,7 @@ import kotlin.math.abs
  * @throws IllegalArgumentException if `mps` is negative or if `accuracy` is negative when provided.
  */
 @Serializable
-data class Speed(
+data class Speed @Throws(IllegalArgumentException::class) constructor(
     @SerialName("mps")
     val mps: Double,
     @SerialName("accuracy")
@@ -34,6 +36,7 @@ data class Speed(
      * @param other The Speed to add.
      * @return A new Speed representing the sum.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun plus(other: Speed): Speed {
         val newMps = mps + other.mps
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
@@ -66,6 +69,7 @@ data class Speed(
      * @return A new Speed representing the difference, which may be zero.
      * @throws IllegalArgumentException if [other] is faster than this speed.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun minus(other: Speed): Speed {
         require(mps >= other.mps) {
             "Cannot subtract ${other.mps} mps from $mps mps: a Speed cannot be negative."
@@ -99,6 +103,7 @@ data class Speed(
      * @return A new Speed representing the product.
      * @throws IllegalArgumentException if [other] is negative.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun times(other: Double): Speed {
         require(other >= 0.0) { "Cannot multiply a Speed by $other: a Speed cannot be negative." }
         return Speed(mps * other, accuracy = accuracy)
@@ -118,6 +123,7 @@ data class Speed(
      * @throws ArithmeticException if [other] is zero.
      * @throws IllegalArgumentException if [other] is negative.
      */
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
     operator fun div(other: Double): Speed {
         if (other == 0.0) throw ArithmeticException("Division by zero")
         require(other > 0.0) { "Cannot divide a Speed by $other: a Speed cannot be negative." }
@@ -131,6 +137,8 @@ data class Speed(
  * @param accuracy An optional estimate of the accuracy of the speed, as a fraction of the measured speed.
  * @return A [Speed] object with this value as mps.
  */
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Int.toSpeed(accuracy: Float? = null) = Speed(mps = this.toDouble(), accuracy = accuracy)
 
 /**
@@ -139,6 +147,8 @@ fun Int.toSpeed(accuracy: Float? = null) = Speed(mps = this.toDouble(), accuracy
  * @param accuracy An optional estimate of the accuracy of the speed, as a fraction of the measured speed.
  * @return A [Speed] instance with this value as the mps.
  */
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Long.toSpeed(accuracy: Float? = null) = Speed(mps = this.toDouble(), accuracy = accuracy)
 
 /**
@@ -148,4 +158,5 @@ fun Long.toSpeed(accuracy: Float? = null) = Speed(mps = this.toDouble(), accurac
  * @return A [Speed] object with this value as meters per second.
  * @throws IllegalArgumentException if this value or [accuracy] is negative.
  */
+@Throws(IllegalArgumentException::class)
 fun Double.toSpeed(accuracy: Float? = null) = Speed(mps = this, accuracy = accuracy)

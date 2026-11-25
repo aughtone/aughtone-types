@@ -72,6 +72,8 @@ The Linux and Windows targets and `iosX64` cannot execute on an arm64 macOS host
 
 **When only adding locales, leave existing pairs alone.** Platform data drifts between runs, so a full regeneration rewrites a handful of established platform-filled names for no reason. Recompose everything, check that the existing pairs come out unchanged apart from that drift, and then ship the existing entries as they were plus the new pairs.
 
+**A new locale CLDR can name needs no harvest at all.** Where every part of a new pair — the language, script and region — is named in the display language's own CLDR files, compose the name directly from the pinned package, without running the emitter. Cyrillic `sr` (#51) and Latin-script `iu` (#54) were added this way, after checking that the composition reproduced the table's existing names for the same language exactly. Pairs CLDR cannot compose are simply absent and fall back to English; they still need the harvest, or a source (#32).
+
 **5. Drop every name equal to the locale's English name**, the shipped table's (`localizedDisplayName(displayIn = english)`; `displayName` itself follows the device's language). CLDR answers many untranslated entries with the English word, and those add bytes to produce exactly what the English fallback already produces. Around a third of candidates go this way. Keeping them would also make `localizedDisplayNameOrNull` return English while implying a translation exists.
 
 **6. Emit the two files.** Both hold one packed string per display language — `tag\u0001name\u0001tag\u0001name…`, sorted by tag — not one declaration per name. That matters: Kotlin/Native compiles a handful of large literals far more comfortably than tens of thousands of small ones.
@@ -93,14 +95,14 @@ These are the baselines the tests hold as of 2026-11-22, after the Canadian Indi
 
 | | value | asserted in |
 |---|---|---|
-| Supplement names | 4,590 | `LocaleDisplayNameSupplementTest` |
-| Linux matrix names | 19,903 | nothing — derived only |
+| Supplement names | 4,750, after Latin-script Inuktitut was added for #54 | `LocaleDisplayNameSupplementTest` |
+| Linux matrix names | 20,229, after Cyrillic `sr` and `sr-RS` (#51) and Latin-script Inuktitut (#54) were added | nothing — derived only |
 | Display languages | 114 | `LocaleDisplayNameSupplementTest` |
 | JVM: own gaps / untranslated after the supplement | 10,303 / 8,635 | `JvmCoverageTest` |
 | Apple: own gaps / untranslated after the supplement | 8,895 / 8,582 | `AppleCoverageTest` |
 
 **Most of the untranslated pairs are expected.** About 6,300 of them are names rendered *in* one of the 25 Canadian Indigenous languages, which no CLDR release and almost no platform has data for. A jump of that size from adding a display language with no CLDR data is the honest answer, not a broken bridge.
 
-**Mind which denominator you are quoting.** The shipped `localeResourceMap` has 254 entries but only 253 distinct language tags — `zh` carrying a `Hans` script and `zh-Hans` build the same tag — so the matrix is 28,956 pairs counted by resource entry and 28,842 counted by tag. The coverage tests deduplicate by tag. Getting this wrong is what produced three different wrong answers for the unnameable-pair count, recorded in ADR-0005.
+**Mind which denominator you are quoting.** The shipped `localeResourceMap` has 258 entries but only 257 distinct language tags — `zh` carrying a `Hans` script and `zh-Hans` build the same tag — so the matrix is 29,412 pairs counted by resource entry and 29,298 counted by tag. The coverage tests deduplicate by tag. Getting this wrong is what produced three different wrong answers for the unnameable-pair count, recorded in ADR-0005.
 
 Treat the table as the current state rather than as targets. If a run produces something far away from it — a supplement of 12 entries, or of 12,000 — something upstream is wrong, most likely the emitter reading the supplement back or falling back to English.

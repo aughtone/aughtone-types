@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("GeometryCollection")
 data class GeometryCollection(
+    @SerialName("geometries")
     val geometries: List<GeoGeometry>,
+    @SerialName("bbox")
     override val bbox: List<Double>? = null
 ) : GeoGeometry()

@@ -151,6 +151,10 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "it-IT" to { Locale(languageCode = "it", regionCode = "IT", displayName = "Italian (Italy)") },
     "iu" to { Locale(languageCode = "iu", displayName = "Inuktitut") },
     "iu-CA" to { Locale(languageCode = "iu", regionCode = "CA", displayName = "Inuktitut (Canada)") },
+    // Latin-script Inuktitut (#54). Its names in other languages are composed from CLDR; nothing yet
+    // names it in Inuktitut itself, in either script.
+    "iu-Latn" to { Locale(languageCode = "iu", scriptCode = "Latn", displayName = "Inuktitut (Latin)") },
+    "iu-Latn-CA" to { Locale(languageCode = "iu", regionCode = "CA", scriptCode = "Latn", displayName = "Inuktitut (Latin, Canada)") },
     "ja" to { Locale(languageCode = "ja", displayName = "Japanese") },
     "ja-JP" to { Locale(languageCode = "ja", regionCode = "JP", displayName = "Japanese (Japan)") },
     "jv" to { Locale(languageCode = "jv", displayName = "Javanese") },
@@ -232,8 +236,11 @@ internal val localeResourceMap: Map<String, Locale> = lazyMapOf(
     "sq-AL" to { Locale(languageCode = "sq", regionCode = "AL", displayName = "Albanian (Albania)") },
     "squ" to { Locale(languageCode = "squ", displayName = "Squamish") },
     "squ-CA" to { Locale(languageCode = "squ", regionCode = "CA", displayName = "Squamish (Canada)") },
-    "sr" to { Locale(languageCode = "sr", scriptCode = "Latn", displayName = "Serbian (Latin)") },
-    "sr-RS" to { Locale(languageCode = "sr", regionCode = "RS", scriptCode = "Latn", displayName = "Serbian (Latin, Serbia)") },
+    // Plain Serbian is Cyrillic, as CLDR has it; Latin Serbian ships under its own tags (#51).
+    "sr" to { Locale(languageCode = "sr", displayName = "Serbian") },
+    "sr-RS" to { Locale(languageCode = "sr", regionCode = "RS", displayName = "Serbian (Serbia)") },
+    "sr-Latn" to { Locale(languageCode = "sr", scriptCode = "Latn", displayName = "Serbian (Latin)") },
+    "sr-Latn-RS" to { Locale(languageCode = "sr", regionCode = "RS", scriptCode = "Latn", displayName = "Serbian (Latin, Serbia)") },
     "str" to { Locale(languageCode = "str", displayName = "Straits Salish") },
     "str-CA" to { Locale(languageCode = "str", regionCode = "CA", displayName = "Straits Salish (Canada)") },
     "su" to { Locale(languageCode = "su", displayName = "Sundanese") },

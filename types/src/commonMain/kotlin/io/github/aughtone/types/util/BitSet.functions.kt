@@ -18,6 +18,7 @@ fun emptyBitSet(): BitSet = bitSet()
  * @return a new [BitSet] instance.
  * @throws IllegalArgumentException if [size] is negative.
  */
+@Throws(IllegalArgumentException::class)
 fun bitSet(size: Int): BitSet = BitSet(size = size)
 /**
  * Creates a [BitSet] with the specified [size] and initializes each bit with the result of the given [initializer] function.
@@ -27,6 +28,7 @@ fun bitSet(size: Int): BitSet = BitSet(size = size)
  * @return A new [BitSet] instance.
  * @throws IllegalArgumentException if [size] is negative.
  */
+@Throws(IllegalArgumentException::class)
 fun bitSet(size: Int, initializer: (Int) -> Boolean): BitSet =
     BitSet(size = size, initializer = initializer)
 
@@ -37,4 +39,5 @@ fun bitSet(size: Int, initializer: (Int) -> Boolean): BitSet =
  * @param all The value to which all bits should be initialized.
  * @return A new [BitSet] with all bits initialized to [all].
  */
+@Throws(IllegalArgumentException::class)
 fun bitSet(size: Int, all: Boolean): BitSet = BitSet(size = size, initializer = { all })
