@@ -11,8 +11,18 @@ env:
   GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+UseParallelGC"
 
 jobs:
+  # Nothing is tagged or published unless the full suite passes on this commit.
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+    permissions:
+      checks: write
+      contents: read
+    secrets: inherit
+
   create-release:
     name: Create GitHub Release
+    needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -41,7 +51,7 @@ jobs:
 
   publish:
     name: Release build and publish
-    needs: create-release
+    needs: [ test, create-release ]
     if: |
       github.event_name == 'release' || 
       (github.event_name == 'push' && needs.create-release.outputs.release_id != '')

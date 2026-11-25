@@ -24,7 +24,7 @@ class MoneyCurrencyIdentityTest {
     private val usd = currencyFor("USD")!!
 
     /** The same currency as another source might describe it: same code, different presentation. */
-    private val usdOtherSource = usd.copy(name = "United States Dollar", symbol = "US$")
+    private val usdOtherSource = usd.restated(name = "United States Dollar", symbol = "US$")
 
     private val eur = currencyFor("EUR")!!
 

@@ -65,9 +65,20 @@ enum class Winding {
  * The winding of one of this polygon's rings, computed from the signed area of the ring — the
  * shoelace sum over its edges.
  *
+ * An empty polygon, which RFC 7946 allows, encloses no area, so its exterior is [Winding.Degenerate]
+ * rather than an error: `windingOf()` with the default index is safe on any valid polygon.
+ *
  * @param ringIndex 0 for the exterior ring, 1 and above for holes.
+ * @throws IllegalArgumentException if [ringIndex] names a ring the polygon does not have.
  */
-fun GeoPolygon.windingOf(ringIndex: Int = 0): Winding = windingOfRing(coordinates[ringIndex])
+@Throws(IllegalArgumentException::class)
+fun GeoPolygon.windingOf(ringIndex: Int = 0): Winding {
+    if (coordinates.isEmpty() && ringIndex == 0) return Winding.Degenerate
+    require(ringIndex in coordinates.indices) {
+        "Ring $ringIndex does not exist; this polygon has ${coordinates.size} ring(s)."
+    }
+    return windingOfRing(coordinates[ringIndex])
+}
 
 internal fun windingOfRing(ring: List<List<Double>>): Winding {
     var twiceArea = 0.0
@@ -107,6 +118,7 @@ internal fun rewindRings(rings: List<List<List<Double>>>): List<List<List<Double
  *
  * @throws IllegalArgumentException if a ring is structurally invalid, or is wound the wrong way.
  */
+@Throws(IllegalArgumentException::class)
 fun geoPolygon(
     coordinates: List<List<List<Double>>>,
     bbox: List<Double>? = null,
@@ -129,6 +141,7 @@ fun geoPolygon(
  *
  * Structural rules are still enforced; only the winding is forgiven.
  */
+@Throws(IllegalArgumentException::class)
 fun geoPolygonRewinding(
     coordinates: List<List<List<Double>>>,
     bbox: List<Double>? = null,

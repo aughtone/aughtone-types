@@ -28,6 +28,7 @@ data class BigInteger internal constructor(
     /**
      * Constructs a BigInteger from its string representation in the specified radix.
      */
+    @Throws(IllegalArgumentException::class)
     constructor(value: String, radix: Int = 10) : this(parseString(value, radix))
 
     /**
@@ -92,6 +93,7 @@ data class BigInteger internal constructor(
      * @return The value in [radix], lowercase for digits above nine, with a leading `-` when negative.
      * @throws IllegalArgumentException If [radix] is out of range.
      */
+    @Throws(IllegalArgumentException::class)
     fun toString(radix: Int): String {
         require(radix in 2..36) { "Radix out of range" }
         if (signum == 0) return "0"
@@ -165,15 +167,19 @@ data class BigInteger internal constructor(
         return BigInteger(resultSign, resultMag)
     }
 
+    @Throws(ArithmeticException::class)
     fun divide(other: BigInteger): BigInteger {
         return divideAndRemainder(other).first
     }
 
+    @Throws(ArithmeticException::class)
     fun remainder(other: BigInteger): BigInteger {
         return divideAndRemainder(other).second
     }
 
+    @Throws(ArithmeticException::class)
     operator fun div(other: BigInteger): BigInteger = divide(other)
+    @Throws(ArithmeticException::class)
     operator fun rem(other: BigInteger): BigInteger = remainder(other)
     operator fun plus(other: BigInteger): BigInteger = add(other)
     operator fun minus(other: BigInteger): BigInteger = subtract(other)
@@ -261,6 +267,7 @@ data class BigInteger internal constructor(
      *         matching [rem] rather than [mod].
      * @throws ArithmeticException if [other] is zero.
      */
+    @Throws(ArithmeticException::class)
     fun divideAndRemainder(other: BigInteger): Pair<BigInteger, BigInteger> {
         if (other.signum == 0) throw ArithmeticException("BigInteger divide by zero")
         if (this.signum == 0) return Pair(ZERO, ZERO)
@@ -281,6 +288,7 @@ data class BigInteger internal constructor(
      * @return A value in `0 until m`.
      * @throws ArithmeticException if [m] is zero or negative.
      */
+    @Throws(ArithmeticException::class)
     fun mod(m: BigInteger): BigInteger {
         if (m.signum <= 0) throw ArithmeticException("BigInteger modulus must be positive")
         val result = this.remainder(m)
@@ -300,6 +308,7 @@ data class BigInteger internal constructor(
      * @throws ArithmeticException if [m] is zero or negative, or if this value and [m] are not
      *         coprime and no inverse exists.
      */
+    @Throws(ArithmeticException::class)
     fun modInverse(m: BigInteger): BigInteger {
         if (m.signum <= 0) throw ArithmeticException("BigInteger modulus must be positive")
         if (m == ONE) return ZERO
@@ -340,6 +349,7 @@ data class BigInteger internal constructor(
      * @throws ArithmeticException if [m] is zero or negative, or if [exponent] is negative and this
      *         value has no inverse modulo [m].
      */
+    @Throws(ArithmeticException::class)
     fun modPow(exponent: BigInteger, m: BigInteger): BigInteger {
         if (m.signum <= 0) throw ArithmeticException("BigInteger modulus must be positive")
         if (m == ONE) return ZERO
@@ -396,6 +406,9 @@ data class BigInteger internal constructor(
 
     fun shiftLeft(n: Int): BigInteger {
         if (n == 0 || this.signum == 0) return this
+        // -Int.MIN_VALUE is Int.MIN_VALUE again, so negating it would recurse between the two shifts
+        // forever. A right shift by 2^31 bits leaves nothing but the sign, as in java.math.BigInteger.
+        if (n == Int.MIN_VALUE) return if (this.signum > 0) ZERO else -ONE
         if (n < 0) return shiftRight(-n)
         
         val wordShift = n / 32
@@ -415,8 +428,11 @@ data class BigInteger internal constructor(
         return BigInteger(this.signum, stripLeadingZeros(newMag, newMag.size))
     }
 
+    @Throws(ArithmeticException::class)
     fun shiftRight(n: Int): BigInteger {
         if (n == 0 || this.signum == 0) return this
+        // A left shift by 2^31 bits cannot be represented, and -Int.MIN_VALUE would recurse forever.
+        if (n == Int.MIN_VALUE) throw ArithmeticException("Shift by 2^31 bits is out of range")
         if (n < 0) return shiftLeft(-n)
         
         val wordShift = n / 32
@@ -463,6 +479,7 @@ data class BigInteger internal constructor(
      * @return `true` if that bit is one.
      * @throws IllegalArgumentException if [n] is negative.
      */
+    @Throws(IllegalArgumentException::class)
     fun testBit(n: Int): Boolean {
         require(n >= 0) { "Negative bit address" }
         val wordIdx = n / 32
@@ -485,11 +502,15 @@ data class BigInteger internal constructor(
         }
     }
 
+    @Throws(IllegalArgumentException::class)
     fun setBit(n: Int): BigInteger {
+        require(n >= 0) { "Negative bit address" }
         return this.or(ONE.shiftLeft(n))
     }
 
+    @Throws(IllegalArgumentException::class)
     fun clearBit(n: Int): BigInteger {
+        require(n >= 0) { "Negative bit address" }
         return this.and(ONE.shiftLeft(n).not())
     }
 
@@ -548,6 +569,7 @@ data class BigInteger internal constructor(
          * @throws NumberFormatException if [value] is empty, is only a sign, or holds a character
          *         that is not a digit in [radix].
          */
+        @Throws(IllegalArgumentException::class)
         fun parseString(value: String, radix: Int = 10): BigInteger {
             require(radix in 2..36) { "Radix out of range" }
             val cleanValue = value.trim()
@@ -584,6 +606,7 @@ data class BigInteger internal constructor(
          * @return The value those bytes denote.
          * @throws NumberFormatException if [bytes] is empty, which denotes no value.
          */
+        @Throws(IllegalArgumentException::class)
         fun fromByteArray(bytes: ByteArray): BigInteger {
             if (bytes.isEmpty()) throw NumberFormatException("Zero-length byte array")
             val signum = if (bytes[0] < 0) -1 else if (bytes.all { it == 0.toByte() }) 0 else 1

@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCRefinement::class)
+
 package io.github.aughtone.types.quantitative
 
 import kotlinx.serialization.SerialName
@@ -39,6 +41,7 @@ data class Azimuth private constructor(
          * @param accuracy An optional accuracy of the measurement in degrees.
          * @throws IllegalArgumentException if `degrees` is outside [0, 360] or `accuracy` is negative.
          */
+        @Throws(IllegalArgumentException::class)
         operator fun invoke(degrees: Double, accuracy: Float? = null): Azimuth =
             Azimuth(degrees = if (degrees == 360.0) 0.0 else degrees, accuracy = accuracy)
 
@@ -89,6 +92,7 @@ data class Azimuth private constructor(
      * @param other The scalar value to multiply by.
      * @return A new Azimuth representing the product, wrapped around 360 degrees.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun times(other: Double): Azimuth {
         val newDegrees = normalize(degrees * other)
         return Azimuth(newDegrees, accuracy?.let { it * abs(other.toFloat()) })
@@ -104,6 +108,7 @@ data class Azimuth private constructor(
      * @return A new Azimuth representing the quotient, wrapped around 360 degrees.
      * @throws ArithmeticException if dividing by zero.
      */
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
     operator fun div(other: Double): Azimuth {
         if (other == 0.0) throw ArithmeticException("Division by zero")
         val newDegrees = normalize(degrees / other)
@@ -111,8 +116,13 @@ data class Azimuth private constructor(
     }
 }
 
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Int.toAzimuth(accuracy: Float? = null) =
     Azimuth(degrees = this.toDouble(), accuracy = accuracy)
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Long.toAzimuth(accuracy: Float? = null) =
     Azimuth(degrees = this.toDouble(), accuracy = accuracy)
+@Throws(IllegalArgumentException::class)
 fun Double.toAzimuth(accuracy: Float? = null) = Azimuth(degrees = this, accuracy = accuracy)

@@ -15,7 +15,8 @@ class LocaleOwnTagLookupTest {
 
     @Test
     fun `a script-bearing tag finds the locale keyed without its script`() {
-        assertEquals(localeFor("sr-RS"), localeFor("sr-Latn-RS"))
+        // sr-RS is Cyrillic, CLDR's default for Serbian, so naming the script finds it (#51).
+        assertEquals(localeFor("sr-RS"), localeFor("sr-Cyrl-RS"))
         assertEquals(localeFor("zh-TW"), localeFor("zh-Hant-TW"))
         assertEquals(localeFor("am"), localeFor("am-Ethi"))
     }
@@ -31,7 +32,7 @@ class LocaleOwnTagLookupTest {
     fun `a script the shipped locale does not carry is not matched`() {
         // zh-HK ships as Traditional, so Simplified Hong Kong Chinese is not it.
         assertNull(localeFor("zh-Hans-HK"))
-        assertNull(localeFor("sr-Cyrl-RS"))
+        assertNull(localeFor("sr-Arab-RS"))
     }
 
     @Test

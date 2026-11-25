@@ -9,6 +9,7 @@ import io.github.aughtone.types.number.BigDecimal
  * @param currency The optional currency to associate with the money.
  * @return A [Money] object representing the value.
  */
+@Throws(IllegalArgumentException::class)
 fun Double.toMoney(currency: Currency = Currency.current): Money {
     return Money(this, currency)
 }

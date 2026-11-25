@@ -28,7 +28,7 @@ class AppleCoverageTest {
             val displayIn = Locale.getLocale(tag) ?: continue
             gaps += locales.count { localizedDisplayNameForNative(it, displayIn) == null }
         }
-        assertCoverageNear("Apple platform gaps", baseline = 8875, actual = gaps)
+        assertCoverageNear("Apple platform gaps", baseline = 8895, actual = gaps)
     }
 
     @Test
@@ -47,6 +47,6 @@ class AppleCoverageTest {
             }
         }
         println("UNTRANSLATED sample: " + unfilled.sorted().take(12))
-        assertCoverageNear("Apple untranslated after the supplement", baseline = 8562, actual = unfilled.size)
+        assertCoverageNear("Apple untranslated after the supplement", baseline = 8582, actual = unfilled.size)
     }
 }

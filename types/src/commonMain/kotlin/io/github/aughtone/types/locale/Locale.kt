@@ -4,6 +4,7 @@ import io.github.aughtone.types.financial.Currency
 import io.github.aughtone.types.financial.currencyFor
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Represents a specific geographical, political, or cultural region, conforming to
@@ -21,27 +22,94 @@ import kotlinx.serialization.Serializable
  * across targets. While platform-native types like `java.util.Locale` or framework types
  * like Compose's `Locale` exist, this version is preferred for cross-platform interoperability.
  *
- * @property languageCode The ISO 639-1 alpha-2 or alpha-3 language code.
- * @property regionCode The ISO 3166-1 alpha-2 country code or UN M.49 numeric-3 area code.
- * @property scriptCode The ISO 15924 alpha-4 script code.
- * @property variantCode Any arbitrary value used to indicate a variation of a [Locale].
- * @property displayName A human-readable name for the locale (e.g., "English (United States)").
+ * **Identity is the language tag.** Two locales are equal when their [languageTag] is, whatever
+ * their [displayName] says, so a locale built from the shipped table and one decoded from a payload
+ * that named it differently are the same value, in a `Set` and as a map key. That is what lets
+ * [displayName] follow the reader's language without changing what the locale is.
+ *
+ * **Case is normalized on the way in**, as BCP 47 asks: the language and variant lowercase, the
+ * script in title case and the region uppercase, so `Locale("EN", "us", ...)` is `en-US`. A blank
+ * region, script or variant counts as absent. This applies however the value was made, including
+ * when it is decoded.
+ *
+ * This is not a data class, because two of the things a data class adds are wrong for it: `copy`
+ * could change a code and keep a name that no longer describes it, and positional destructuring of
+ * four codes and a name means nothing. Build a locale from the companion's `invoke`, which reads like
+ * a constructor call, or look one up with [localeFor] or [resolveLocale].
+ *
  */
 @Serializable
-data class Locale(
+// @PublishedApi internal rather than private: Kotlin source outside the library builds a Locale
+// through the companion's invoke, but code compiled against 4.2, when this was a data class with a
+// public constructor, still calls this constructor by its JVM signature, which is unchanged. Private,
+// those binaries failed with an access error at run time.
+class Locale @PublishedApi internal constructor(
+    // The wire carries the codes as they were written; the public properties below normalize them,
+    // so a payload with "EN" decodes to "en" without a custom serializer.
     @SerialName("languageCode")
-    val languageCode: String,
+    private val encodedLanguageCode: String,
     @SerialName("regionCode")
-    val regionCode: String? = null,
+    private val encodedRegionCode: String? = null,
     @SerialName("scriptCode")
-    val scriptCode: String? = null,
+    private val encodedScriptCode: String? = null,
     @SerialName("variantCode")
-    val variantCode: String? = null,
+    private val encodedVariantCode: String? = null,
+    // The name the locale was built with: the shipped table's English name, an English name a
+    // lookup composed, or whatever a caller passed. It is the last resort for displayName and the
+    // English answer where nothing better is known, and the only name that goes on the wire.
     @SerialName("displayName")
-    val displayName: String
+    internal val fallbackName: String,
 ) {
     /**
-     * The IETF BCP 47 language tag representation of this locale.
+     * The name of this locale in the user's current language, such as "Konkani (India)" for `kok-IN`
+     * when the user reads English and "कोंकणी (भारत)" when they read Konkani.
+     *
+     * The language is that of [Locale.currentOrNull], read each time, so the name follows the user if
+     * they change it. It comes from the first of these that has one:
+     *
+     * 1. **This library's own names**: the shipped locale table, which is English, or the bundled
+     *    translations into the user's language. Where they have a name, it is the same on every target.
+     * 2. **The platform's name** in the user's language. Wording here varies between platforms.
+     * 3. **An English name**, when nothing names the locale in the user's language.
+     * 4. **The codes**, only for a subtag nothing at all can name.
+     *
+     * This is [localizedDisplayName] with the user's language filled in; call that to name a locale
+     * in a language of your choosing, English included. Because the name depends on the device, never
+     * compare it, key on it or snapshot it: compare locales, which are equal by [languageTag].
+     */
+    val displayName: String
+        get() {
+            val reader = currentOrNull
+            val key = reader?.languageTag
+            displayNameCache?.let { (cachedFor, name) -> if (cachedFor == key) return name }
+            val name = if (reader == null) englishName() else localizedDisplayName(displayIn = reader)
+            // A benign race: two threads may both compute it, and either result is correct.
+            displayNameCache = key to name
+            return name
+        }
+
+    @Transient
+    private var displayNameCache: Pair<String?, String>? = null
+
+    /** The ISO 639 language code, lowercase (e.g., "en", "atj"). */
+    @Transient
+    val languageCode: String = encodedLanguageCode.lowercase()
+
+    /** The ISO 3166-1 alpha-2 country code or UN M.49 numeric-3 area code, uppercase, or `null`. */
+    @Transient
+    val regionCode: String? = encodedRegionCode?.takeIf { it.isNotBlank() }?.uppercase()
+
+    /** The ISO 15924 script code, in title case (e.g., "Latn", "Hant"), or `null`. */
+    @Transient
+    val scriptCode: String? = encodedScriptCode?.takeIf { it.isNotBlank() }
+        ?.lowercase()?.replaceFirstChar { it.uppercaseChar() }
+
+    /** Any variant subtags, lowercase, or `null`. */
+    @Transient
+    val variantCode: String? = encodedVariantCode?.takeIf { it.isNotBlank() }?.lowercase()
+
+    /**
+     * The IETF BCP 47 language tag representation of this locale, and its identity.
      *
      * The tag is constructed by joining the non-null components with hyphens in the following order:
      * `languageCode`, `scriptCode`, `regionCode`, `variantCode`.
@@ -53,6 +121,7 @@ data class Locale(
      * - `zh-Hans-CN` (language, script, and region)
      * - `es-419` (language and UN M.49 numeric region, carried in [regionCode])
      */
+    @Transient
     val languageTag: String = buildString {
         append(languageCode)
         if (scriptCode != null) {
@@ -69,7 +138,48 @@ data class Locale(
         }
     }
 
+    // Earlier releases serialized the tag, so a payload may still carry it. It is read and ignored,
+    // because the tag is derived from the codes, and written exactly as before so the wire is unchanged.
+    @SerialName("languageTag")
+    private val encodedLanguageTag: String = languageTag
+
+    /** Two locales are equal when their [languageTag] is; [displayName] takes no part. */
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is Locale && languageTag == other.languageTag)
+
+    /** Hashes the [languageTag] alone, so locales equal under [equals] share a bucket. */
+    override fun hashCode(): Int = languageTag.hashCode()
+
+    /** The [languageTag]. */
+    override fun toString(): String = languageTag
+
     companion object {
+        /**
+         * Creates a [Locale] from its codes and name. Codes are case-normalized, so `"EN"` and `"us"`
+         * give `en-US`; see [Locale].
+         *
+         * @param languageCode The ISO 639-1 alpha-2 or alpha-3 language code.
+         * @param regionCode The ISO 3166-1 alpha-2 country code or UN M.49 numeric-3 area code.
+         * @param scriptCode The ISO 15924 alpha-4 script code.
+         * @param variantCode Any arbitrary value used to indicate a variation of a [Locale].
+         * @param displayName An English name for the locale. [Locale.displayName] uses it only when
+         *   neither this library nor the platform can name the locale in the reader's language, and
+         *   in English only when this library does not ship the locale; see [Locale.displayName].
+         */
+        operator fun invoke(
+            languageCode: String,
+            regionCode: String? = null,
+            scriptCode: String? = null,
+            variantCode: String? = null,
+            displayName: String,
+        ): Locale = Locale(
+            encodedLanguageCode = languageCode,
+            encodedRegionCode = regionCode,
+            encodedScriptCode = scriptCode,
+            encodedVariantCode = variantCode,
+            fallbackName = displayName,
+        )
+
         /**
          * Returns the system's current default [Locale].
          *

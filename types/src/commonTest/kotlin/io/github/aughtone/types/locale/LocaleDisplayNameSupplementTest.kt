@@ -20,7 +20,7 @@ class LocaleDisplayNameSupplementTest {
     @Test
     fun `the supplement holds the number of names it says it does`() {
         assertEquals(
-            4584,
+            4750,
             LocaleDisplayNameSupplement.size,
             "The supplement's payload changed size. Regenerate deliberately and update this number."
         )

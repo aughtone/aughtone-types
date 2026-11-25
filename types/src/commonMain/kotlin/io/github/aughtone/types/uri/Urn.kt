@@ -34,7 +34,7 @@ import kotlinx.serialization.Serializable
  */
 
 @Serializable
-data class Urn(
+data class Urn @Throws(IllegalArgumentException::class) constructor(
     @SerialName("namespace")
     val namespace: String,
     @SerialName("identity")
@@ -140,6 +140,7 @@ data class Urn(
  * @return A new [Urn] instance.
  * @throws IllegalArgumentException if the string is not a valid URN.
  */
+@Throws(IllegalArgumentException::class)
 fun urn(urnString: String): Urn {
     if (!(urnString.length > 4 && urnString.regionMatches(0, "urn:", 0, 4, ignoreCase = true))) {
         throw UriParseException(urnString, "Cannot parse \"$urnString\": a URN must start with \"urn:\".")

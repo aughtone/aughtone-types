@@ -11,8 +11,7 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
         lcMessages = getenv("LC_MESSAGES")?.toKString(),
         lang = getenv("LANG")?.toKString(),
     )
-    val tag = languageTag ?: fallbackTag ?: return null
-    return resolveLocale(tag) ?: parseLocale(tag)
+    return currentLocaleFrom(languageTag, fallbackTag)
 }
 
 actual fun localeForNative(languageTag: String): Locale? {
@@ -20,9 +19,3 @@ actual fun localeForNative(languageTag: String): Locale? {
     // We fall back to the shared resource map.
     return localeFor(languageTag)
 }
-
-actual fun localizedDisplayNameForNative(locale: Locale, displayIn: Locale): String? =
-    // Linux ships no CLDR, so there is no platform answer to prefer and nothing to supplement:
-    // the bundled table IS the platform here. It carries the whole matrix rather than the gaps,
-    // and it ships only in this target's artifact.
-    LocaleDisplayNameTable.nameFor(displayIn.languageCode, locale.languageTag)

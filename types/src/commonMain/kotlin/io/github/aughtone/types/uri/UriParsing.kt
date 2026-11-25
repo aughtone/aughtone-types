@@ -26,7 +26,7 @@ class UriParseException(
 private fun fail(input: String, reason: String): Nothing =
     throw UriParseException(input, "Cannot parse \"$input\": $reason")
 
-private val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*$")
+internal val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*$")
 
 /**
  * Splits `scheme:rest`, validating the scheme against the RFC 3986 grammar and lowercasing it.
@@ -78,6 +78,7 @@ private class Quad(val authority: String?, val path: String, val query: String, 
  *
  * @throws UriParseException if [value] is not a well-formed URI.
  */
+@Throws(IllegalArgumentException::class)
 fun uri(value: String): Uri {
     val (scheme, rest) = splitScheme(value)
     val parts = splitAfterScheme(rest)
@@ -102,6 +103,7 @@ fun uriOrNull(value: String): Uri? = try { uri(value) } catch (e: UriParseExcept
  *
  * @throws UriParseException if [value] is not a well-formed URL, or carries no authority.
  */
+@Throws(IllegalArgumentException::class)
 fun url(value: String): Url {
     val (scheme, rest) = splitScheme(value)
     val parts = splitAfterScheme(rest)
@@ -166,6 +168,7 @@ fun urlOrNull(value: String): Url? = try { url(value) } catch (e: UriParseExcept
  *
  * @throws UriParseException if [value] is not a well-formed `geo:` URI.
  */
+@Throws(IllegalArgumentException::class)
 fun geoUri(value: String): GeoUri {
     val (_, rest) = splitScheme(value, expected = "geo")
     val segments = rest.split(';')

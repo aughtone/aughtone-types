@@ -35,7 +35,7 @@ import kotlinx.serialization.json.intOrNull
  */
 @Serializable
 @SerialName("Feature")
-data class GeoFeature(
+data class GeoFeature @Throws(IllegalArgumentException::class) constructor(
     @SerialName("geometry")
     val geometry: GeoGeometry?,
     @SerialName("properties")

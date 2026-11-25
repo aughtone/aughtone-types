@@ -61,6 +61,7 @@ class UrlBuilder {
      * @param segment The path segment to add.
      * @return This UrlBuilder instance.
      */
+    @Throws(IllegalArgumentException::class)
     fun addPathSegment(segment: String): UrlBuilder {
         pathSegments.add(UrlEncoder.encode(segment))
         return this
@@ -72,6 +73,7 @@ class UrlBuilder {
      * @param segments The path segments to add.
      * @return This UrlBuilder instance.
      */
+    @Throws(IllegalArgumentException::class)
     fun addPathSegments(vararg segments: String): UrlBuilder {
         segments.forEach { addPathSegment(it) }
         return this
@@ -84,6 +86,7 @@ class UrlBuilder {
      * @param value The value of the query parameter.
      * @return This UrlBuilder instance.
      */
+    @Throws(IllegalArgumentException::class)
     fun addQueryParameter(name: String, value: String): UrlBuilder {
         queryParameters.add(UrlEncoder.encode(name) to UrlEncoder.encode(value))
         return this
@@ -95,6 +98,7 @@ class UrlBuilder {
      * @return The complete URL string.
      * @throws IllegalStateException If the URL cannot be built due to missing components.
      */
+    @Throws(IllegalStateException::class)
     fun build(): String {
         // Check if we have at least a scheme and host
         if (scheme == null || host == null) {

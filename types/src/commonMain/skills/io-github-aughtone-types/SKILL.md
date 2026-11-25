@@ -3,9 +3,9 @@ name: io-github-aughtone-types
 description: >-
   Hold money without losing cents to Double: ISO 4217 currency by code or
   locale, minor units, banker's half-even rounding. Shared value types for
-  Kotlin Multiplatform — JVM, Android, iOS, JS, Wasm, Linux — identical on
-  each. Arbitrary-precision decimals and big integers off the JVM; GPS
-  latitude and longitude, distance between two points, move a point by
+  Kotlin Multiplatform — JVM, Android, iOS, macOS, JS, Wasm, Linux, Windows —
+  alike on each. Arbitrary-precision decimals and big integers off the JVM;
+  GPS latitude and longitude, distance between two points, move a point by
   distance and bearing; distance, speed, altitude and compass heading with
   accuracy; GeoJSON points, polygons and features validated on decode, with
   winding order and bounding boxes; parse and compare URLs, URIs, URNs and
@@ -17,7 +17,7 @@ description: >-
   km", "$12.50" or "3 days ago" use io.github.aughtone:format-readable.
 license: Apache-2.0
 metadata:
-  version: "4.2.0"
+  version: "4.3.0"
   repository: https://github.com/aughtone/aughtone-types
 ---
 
@@ -73,13 +73,23 @@ when (val result = runOutcome { url(userInput) }) {
 
 **`Coordinates` and `GeoPoint` take their arguments in opposite orders.** `Coordinates(latitude, longitude)` follows the conversational order; `GeoPoint(longitude, latitude)` follows RFC 7946, which puts longitude first. Both parameters are `Double`, so swapping them compiles and puts the point in the wrong hemisphere. Use **`Coordinates.toGeoPoint()`** to convert between them rather than reordering by hand, use named arguments when constructing either, and remember that anything GeoJSON is longitude-first. The symptom of getting it wrong is a point that serializes and validates cleanly and plots in the sea.
 
-**`Money` equality ignores scale, but serialization preserves it.** `Money(5.1, usd) == Money(5.10, usd)` is `true`, because no arithmetic here can make two spellings of one amount differ in value. The stored scale is untouched and still serialized, so **two equal amounts can serialize differently**. Compare `value.scale` explicitly to ask whether two amounts were *written* the same way. `BigDecimal` is unaffected and keeps JDK-style scale-sensitive equality.
+**`Money` equality ignores scale, but serialization preserves it.** `Money(5.1, usd) == Money(5.10, usd)` is `true`, because no arithmetic here can make two spellings of one amount differ in value. The stored scale is untouched and still serialized, so **two equal amounts can serialize differently**. Compare `value.scale` explicitly to ask whether two amounts were *written* the same way. `BigDecimal` is unaffected and keeps JDK-style scale-sensitive equality. `BigDecimal.toString()` writes what `java.math.BigDecimal` does, so a negative scale or a value below `0.000001` prints in scientific notation, `"1.23E+4"` or `"1E-7"`; `toPlainString()` never uses an exponent.
 
 **Every `Money` operation across two currencies throws.** `plus`, `minus`, `times`, `div` and `compareTo` all raise `IllegalArgumentException` rather than inventing an answer, so **sorting or summing a mixed-currency list is a runtime failure, not a compile error**. The symptom is an exception from `sorted()`, `max()`, `sum()` or a `TreeMap` on a collection that looked homogeneous.
 
-**`Currency` equality is its ISO 4217 code, and nothing else.** `name`, `symbol`, `number`, `digits`, `obsolete` and `replacedBy` take no part, so two instances describing one currency are one value however they were built — the bundled map, a platform lookup, a decoded payload with a different `name`. The symptoms to expect: a `Set` or `distinct()` over currencies collapses entries you can see are textually different, `usd.copy(symbol = "US$") == usd` is `true`, and a map keyed by `Currency` finds a value under an instance you did not put there. Compare the individual properties where presentation is what you care about. Every `Money` operation defers to this, `equals` and `compareTo` included. Before 4.1.0 `Currency` compared all seven fields, so amounts from different sources added fine and then threw from `sorted()`.
+**`Currency` equality is its ISO 4217 code, and nothing else.** `name`, `symbol`, `number`, `digits`, `obsolete` and `replacedBy` take no part, so two instances describing one currency are one value however they were built — the bundled map, a platform lookup, a decoded payload with a different `name`. The symptoms to expect: a `Set` or `distinct()` over currencies collapses entries you can see are textually different, `Currency("USD", 840, 2, "Dollar", "US$") == usd` is `true`, and a map keyed by `Currency` finds a value under an instance you did not put there. Compare the individual properties where presentation is what you care about. Every `Money` operation defers to this, `equals` and `compareTo` included. Before 4.1.0 `Currency` compared all seven fields, so amounts from different sources added fine and then threw from `sorted()`.
+
+**`Locale` equality is its `languageTag`, and `displayName` takes no part.** A locale from the shipped table and one decoded from a payload that named it in French are the same value in a `Set` and as a map key; compare `displayName` explicitly where the name matters. Codes are case-normalized however a `Locale` is made, decoding included, so `Locale("EN", "us", displayName = ...)` is `en-US`, and a blank region, script or variant counts as absent.
+
+**Neither `Locale` nor `Currency` is a data class, so neither has `copy` or `componentN`.** Code written against an earlier release that calls `locale.copy(regionCode = "FR")` or destructures a `Currency` no longer compiles. `copy` was removed on purpose: changing a code kept a name or symbol that described something else, so `enUs.copy(regionCode = "FR")` was `en-FR` named "English (United States)". Build a new value with `Locale(...)` or `Currency(...)` — the companion's `invoke`, which reads like a constructor call — or look one up with `localeFor`, `parseLocale` or `currencyFor`. Both print as their tag or code, so `toString()` is `"en-US"` or `"USD"`.
+
+**`displayName` is in the user's current language, and changes with it.** It reads `Locale.currentOrNull` each time, so on a French device `localeFor("de-DE")!!.displayName` is "allemand (Allemagne)", not "German (Germany)". It is this library's own name first — the shipped table's in English, the bundled translations otherwise — then the platform's, then English, and the bare codes only for a subtag nothing can name. The symptom of assuming English is a test or a log that passes on one machine and fails on another. Pass `displayIn` to `localizedDisplayName` for a fixed language, English included, and never compare, key on or snapshot a name: compare locales, which are equal by tag.
+
+**A locale this library does not ship keeps its codes and still gets a name.** `parseLocale("kok-IN")`, and `Locale.current` on a device set to Konkani, is `kok-IN`: "Konkani (India)" to an English reader on every target, from CLDR's English names bundled here, and "कोंकणी (भारत)" to a Konkani reader wherever the platform has that data.
 
 **`Distance` and `Speed` reject negative results instead of clamping them.** `Distance(3.0) - Distance(5.0)` throws; it does not return zero. The same applies to negative scalars in `Speed.times` and `Speed.div`, and to a negative divisor on `Distance`. Guard the call, or compare first, when operands may arrive in either order. A zero distance or speed is perfectly valid — only going below zero is refused.
+
+**`Locale.current` keeps the device's region even where no shipped locale has it.** A device set to `en-ZW` gets English in Zimbabwe, `en-ZW`, not plain `en`, so `Currency.current` finds its currency; the locale is then not one `availableLocales()` lists, though it equals `localeFor` of its tag whenever that tag is shipped.
 
 **`Locale.current` and `Currency.current` throw when the platform cannot say.** Both are `requireNotNull` over a platform lookup, so they raise `IllegalArgumentException` rather than defaulting to English or USD. `Currency.current` also throws when the locale has no country, such as a bare `en`, because the currency comes from the country alone. That makes them a poor default argument, a poor property initialiser and a poor thing to read during composition. Use `Locale.currentOrNull` and `Currency.currentOrNull` where a sensible fallback exists, and keep the throwing form where none does — failing loudly beats silently rendering someone else's language.
 
@@ -87,9 +97,13 @@ when (val result = runOutcome { url(userInput) }) {
 
 **Invalid GeoJSON is rejected on construction *and* on deserialization.** Minimum position counts, positions of at least two elements, and closed linear rings of at least four positions are all enforced, so a payload that used to decode into a structurally invalid value now throws. Winding order is deliberately **not** enforced: RFC 7946 §3.1.6 tells parsers not to reject polygons that break the right-hand rule, so a clockwise exterior ring round-trips unchanged. Use `GeoPolygon.windingOf()` to inspect it and `rewound()` to correct it, or the `geoPolygon(...)` factory, which refuses bad winding at construction.
 
-**URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. The symptom is a count that comes out lower than expected: `distinct()`, a `Set` or a map key collapses values you can see are textually different, and two URNs differing only after `?+` or `#` become one entry. The value you supplied is preserved and serialized unchanged — only the comparison is normalized.
+**URI types compare by the equivalence their specification defines, not member by member.** A `Urn`'s r-, q- and f-components take no part in equality, because RFC 8141 §3.1 requires they be ignored. `Uri` and `Url` treat scheme and host as case-insensitive and everything else as case-sensitive, per RFC 3986 §6.2.2.1. A `GeoUri` with no `crs` equals one with `"WGS84"`, per RFC 5870. The symptom is a count that comes out lower than expected: `distinct()`, a `Set` or a map key collapses values you can see are textually different, and two URNs differing only after `?+` or `#` become one entry. The value you supplied is preserved and serialized unchanged — only the comparison is normalized. A `Url` also refuses what `url()` would — an invalid scheme, an empty host, an unclosed IPv6 host, a port outside 0..65535 — when constructed and when decoded, so a payload carrying one fails to decode.
 
-**`localizedDisplayName` falls back to English, silently.** Names come from the platform's own CLDR where it has them, and from a bundled table where it does not — including on Linux, which has no system CLDR and answers entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
+**`localizedDisplayName` and `displayName` fall back to English, silently.** Names come from this library's bundled names first and the platform's own CLDR after them — on Linux, which has no system CLDR, and Windows, which names a locale only in the user's interface language, both answer entirely from the bundled matrix. When neither can supply one the English name comes back with nothing marking it, so **the symptom is an English word appearing mid-sentence in an otherwise translated UI**, which looks like a missing translation in your own resources rather than in the platform's. Use **`localizedDisplayNameOrNull`** where showing the wrong language is worse than showing nothing: it returns `null` instead of English, so the choice is yours.
+
+**The dialect form is opt-in.** `localizedDisplayName(displayIn, LanguageDisplay.Dialect)` gives CLDR's dedicated name where one exists, "Canadian French" or "Flemish", and the standard "French (France)" form otherwise; only 15 shipped locales have one, so a list mixes the two shapes and a variant sorts under its dialect name. `displayName` is always the standard form.
+
+**Plain `sr` is Serbian in Cyrillic, as in CLDR.** Latin Serbian is `sr-Latn` and `sr-Latn-RS`, and `sh`, `hbs` and `sr-ME` resolve to it. Before 4.3.0 `sr` and `sr-RS` were Latin, so code or stored tags that meant Latin by `sr` now get Cyrillic: write `sr-Latn`.
 
 **A three-letter language code becomes the two-letter one.** `parseLocale("eng-US").languageTag` is `"en-US"`, and `fre`, `ger` or `cre` come back as `fr`, `de` or `cr`, because BCP 47 requires the shortest code. The symptom is a tag you stored as text no longer matching the one you get back, so compare `Locale` values or normalize both sides through `parseLocale`. A language with only a three-letter code, such as `hur` or `moh`, keeps it.
 
@@ -143,6 +157,24 @@ Then the renames, all of which the compiler finds, because the old names cease t
 - **On Linux, `Locale.current` reads `LC_ALL`, `LC_MESSAGES` and `LANG`**, in that order, and throws under `LANG=C` or `POSIX`, where it used to return a locale with the language `c`.
 - **Cree, Ojibwe, Inupiaq and 22 three-letter-only Canadian Indigenous languages** are new locales. Nothing is removed and nothing is renamed.
 
+**Changed shape in 4.3.0**, which the compiler finds, except where marked:
+
+- **`Locale` and `Currency` are not data classes.** `copy` and `componentN` are gone; build a new value with `Locale(...)` or `Currency(...)`, which call the companion's `invoke` and take the same arguments. Code already compiled against 4.2 keeps linking unless it calls `copy` or `componentN`. In Swift, construction is `Locale.Companion.shared.invoke(...)`.
+- **In Swift, throwing calls are `throws`**, so a call to `url(value:)`, `Money.plus(other:)` or a validating constructor needs `try`. The number overloads lost their trailing underscores: `div(scalar_:)` is `div(count:)`, `plus(scalar_:)` is `plus(minorUnits:)`, and the `Int` and `Long` forms of `toDistance` and its siblings are not exported.
+- **`localizedDisplayName` and `localizedDisplayNameOrNull` take a `languageDisplay` argument**, defaulting to the standard form, so Kotlin calls are unchanged and Swift calls pass it.
+
+**Changed behaviour in 4.3.0**, with no compile error:
+
+- **`Locale.displayName` is in the user's current language**, not English, and follows it when it changes. Code, tests or snapshots expecting English need `localizedDisplayName(displayIn = …)` with a fixed language.
+- **`Locale` equality is the language tag alone**, so two locales named differently are one value. Codes are case-normalized on construction and decoding: `Locale("EN", "us", …)` is `en-US`, and a blank region, script or variant is absent. `toString()` is the tag, and `Currency.toString()` the code.
+- **Plain `sr` and `sr-RS` are Serbian in Cyrillic**, where they were Latin; Latin Serbian is `sr-Latn` and `sr-Latn-RS`, and `sh`, `hbs` and `sr-ME` resolve to it.
+- **A language-region tag resolves in its region's script**: `zh-MO`, and `zh-US`, `zh-GB` and `zh-AU`, give Traditional `zh-Hant`; `pa-PK` is Arabic-script Punjabi.
+- **`Locale.current` keeps the device's region**, so `en-ZW` is English in Zimbabwe with its currency, not plain `en`, and may be a locale `availableLocales()` does not list. A locale the library does not ship keeps its codes and gets a real English name, "Konkani (India)", rather than its tag.
+- **`BigDecimal.toString()` writes what `java.math.BigDecimal` does**, so a negative scale or a value below `0.000001` prints in scientific notation; `toPlainString()` is new.
+- **`Url` refuses an invalid scheme, an empty host or a port outside 0..65535** when constructed and when decoded, so a payload carrying one fails to decode. `Distance` refuses a negative accuracy.
+
+**Added in 4.3.0:** macOS arm64, Linux arm64 and Windows targets; `zh-Hant`, `sr-Latn`, `sr-Latn-RS`, `iu-Latn` and `iu-Latn-CA` locales; `LanguageDisplay` for the dialect form; `BigDecimal.toPlainString()`.
+
 **Earlier renames still worth knowing**, because code and training data predate them:
 
 - GeoJSON types gained a `Geo` prefix in 3.0.0: `Point` is `GeoPoint`, `Polygon` is `GeoPolygon`, `Feature` is `GeoFeature`, and so on.
@@ -162,9 +194,9 @@ It does no I/O, has no networking, and reads no files or resources at runtime.
 
 ## Calling it from other languages
 
-**Kotlin is the consumer surface, on every target.** Kotlin callers need nothing beyond this file, whether they are on the JVM, Android, Kotlin/JS, Kotlin/Wasm, a native Apple target or Linux.
+**Kotlin is the consumer surface, on every target.** Kotlin callers need nothing beyond this file, whether they are on the JVM, Android, Kotlin/JS, Kotlin/Wasm, a native Apple target, Linux or Windows.
 
-**Swift callers need one more page,** because the export renames and reshapes things, and because nothing here is annotated `@Throws` — a Kotlin exception reaching the Objective-C boundary terminates the process rather than becoming a Swift error, so the non-throwing forms are the only ones a Swift caller can recover from:
+**Swift callers need one more page,** because the export renames and reshapes things. Every throwing function and constructor is annotated `@Throws`, so it is `throws` in Swift; the exceptions are `Locale.current` and `Currency.current`, which are properties and still terminate the process on failure, so use `currentOrNull`:
 
 - [Calling it from Swift](references/swift.md)
 

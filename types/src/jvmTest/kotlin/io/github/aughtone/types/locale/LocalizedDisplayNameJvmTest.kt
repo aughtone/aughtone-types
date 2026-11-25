@@ -28,7 +28,9 @@ class LocalizedDisplayNameJvmTest {
         val french = localeFor("fr")
         assertNotNull(french)
         val unknown = parseLocale("zz-ZZ")
-        assertEquals("zz-ZZ", unknown.localizedDisplayName(displayIn = french))
+        assertEquals(unknown.fallbackName, unknown.localizedDisplayName(displayIn = french))
+        // ZZ is CLDR's own code for an unknown region, and CLDR names it.
+        assertEquals("zz (Unknown Region)", unknown.fallbackName)
     }
 
     @Test

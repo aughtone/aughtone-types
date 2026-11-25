@@ -3,7 +3,7 @@
 Two generated files carry locale display names, and this is how to rebuild them:
 
 - `types/src/commonMain/kotlin/io/github/aughtone/types/locale/LocaleDisplayNameSupplement.kt` — names for pairs some platform cannot produce.
-- `types/src/linuxMain/kotlin/io/github/aughtone/types/locale/LocaleDisplayNameTable.kt` — the whole matrix, for Linux, which has no system CLDR.
+- `types/src/bundledNamesMain/kotlin/io/github/aughtone/types/locale/LocaleDisplayNameTable.kt` — the whole matrix, for Linux, which has no system CLDR, and Windows, which names a locale only in the user's interface language.
 
 Do this when a coverage test fails, which is the signal that a platform's CLDR has moved, or when the shipped locale set changes. [ADR-0005](../decisions/completeness-over-consistency-for-display-names.md) explains why the tables exist and why they hold what they do.
 
@@ -48,7 +48,7 @@ class TableEmitterTest {
 
 **It must call `localizedDisplayNameOrNull`, not `localizedDisplayName`.** The latter falls back to English, so the emitter would record English as though it were a translation and the table would grow by thousands of useless entries.
 
-**Comment out the supplement lookup first.** `localizedDisplayNameOrNull` consults the supplement, so leaving it in place makes the emitter read back the table it is generating. The second run would then look complete regardless of what the platforms actually have.
+**Comment out the bundled lookup first.** `localizedDisplayNameOrNull` consults the bundled names before the platform — the supplement, and for English the shipped table — so leaving it in place makes the emitter read back the table it is generating. The second run would then look complete regardless of what the platforms actually have.
 
 **2. Run it on every target that can run:**
 
@@ -58,7 +58,7 @@ class TableEmitterTest {
 
 **`--continue` is required.** With the supplement lookup commented out, other display-name tests on the JVM and JS fail, and without it the first failing task stops the targets after it from running at all.
 
-`linuxX64` and `iosX64` cannot execute on an arm64 macOS host, and they do not need to: Linux consumes the merged table rather than contributing to it, and the iOS targets share `appleMain`.
+The Linux and Windows targets and `iosX64` cannot execute on an arm64 macOS host, and they do not need to: Linux and Windows consume the merged table rather than contributing to it, and the iOS targets share `appleMain`.
 
 **3. Harvest from the test XML**, at `types/build/test-results/<task>/*TableEmitter*.xml`, reading every `<system-out>` section. Each row is `N|displayLanguage|languageTag|name`. **The browser targets prefix the first line of each `println` with `[log] `**, so strip it, or the first row of the batch is lost and the count check below fails by one.
 
@@ -72,35 +72,37 @@ class TableEmitterTest {
 
 **When only adding locales, leave existing pairs alone.** Platform data drifts between runs, so a full regeneration rewrites a handful of established platform-filled names for no reason. Recompose everything, check that the existing pairs come out unchanged apart from that drift, and then ship the existing entries as they were plus the new pairs.
 
-**5. Drop every name equal to the locale's English `displayName`.** CLDR answers many untranslated entries with the English word, and those add bytes to produce exactly what the English fallback already produces. Around a third of candidates go this way. Keeping them would also make `localizedDisplayNameOrNull` return English while implying a translation exists.
+**A new locale CLDR can name needs no harvest at all.** Where every part of a new pair — the language, script and region — is named in the display language's own CLDR files, compose the name directly from the pinned package, without running the emitter. Cyrillic `sr` (#51) and Latin-script `iu` (#54) were added this way, after checking that the composition reproduced the table's existing names for the same language exactly. Pairs CLDR cannot compose are simply absent and fall back to English; they still need the harvest, or a source (#32).
+
+**5. Drop every name equal to the locale's English name**, the shipped table's (`localizedDisplayName(displayIn = english)`; `displayName` itself follows the device's language). CLDR answers many untranslated entries with the English word, and those add bytes to produce exactly what the English fallback already produces. Around a third of candidates go this way. Keeping them would also make `localizedDisplayNameOrNull` return English while implying a translation exists.
 
 **6. Emit the two files.** Both hold one packed string per display language — `tag\u0001name\u0001tag\u0001name…`, sorted by tag — not one declaration per name. That matters: Kotlin/Native compiles a handful of large literals far more comfortably than tens of thousands of small ones.
 
 **Emit `size` as a `by lazy` count over the payload, never as a literal.** Both files derive it today, and it must stay derived. A literal written by the generator went stale in both files at once — each declared one number while its own header comment declared another — and nothing caught it, because at the time nothing read either. A derived count cannot disagree with what it counts.
 
 - The **supplement** holds the names for pairs at least one platform's raw harvest lacks.
-- The **Linux table** holds every pair any platform can name.
+- The **Linux and Windows table** holds every pair any platform can name.
 
 **7. Remove the emitter, restore the supplement lookup, and run `./gradlew check`.**
 
 **8. Update the baselines.** `JvmCoverageTest` and `AppleCoverageTest` each hold two baselines — the platform's own gap count, and how many pairs remain untranslated after the supplement — and `LocaleDisplayNameSupplementTest` pins the supplement's derived size and the display-language count exactly. The coverage baselines are **tolerant**, within 5%, because they measure host data: a different OS, simulator runtime or JDK reports slightly different counts, and an exact pin failed a release on CI over a drift of six pairs. Every run prints the actual counts, so watch the logs for drift. Change a baseline only once you have looked at what moved.
 
-The Linux table's `size` is **not** pinned by any test, because there is no `linuxTest` source set and `linuxX64` cannot execute on an arm64 macOS host anyway. It is derived from the payload, so it cannot contradict the file it lives in, but nothing asserts the payload itself.
+The Linux and Windows table's `size` is **not** pinned by any test, because there is no `linuxTest` source set and neither the Linux nor the Windows targets can execute on an arm64 macOS host anyway. It is derived from the payload, so it cannot contradict the file it lives in, but nothing asserts the payload itself.
 
 ## What to expect
 
-These are the baselines the tests hold as of 2026-11-09, after the Canadian Indigenous languages were added in #44 and the English fallbacks removed in #45, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
+These are the baselines the tests hold as of 2026-11-22, after the Canadian Indigenous languages were added in #44, the English fallbacks removed in #45 and `zh-Hant` added in #41, taken from the tests and the shipped files rather than from a generation run. The coverage rows are measured on one host and tolerate 5% drift on another:
 
 | | value | asserted in |
 |---|---|---|
-| Supplement names | 4,584 | `LocaleDisplayNameSupplementTest` |
-| Linux matrix names | 19,816 | nothing — derived only |
+| Supplement names | 4,750, after Latin-script Inuktitut was added for #54 | `LocaleDisplayNameSupplementTest` |
+| Linux matrix names | 20,229, after Cyrillic `sr` and `sr-RS` (#51) and Latin-script Inuktitut (#54) were added | nothing — derived only |
 | Display languages | 114 | `LocaleDisplayNameSupplementTest` |
-| JVM: own gaps / untranslated after the supplement | 10,276 / 8,609 | `JvmCoverageTest` |
-| Apple: own gaps / untranslated after the supplement | 8,875 / 8,562 | `AppleCoverageTest` |
+| JVM: own gaps / untranslated after the supplement | 10,303 / 8,635 | `JvmCoverageTest` |
+| Apple: own gaps / untranslated after the supplement | 8,895 / 8,582 | `AppleCoverageTest` |
 
 **Most of the untranslated pairs are expected.** About 6,300 of them are names rendered *in* one of the 25 Canadian Indigenous languages, which no CLDR release and almost no platform has data for. A jump of that size from adding a display language with no CLDR data is the honest answer, not a broken bridge.
 
-**Mind which denominator you are quoting.** The shipped `localeResourceMap` has 253 entries but only 252 distinct language tags — `zh` carrying a `Hans` script and `zh-Hans` build the same tag — so the matrix is 28,842 pairs counted by resource entry and 28,728 counted by tag. The coverage tests deduplicate by tag. Getting this wrong is what produced three different wrong answers for the unnameable-pair count, recorded in ADR-0005.
+**Mind which denominator you are quoting.** The shipped `localeResourceMap` has 258 entries but only 257 distinct language tags — `zh` carrying a `Hans` script and `zh-Hans` build the same tag — so the matrix is 29,412 pairs counted by resource entry and 29,298 counted by tag. The coverage tests deduplicate by tag. Getting this wrong is what produced three different wrong answers for the unnameable-pair count, recorded in ADR-0005.
 
 Treat the table as the current state rather than as targets. If a run produces something far away from it — a supplement of 12 entries, or of 12,000 — something upstream is wrong, most likely the emitter reading the supplement back or falling back to English.

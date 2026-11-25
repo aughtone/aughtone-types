@@ -13,7 +13,7 @@ package io.github.aughtone.types.util
  * @constructor Creates a new `BitSet` with the specified size.
  * @throws IllegalArgumentException if the size is negative.
  */
-class BitSet(private val size: Int = 1) {
+class BitSet @Throws(IllegalArgumentException::class) constructor(private val size: Int = 1) {
     private val data: LongArray
     private val vectorSize: Int
 
@@ -28,6 +28,7 @@ class BitSet(private val size: Int = 1) {
      * @param size Size of the BitVector
      * @param initializer initializer function
      */
+    @Throws(IllegalArgumentException::class)
     constructor(size: Int, initializer: (Int) -> Boolean) : this(size) {
         for (i in 0 until size) {
             set(i, initializer(i))
@@ -40,6 +41,7 @@ class BitSet(private val size: Int = 1) {
      * @param index The index of the bit to set.
      * @throws IndexOutOfBoundsException if the index is out of bounds.
      */
+    @Throws(IndexOutOfBoundsException::class)
     fun set(index: Int) {
         checkIndex(index)
         val arrayIndex = index / Long.SIZE_BITS
@@ -54,6 +56,7 @@ class BitSet(private val size: Int = 1) {
      * @param value The value to set the bit to (true for 1, false for 0).
      * @throws IndexOutOfBoundsException if the index is out of bounds.
      */
+    @Throws(IndexOutOfBoundsException::class)
     fun set(index: Int, value: Boolean) {
         checkIndex(index)
         if (value) {
@@ -69,6 +72,7 @@ class BitSet(private val size: Int = 1) {
      * @param index The index of the bit to clear.
      * @throws IndexOutOfBoundsException if the index is out of bounds.
      */
+    @Throws(IndexOutOfBoundsException::class)
     fun clear(index: Int) {
         checkIndex(index)
         val arrayIndex = index / Long.SIZE_BITS
@@ -83,6 +87,7 @@ class BitSet(private val size: Int = 1) {
      * @return true if the bit is set, false otherwise.
      * @throws IndexOutOfBoundsException if the index is out of bounds.
      */
+    @Throws(IndexOutOfBoundsException::class)
     operator fun get(index: Int): Boolean {
         checkIndex(index)
         val arrayIndex = index / Long.SIZE_BITS

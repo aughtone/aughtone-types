@@ -117,6 +117,7 @@ sealed class Outcome<out T> {
      * @return The value of a [Success].
      * @throws Throwable the [Failure.exception] itself, unwrapped, if this is a [Failure].
      */
+    @Throws(Throwable::class)
     fun getOrThrow(): T = when (this) {
         is Success -> data
         is Failure -> throw exception

@@ -114,6 +114,7 @@ data class Uri(
      * @return A new [Urn] instance representing this URI as a URN.
      * @throws IllegalArgumentException if the resulting namespace is not a valid RFC 8141 NID.
      */
+    @Throws(IllegalArgumentException::class)
     fun toUrn(): Urn = if (':' in path) {
         Urn(namespace = path.substringBefore(':'), identity = path.substringAfter(':'))
     } else {
@@ -135,8 +136,9 @@ data class Uri(
      * @return A [Url] object representing the converted URI.
      *
      * @throws IllegalArgumentException if the authority contains an unterminated
-     * IPv6 literal or a port that is not a decimal number.
+     * IPv6 literal, a port that is not a decimal number or is outside 0..65535, or an empty host.
      */
+    @Throws(IllegalArgumentException::class)
     fun toUrl(): Url {
         // authority = [userinfo "@"] host [":" port]
         val userInfo = if ('@' in authority) authority.substringBeforeLast('@') else ""
@@ -162,7 +164,8 @@ data class Uri(
             require(candidate.isNotEmpty() && candidate.all { it in '0'..'9' }) {
                 "Invalid port \"$candidate\" in authority: $authority"
             }
-            candidate.toInt()
+            // An all-digit port too large for an Int is out of range, not a number format error.
+            candidate.toIntOrNull() ?: throw IllegalArgumentException("Port $candidate is outside 0..65535.")
         }
         return Url(
             scheme = scheme,

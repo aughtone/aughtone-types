@@ -198,7 +198,7 @@ class MoneyTest {
     @Test
     fun `arithmetic accepts currencies matched by code`() {
         // Same ISO code but different display metadata, e.g. from a native lookup.
-        val nativeUsd = usd.copy(name = "US-Dollar", symbol = "US$")
+        val nativeUsd = usd.restated(name = "US-Dollar", symbol = "US$")
         val total = Money(1000L, usd) + Money(550L, nativeUsd)
         assertEquals(1550L, total.minorUnits)
         assertEquals(usd, total.currency)

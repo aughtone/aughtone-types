@@ -24,8 +24,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("Point")
-data class GeoPoint(
+data class GeoPoint @Throws(IllegalArgumentException::class) constructor(
+    @SerialName("coordinates")
     val coordinates: List<Double>,
+    @SerialName("bbox")
     override val bbox: List<Double>? = null
 ) : GeoGeometry() {
     /**
@@ -57,6 +59,7 @@ data class GeoPoint(
      *
      * @param coordinates An array of coordinates [longitude, latitude, altitude?].
      */
+    @Throws(IllegalArgumentException::class)
     constructor(coordinates: DoubleArray) : this(coordinates.toList())
 
     /**

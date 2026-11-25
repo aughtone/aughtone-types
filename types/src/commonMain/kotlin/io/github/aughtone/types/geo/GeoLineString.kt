@@ -5,8 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("LineString")
-data class GeoLineString(
+data class GeoLineString @Throws(IllegalArgumentException::class) constructor(
+    @SerialName("coordinates")
     val coordinates: List<List<Double>>,
+    @SerialName("bbox")
     override val bbox: List<Double>? = null
 ) : GeoGeometry() {
     init { GeoValidation.lineString(coordinates, "LineString") }

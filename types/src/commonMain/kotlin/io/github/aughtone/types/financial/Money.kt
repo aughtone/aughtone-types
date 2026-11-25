@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCName::class)
+
 package io.github.aughtone.types.financial
 
 import io.github.aughtone.types.number.BigDecimal
@@ -102,7 +104,8 @@ data class Money(
      * @param value The monetary value as a [Double].
      * @param currency The currency. Defaults to [Currency.current].
      */
-    constructor(value: Double, currency: Currency = Currency.current) : this(BigDecimal.valueOf(value), currency)
+    @Throws(IllegalArgumentException::class)
+    constructor(@kotlin.native.ObjCName("amount") value: Double, currency: Currency = Currency.current) : this(BigDecimal.valueOf(value), currency)
 
     /**
      * Adds another `Money` object to this one. Currencies are matched by [Currency] equality, which is
@@ -110,6 +113,7 @@ data class Money(
      * are compatible. The result keeps this instance's [currency].
      * @throws IllegalArgumentException if the currency codes do not match.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun plus(other: Money): Money {
         require(this.currency == other.currency) { "Cannot add money with different currencies." }
         return Money(this.value + other.value, this.currency)
@@ -120,6 +124,7 @@ data class Money(
      * which is the ISO 4217 code. The result keeps this instance's [currency].
      * @throws IllegalArgumentException if the currency codes do not match.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun minus(other: Money): Money {
         require(this.currency == other.currency) { "Cannot subtract money with different currencies." }
         return Money(this.value - other.value, this.currency)
@@ -134,6 +139,7 @@ data class Money(
      *
      * @throws IllegalArgumentException if the currency codes do not match.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun times(other: Money): Money {
         require(this.currency == other.currency) { "Cannot multiply money with different currencies." }
         return Money(this.value * other.value, this.currency)
@@ -144,6 +150,7 @@ data class Money(
      * Currencies are matched by [Currency] equality, which is the ISO 4217 code.
      * @throws IllegalArgumentException if the currency codes do not match.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun div(other: Money): Double {
         require(this.currency == other.currency) { "Cannot divide money with different currencies." }
         return this.value.toDouble() / other.value.toDouble()
@@ -152,6 +159,7 @@ data class Money(
     /**
      * Adds a scalar [Double] value to this `Money` object.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun plus(scalar: Double): Money {
         return Money(this.value + BigDecimal(scalar), this.currency)
     }
@@ -159,6 +167,7 @@ data class Money(
     /**
      * Subtracts a scalar [Double] value from this `Money` object.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun minus(scalar: Double): Money {
         return Money(this.value - BigDecimal(scalar), this.currency)
     }
@@ -166,6 +175,7 @@ data class Money(
     /**
      * Multiplies this `Money` object by a scalar value.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun times(scalar: Double): Money {
         return Money(this.value * BigDecimal(scalar), this.currency)
     }
@@ -177,6 +187,7 @@ data class Money(
      * Banker's Rounding (HALF_EVEN) at a scale of `max(value.scale, currency.digits) + 2`,
      * keeping two guard digits of sub-minor precision.
      */
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
     operator fun div(scalar: Double): Money {
         return Money(dividedValue(BigDecimal(scalar)), this.currency)
     }
@@ -188,7 +199,7 @@ data class Money(
      * `Money(1000L, usd) + 250L` is $10.00 + $2.50. This differs from [times] and [div],
      * where a [Long] is a dimensionless multiplier. Prefer [plusMinorUnits] for clarity.
      */
-    operator fun plus(scalar: Long): Money = plusMinorUnits(scalar)
+    operator fun plus(@kotlin.native.ObjCName("minorUnits") scalar: Long): Money = plusMinorUnits(scalar)
 
     /**
      * Subtracts a scalar [Long] value from this `Money` object.
@@ -197,7 +208,7 @@ data class Money(
      * This differs from [times] and [div], where a [Long] is a dimensionless multiplier.
      * Prefer [minusMinorUnits] for clarity.
      */
-    operator fun minus(scalar: Long): Money = minusMinorUnits(scalar)
+    operator fun minus(@kotlin.native.ObjCName("minorUnits") scalar: Long): Money = minusMinorUnits(scalar)
 
     /**
      * Adds the given number of **minor units** (e.g., cents for USD) to this `Money` object.
@@ -223,7 +234,7 @@ data class Money(
      * without the underscore is the [Double] overload. The underscore is the only thing telling
      * them apart, and choosing the wrong one silently changes which arithmetic runs.
      */
-    operator fun times(scalar: Long): Money {
+    operator fun times(@kotlin.native.ObjCName("count") scalar: Long): Money {
         return Money(this.value * BigDecimal(scalar), this.currency)
     }
 
@@ -240,7 +251,8 @@ data class Money(
      * Banker's Rounding (HALF_EVEN) at a scale of `max(value.scale, currency.digits) + 2`,
      * keeping two guard digits of sub-minor precision.
      */
-    operator fun div(scalar: Long): Money {
+    @Throws(ArithmeticException::class)
+    operator fun div(@kotlin.native.ObjCName("count") scalar: Long): Money {
         return Money(dividedValue(BigDecimal(scalar)), this.currency)
     }
 

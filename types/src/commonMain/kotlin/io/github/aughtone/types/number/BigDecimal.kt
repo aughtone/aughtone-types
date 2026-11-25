@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCName::class)
+
 package io.github.aughtone.types.number
 
 import kotlinx.serialization.SerialName
@@ -28,19 +30,21 @@ data class BigDecimal(
      * Constructs a `BigDecimal` from its string representation.
      * @param value The string to parse.
      */
-    constructor(value: String) : this(parseString(value))
+    @Throws(IllegalArgumentException::class)
+    constructor(@kotlin.native.ObjCName("string") value: String) : this(parseString(value))
 
     /**
      * Constructs a `BigDecimal` from a `Double` value, preserving its binary precision.
      * @param value The double value.
      */
+    @Throws(IllegalArgumentException::class)
     constructor(value: Double) : this(valueOf(value))
 
     /**
      * Constructs a `BigDecimal` from a `Long` value.
      * @param value The long value.
      */
-    constructor(value: Long) : this(BigInteger.valueOf(value), 0)
+    constructor(@kotlin.native.ObjCName("integer") value: Long) : this(BigInteger.valueOf(value), 0)
 
     /**
      * Compares this value to [other] by numeric value, ignoring scale, so `2.0` and `2.00` compare
@@ -68,7 +72,9 @@ data class BigDecimal(
 
         decideByMagnitude(other, thisSign)?.let { return it }
 
-        val diff = this.scale - other.scale
+        // Past decideByMagnitude the two magnitudes overlap, which bounds the scale difference by the
+        // operands' digit counts, so it fits in an Int.
+        val diff = checkedScale(this.scale.toLong() - other.scale)
         return if (diff < 0) {
             val scaledThis = this.unscaledValue.multiply(powerOfTen(-diff))
             scaledThis.compareTo(other.unscaledValue)
@@ -95,10 +101,11 @@ data class BigDecimal(
         val thisBits = this.unscaledValue.bitLength()
         val otherBits = other.unscaledValue.bitLength()
 
-        val thisLow = minimumDecimalDigits(thisBits) - this.scale
-        val thisHigh = maximumDecimalDigits(thisBits) - this.scale
-        val otherLow = minimumDecimalDigits(otherBits) - other.scale
-        val otherHigh = maximumDecimalDigits(otherBits) - other.scale
+        // In Long: a scale near either end of Int would wrap around and invert the comparison.
+        val thisLow = minimumDecimalDigits(thisBits).toLong() - this.scale
+        val thisHigh = maximumDecimalDigits(thisBits).toLong() - this.scale
+        val otherLow = minimumDecimalDigits(otherBits).toLong() - other.scale
+        val otherHigh = maximumDecimalDigits(otherBits).toLong() - other.scale
 
         // A larger magnitude means a larger absolute value, which for two negatives means smaller.
         if (thisLow > otherHigh) return sign
@@ -116,66 +123,103 @@ data class BigDecimal(
         return 31 * unscaledValue.hashCode() + scale
     }
 
+    /**
+     * This value as `java.math.BigDecimal.toString` writes it: plain notation while the scale is
+     * not negative and the adjusted exponent is at least -6, scientific notation otherwise. So
+     * `1.25` is `"1.25"`, `0.0000001` is `"1E-7"`, and `1.23E+4` (unscaled 123, scale -2) is
+     * `"1.23E+4"`. The adjusted exponent is the exponent of the first digit: `-scale` plus the
+     * number of unscaled digits, less one.
+     *
+     * Scientific notation is what keeps this bounded: a value with a huge scale prints in a few
+     * characters rather than one digit per place. Use [toPlainString] for notation without an
+     * exponent, and expect it to be as long as the value has places.
+     */
     override fun toString(): String {
-        if (unscaledValue.signum == 0 && scale == 0) return "0"
-        val signStr = if (unscaledValue.signum < 0) "-" else ""
-        val absStr = unscaledValue.negateIfNegative().toString()
-        
-        if (scale == 0) {
-            return signStr + absStr
-        } else if (scale > 0) {
-            return if (absStr.length > scale) {
-                val dotIdx = absStr.length - scale
-                signStr + absStr.substring(0, dotIdx) + "." + absStr.substring(dotIdx)
-            } else {
-                val zeros = "0".repeat(scale - absStr.length)
-                signStr + "0." + zeros + absStr
-            }
-        } else {
-            val exp = -scale
-            return signStr + absStr + "E+" + exp
+        val sign = if (unscaledValue.signum < 0) "-" else ""
+        val digits = unscaledValue.negateIfNegative().toString()
+        if (scale == 0) return sign + digits
+        val adjusted = -scale.toLong() + (digits.length - 1)
+        if (scale > 0 && adjusted >= -6) return sign + plainDigits(digits)
+        return buildString {
+            append(sign)
+            append(digits[0])
+            if (digits.length > 1) append('.').append(digits, 1, digits.length)
+            append('E')
+            if (adjusted >= 0) append('+')
+            append(adjusted)
         }
     }
 
+    /**
+     * This value without an exponent, as `java.math.BigDecimal.toPlainString` writes it: `"12300"`
+     * for unscaled 123 at scale -2, and `"0.0000001"` for 1 at scale 7. The string is as long as the
+     * value has places, so a value with a scale in the millions makes a string in the millions.
+     */
+    fun toPlainString(): String {
+        val sign = if (unscaledValue.signum < 0) "-" else ""
+        val digits = unscaledValue.negateIfNegative().toString()
+        return when {
+            scale == 0 -> sign + digits
+            scale < 0 -> sign + (if (unscaledValue.signum == 0) "0" else digits + "0".repeat(-scale))
+            else -> sign + plainDigits(digits)
+        }
+    }
+
+    /** [digits] with the decimal point placed for a positive [scale]. */
+    private fun plainDigits(digits: String): String =
+        if (digits.length > scale) {
+            val point = digits.length - scale
+            digits.substring(0, point) + "." + digits.substring(point)
+        } else {
+            "0." + "0".repeat(scale - digits.length) + digits
+        }
+
+    @Throws(ArithmeticException::class)
     fun add(other: BigDecimal): BigDecimal {
         val maxScale = maxOf(this.scale, other.scale)
         val thisScaled = if (this.scale < maxScale) {
-            this.unscaledValue.multiply(powerOfTen(maxScale - this.scale))
+            this.unscaledValue.multiply(powerOfTen(checkedScale(maxScale.toLong() - this.scale)))
         } else {
             this.unscaledValue
         }
         val otherScaled = if (other.scale < maxScale) {
-            other.unscaledValue.multiply(powerOfTen(maxScale - other.scale))
+            other.unscaledValue.multiply(powerOfTen(checkedScale(maxScale.toLong() - other.scale)))
         } else {
             other.unscaledValue
         }
         return BigDecimal(thisScaled.add(otherScaled), maxScale)
     }
 
+    @Throws(ArithmeticException::class)
     fun subtract(other: BigDecimal): BigDecimal {
         val maxScale = maxOf(this.scale, other.scale)
         val thisScaled = if (this.scale < maxScale) {
-            this.unscaledValue.multiply(powerOfTen(maxScale - this.scale))
+            this.unscaledValue.multiply(powerOfTen(checkedScale(maxScale.toLong() - this.scale)))
         } else {
             this.unscaledValue
         }
         val otherScaled = if (other.scale < maxScale) {
-            other.unscaledValue.multiply(powerOfTen(maxScale - other.scale))
+            other.unscaledValue.multiply(powerOfTen(checkedScale(maxScale.toLong() - other.scale)))
         } else {
             other.unscaledValue
         }
         return BigDecimal(thisScaled.subtract(otherScaled), maxScale)
     }
 
+    @Throws(ArithmeticException::class)
     fun multiply(other: BigDecimal): BigDecimal {
         val newUnscaled = this.unscaledValue.multiply(other.unscaledValue)
-        val newScale = this.scale + other.scale
+        val newScale = checkedScale(this.scale.toLong() + other.scale)
         return BigDecimal(newUnscaled, newScale)
     }
 
+    @Throws(ArithmeticException::class)
     operator fun plus(other: BigDecimal): BigDecimal = add(other)
+    @Throws(ArithmeticException::class)
     operator fun minus(other: BigDecimal): BigDecimal = subtract(other)
+    @Throws(ArithmeticException::class)
     operator fun times(other: BigDecimal): BigDecimal = multiply(other)
+    @Throws(ArithmeticException::class)
     operator fun div(other: BigDecimal): BigDecimal = divide(other)
     operator fun unaryMinus(): BigDecimal = BigDecimal(-this.unscaledValue, this.scale)
 
@@ -198,16 +242,18 @@ data class BigDecimal(
      * @throws ArithmeticException if [divisor] is zero, or if the quotient has a non-terminating
      *         decimal expansion and so has no exact representation.
      */
+    @Throws(ArithmeticException::class)
     fun divide(divisor: BigDecimal): BigDecimal {
         if (divisor.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
         }
+        val quotientScale = checkedScale(this.scale.toLong() - divisor.scale)
         if (this.unscaledValue.signum == 0) {
-            return BigDecimal(BigInteger.ZERO, this.scale - divisor.scale)
+            return BigDecimal(BigInteger.ZERO, quotientScale)
         }
         val (q, r) = this.unscaledValue.divideAndRemainder(divisor.unscaledValue)
         if (r.signum == 0) {
-            return BigDecimal(q, this.scale - divisor.scale)
+            return BigDecimal(q, quotientScale)
         }
 
         // The expansion terminates iff the reduced denominator has only factors of 2 and 5.
@@ -234,7 +280,7 @@ data class BigDecimal(
         }
         val extraDigits = maxOf(twos, fives)
         val exact = this.unscaledValue.multiply(powerOfTen(extraDigits)).divide(divisor.unscaledValue)
-        return BigDecimal(exact, this.scale - divisor.scale + extraDigits)
+        return BigDecimal(exact, checkedScale(quotientScale.toLong() + extraDigits))
     }
 
     /**
@@ -247,19 +293,29 @@ data class BigDecimal(
      * @throws ArithmeticException if [other] is zero, or if [roundingMode] is
      *         [RoundingMode.UNNECESSARY] and rounding would in fact be needed.
      */
+    @Throws(ArithmeticException::class)
     fun divide(other: BigDecimal, scale: Int, roundingMode: RoundingMode): BigDecimal {
         if (other.unscaledValue.signum == 0) {
             throw ArithmeticException("Division by zero")
         }
-        val k = scale + other.scale - this.scale
+        val k = scale.toLong() + other.scale - this.scale
         val num: BigInteger
         val den: BigInteger
         if (k >= 0) {
-            num = this.unscaledValue.multiply(powerOfTen(k))
+            num = this.unscaledValue.multiply(powerOfTen(checkedScale(k)))
             den = other.unscaledValue
+        } else if (-k > maximumDecimalDigits(this.unscaledValue.bitLength()) + 1L) {
+            // The divisor dwarfs the dividend, so the quotient at this scale is zero with the whole
+            // dividend as remainder. Any denominator over twice the remainder rounds the same way,
+            // and building 10^-k itself could need more memory than exists.
+            num = this.unscaledValue
+            den = powerOfTen(maximumDecimalDigits(this.unscaledValue.bitLength()) + 1)
+            if (num.signum == 0) return BigDecimal(BigInteger.ZERO, scale)
+            val signed = if (other.unscaledValue.signum < 0) den.negate() else den
+            return BigDecimal(round(BigInteger.ZERO, num, signed, roundingMode), scale)
         } else {
             num = this.unscaledValue
-            den = other.unscaledValue.multiply(powerOfTen(-k))
+            den = other.unscaledValue.multiply(powerOfTen(checkedScale(-k)))
         }
 
         val (q, r) = num.divideAndRemainder(den)
@@ -281,6 +337,7 @@ data class BigDecimal(
      * @return This value at [newScale].
      * @throws ArithmeticException if reaching [newScale] would discard a non-zero digit.
      */
+    @Throws(ArithmeticException::class)
     fun setScale(newScale: Int): BigDecimal {
         return setScale(newScale, RoundingMode.UNNECESSARY)
     }
@@ -294,15 +351,19 @@ data class BigDecimal(
      * @throws ArithmeticException if [roundingMode] is [RoundingMode.UNNECESSARY] and rounding
      *         would in fact be needed.
      */
+    @Throws(ArithmeticException::class)
     fun setScale(newScale: Int, roundingMode: RoundingMode): BigDecimal {
         if (newScale == this.scale) return this
         if (newScale > this.scale) {
-            val diff = newScale - this.scale
+            val diff = checkedScale(newScale.toLong() - this.scale)
             val newUnscaled = this.unscaledValue.multiply(powerOfTen(diff))
             return BigDecimal(newUnscaled, newScale)
         } else {
-            val diff = this.scale - newScale
-            val den = powerOfTen(diff)
+            val diff = newScale.toLong().let { this.scale.toLong() - it }
+            val digits = maximumDecimalDigits(this.unscaledValue.bitLength()) + 1
+            // Dropping more digits than the value has leaves zero with the whole value as remainder;
+            // a smaller power of ten than 10^diff rounds the same way and is cheap to build.
+            val den = powerOfTen(if (diff > digits) digits else diff.toInt())
             val (q, r) = this.unscaledValue.divideAndRemainder(den)
             if (r.signum == 0) {
                 return BigDecimal(q, newScale)
@@ -322,7 +383,7 @@ data class BigDecimal(
         var currentScale = scale
         val ten = BigInteger.TEN
         
-        while (currentUnscaled.signum != 0) {
+        while (currentUnscaled.signum != 0 && currentScale > Int.MIN_VALUE) {
             val (q, r) = currentUnscaled.divideAndRemainder(ten)
             if (r.signum == 0) {
                 currentUnscaled = q
@@ -343,6 +404,7 @@ data class BigDecimal(
             return BigDecimal(BigInteger.valueOf(value), scale)
         }
 
+        @Throws(IllegalArgumentException::class)
         fun valueOf(value: Double): BigDecimal {
             return parseString(value.toString())
         }
@@ -359,6 +421,7 @@ data class BigDecimal(
          * @return The exact decimal value of [value].
          * @throws ArithmeticException if [value] is `NaN` or infinite, neither of which is a decimal.
          */
+        @Throws(ArithmeticException::class)
         fun valueOfExact(value: Double): BigDecimal {
             if (value.isNaN() || value.isInfinite()) {
                 throw ArithmeticException("Cannot convert NaN or Infinite double to BigDecimal")
@@ -396,6 +459,7 @@ data class BigDecimal(
             }
         }
 
+        @Throws(IllegalArgumentException::class)
         fun parseString(value: String): BigDecimal {
             val clean = value.trim()
             val eIdx = clean.indexOfAny(charArrayOf('e', 'E'))
@@ -481,6 +545,12 @@ data class BigDecimal(
             powers as Array<BigInteger>
         }
 
+        /** The scale [value], or an [ArithmeticException] when it does not fit in an Int. */
+        private fun checkedScale(value: Long): Int {
+            if (value !in Int.MIN_VALUE..Int.MAX_VALUE) throw ArithmeticException("Scale $value is out of range")
+            return value.toInt()
+        }
+
         /**
          * Returns `10^`[k], from [CACHED_POWERS_OF_TEN] where possible.
          *
@@ -491,8 +561,10 @@ data class BigDecimal(
          *
          * @param k The exponent, which must not be negative.
          * @return Ten raised to [k].
+         * @throws ArithmeticException if [k] is negative.
          */
         private fun powerOfTen(k: Int): BigInteger {
+            if (k < 0) throw ArithmeticException("Negative power of ten: $k")
             if (k <= MAX_CACHED_POWER_OF_TEN) return CACHED_POWERS_OF_TEN[k]
 
             var result = CACHED_POWERS_OF_TEN[MAX_CACHED_POWER_OF_TEN]

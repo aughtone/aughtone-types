@@ -8,8 +8,7 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     } catch (e: Throwable) {
         null
     }
-    val tag = languageTag ?: fallbackTag ?: return null
-    return resolveLocale(tag) ?: parseLocale(tag)
+    return currentLocaleFrom(languageTag, fallbackTag)
 }
 
 actual fun localeForNative(languageTag: String): Locale? {

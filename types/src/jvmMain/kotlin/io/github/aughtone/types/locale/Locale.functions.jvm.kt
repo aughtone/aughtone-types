@@ -4,13 +4,22 @@ import java.util.Locale as JavaLocale
 
 actual fun localeForNative(languageTag: String): Locale? {
     val parsed = parseLocale(languageTag)
-    val javaLocale = JavaLocale(parsed.languageCode, parsed.regionCode ?: "", parsed.variantCode ?: "")
+    // The three-argument constructor has no script parameter, so a locale kept in another script was
+    // named like the default one: "Inuktitut (Canada)" for iu-Latn-CA. Only a tag can carry the script.
+    // Without a script the constructor stays, because forLanguageTag drops variants it finds ill-formed.
+    val javaLocale = if (parsed.scriptCode != null) {
+        JavaLocale.forLanguageTag(parsed.languageTag)
+    } else {
+        JavaLocale(parsed.languageCode, parsed.regionCode ?: "", parsed.variantCode ?: "")
+    }
     return Locale(
         languageCode = parsed.languageCode,
         regionCode = parsed.regionCode,
         scriptCode = parsed.scriptCode,
         variantCode = parsed.variantCode,
-        displayName = javaLocale.displayName
+        // English, not the device language the no-argument form uses: this is the locale's stored
+        // English name, and Locale.displayName finds the name in the reader's language itself.
+        displayName = javaLocale.getDisplayName(JavaLocale.ENGLISH)
     )
 }
 
@@ -44,12 +53,9 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val defaultLocale = JavaLocale.getDefault()
     val tag = buildString {
         append(defaultLocale.language)
-        val script = try {
-            val method = defaultLocale.javaClass.getMethod("getScript")
-            method.invoke(defaultLocale) as? String ?: ""
-        } catch (e: Exception) {
-            ""
-        }
+        // Read directly, not by reflection: this runs on every Locale.displayName read, and the JVM
+        // target is 17, where getScript always exists.
+        val script = defaultLocale.script
         if (script.isNotEmpty()) {
             append("-")
             append(script)
@@ -65,5 +71,5 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
             append(variant)
         }
     }
-    return resolveLocale(tag) ?: fallbackTag?.let { resolveLocale(it) } ?: parseLocale(tag)
+    return currentLocaleFrom(tag, fallbackTag)
 }

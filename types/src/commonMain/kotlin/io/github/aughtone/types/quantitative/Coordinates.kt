@@ -39,7 +39,7 @@ private const val EARTH_RADIUS = 6371e3
  *         their valid ranges.
  */
 @Serializable
-data class Coordinates(
+data class Coordinates @Throws(IllegalArgumentException::class) constructor(
     @SerialName("latitude")
     val latitude: Double,
     @SerialName("longitude")
@@ -103,6 +103,7 @@ data class Coordinates(
      * @param bearing The direction to move in.
      * @return The new `Coordinates`.
      */
+    @Throws(IllegalArgumentException::class)
     fun plus(distance: Distance, bearing: Azimuth): Coordinates {
         val lat1Rad = toRadians(this.latitude)
         val lon1Rad = toRadians(this.longitude)
@@ -158,6 +159,7 @@ internal fun normalizeLongitude(longitude: Double): Double =
  * @throws IllegalArgumentException If the array does not contain exactly 2 or 3 elements,
  * or if the values are outside the valid geographic ranges.
  */
+@Throws(IllegalArgumentException::class)
 fun DoubleArray.toCoordinates(accuracy: Float? = null): Coordinates {
     require(size == 2 || size == 3) { "Expected 2 or 3 elements (longitude, latitude, altitude), found $size" }
     return Coordinates(longitude = this[0], latitude = this[1], accuracy = accuracy)

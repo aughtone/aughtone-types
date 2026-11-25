@@ -43,20 +43,36 @@ Coordinates(latitude: 45.42, longitude: -75.69, accuracy: nil)
 locale.localizedDisplayName(displayIn: Locale.Companion.shared.current)
 ```
 
-There is no overload with fewer parameters. Supply `nil` for the optional ones.
+There is no overload with fewer parameters. Supply `nil` for the optional ones, and the default explicitly where there is one: `locale.localizedDisplayName(displayIn: reader, languageDisplay: .standard)`.
 
 Note what the last line costs you: `Locale.Companion.shared.current` **throws** when the platform cannot resolve a locale, and in Swift you are forced to write it explicitly wherever Kotlin would have defaulted it. `Locale.Companion.shared.currentOrNull` returns `nil` instead, which is usually what you want at a call site you did not choose to make.
 
-## Overloads that differ only by number type gain a trailing underscore
+## `Locale` and `Currency` have no initializer
 
-`Money.div` takes a `Double` in one overload and a `Long` in another. Objective-C cannot express that, so the second is renamed:
+Neither type exposes a constructor, so there is no `Locale(...)` or `Currency(...)` initializer in Swift. Kotlin's `Locale("en", "US", displayName = ...)` is a call to the companion's `invoke`, and Swift reaches it through the companion, with every argument supplied:
 
 ```swift
-money.div(scalar: 2.0)    // the Double overload
-money.div(scalar_: 2)     // the Long overload — note the underscore
+let locale = Locale.Companion.shared.invoke(languageCode: "en", regionCode: "US", scriptCode: nil, variantCode: nil, displayName: "English (United States)")
+let usd = Currency.Companion.shared.invoke(code: "USD", number: 840, digits: 2, name: "US Dollar", symbol: "$", obsolete: false, replacedBy: nil)
 ```
 
-The underscore is the only thing distinguishing them, and picking the wrong one changes which arithmetic runs. The same pattern appears anywhere else the library overloads on numeric type.
+Prefer a lookup where one exists, since a shipped locale or currency carries its proper name: `Locale_functionsKt.localeFor(languageTag:)`, `Locale_functionsKt.parseLocale(languageTag:)` and `Currency_functionsKt.currencyFor(currencyCode:)`. Neither type has `doCopy` any more, so build a new value rather than copying one.
+
+## Overloads on number type have their own labels
+
+Objective-C cannot overload on a parameter's type, so where Kotlin does, each form carries a label of its own. The label says what the number means:
+
+```swift
+money.plus(scalar: 2.5)        // adds 2.5 currency units
+money.plus(minorUnits: 250)    // adds 250 cents
+money.times(scalar: 1.5)       // a Double factor
+money.times(count: 3)          // a whole-number factor
+money.div(count: 3)
+Money(amount: 5.0, currency: usd)     // the Double constructor
+BigDecimal(string: "1.50")            // and BigDecimal(value:) for a Double, BigDecimal(integer:) for a Long
+```
+
+The `Int` and `Long` forms of `toDistance`, `toSpeed`, `toAzimuth` and `toAltitude`, and `BankersValue.div(Int)`, are not exported: convert to `Double`, or to `Int64` for `BankersValue`, and call the remaining form. Before 4.3.0 the extra overloads exported with trailing underscores, `div(scalar_:)`, distinguishable only by that.
 
 Operators are methods rather than operators: `plus(other:)`, `minus(other:)`, `times(other:)`, `div(other:)`. `Money.div(other:)` returns a `Double` ratio, while `div(scalar:)` returns a `Money`.
 
@@ -72,6 +88,8 @@ else if let failure = result as? OutcomeFailure { report(failure.message) }
 
 Adding a case to the sealed class in a future version will not produce a Swift compile error anywhere. That is the reason `Outcome` exists rather than `kotlin.Result` — a `Result` cannot cross into Swift as data at all — but it does not make the check exhaustive.
 
+**Exhaustiveness is decided by the framework Swift sees, not by this library.** This library publishes no Swift framework of its own: Swift reaches it through the consuming project's Kotlin framework, so how a sealed class exports is that build's choice. A framework built with Touchlab's SKIE presents sealed classes, `Outcome` included, as Swift enums through `onEnum(of:)`, and a `switch` over that is exhaustive. This library neither requires nor configures SKIE; without it, the `as?` form above is the one that works.
+
 The whole API arrives on the class, including the parts that are Kotlin extensions — `getOrElse(onFailure:)`, `getOrDefault(defaultValue:)` and `recover(transform:)` export as an Objective-C category, so they read as ordinary methods and need no `OutcomeKt`. Only `runOutcome(block:)` lives on `OutcomeKt`, being a top-level function.
 
 `isSuccess` and `isFailure` are properties; `getOrNull()`, `getOrThrow()` and `exceptionOrNull()` are methods, with the parentheses Kotlin lets you omit. Every failure callback is handed a **`KotlinThrowable`**, not a Swift `Error`: `outcome.onFailure { throwable in … }`, `outcome.fold(onSuccess:onFailure:)`, `getOrElse(onFailure:)` and `recover(transform:)` all take one. Read `throwable.message`, which is optional, or branch to `OutcomeFailure` for the non-optional `message`.
@@ -82,27 +100,28 @@ A nullable or generic numeric becomes a boxed class: `accuracy` on `Coordinates`
 
 `GeoPoint` has one initializer taking a raw `KotlinDoubleArray` and another taking `[AOTKDouble]` with a `bbox`; they are different initializers, not one with a default.
 
-## Nothing in this library is `throws`, and an exception crashes the app
+## Throwing calls are `throws`, with three exceptions that still crash
 
-This is the most consequential difference on the page, and it is invisible: **no declaration in this library is annotated `@Throws`, so nothing exports as Swift `throws` and nothing gains an `NSError` out-parameter.** Read from the generated header: zero members carry `error:(NSError **)error`, and `getOrThrow` arrives as plain `- (T _Nullable)getOrThrow`.
-
-Kotlin/Native converts a Kotlin exception into a Swift error *only* for a declaration marked `@Throws`. Without it, an exception reaching the Objective-C boundary is an unhandled Kotlin exception and the runtime terminates the process. There is no `catch` to write: `try?` will not compile against a non-throwing method, and `do/catch` cannot save you.
-
-Plenty of this library throws. `Outcome.getOrThrow()` on a failure; `Locale.Companion.shared.current` and `Currency.Companion.shared.current` when the platform cannot resolve one; `Money.compareTo`, `plus`, `minus`, `times` and `div` across two currencies; `Distance` and `Speed` operators that would go below zero; GeoJSON construction that breaks RFC 7946's structural rules; and `url`, `uri`, `geoUri` and `urn` on malformed input.
-
-So on the Swift side, the non-throwing forms are not a convenience — they are the only callable ones:
+Every function and constructor here that can fail is annotated `@Throws`, so Swift sees it as `throws` and a failure arrives as an `NSError` you can catch. The Kotlin exception is in its `userInfo` under `KotlinException`.
 
 ```swift
-// Crashes the app on bad input. No compiler warning, no catch.
-let site = UriParsingKt.url(value: userInput)
-
-// The two forms that cannot crash.
-let maybe = UriParsingKt.urlOrNull(value: userInput)          // nil
-let result = OutcomeKt.runOutcome { UriParsingKt.url(value: userInput) }
-if let failure = result as? OutcomeFailure { report(failure.message) }
+do {
+    let site = try UriParsingKt.url(value: userInput)
+    let total = try price.plus(other: tax)          // throws across two currencies
+} catch {
+    report(error.localizedDescription)
+}
 ```
 
-Use the `OrNull` parser, `Locale.Companion.shared.currentOrNull`, `Outcome.getOrNull()` or `getOrDefault`, and `runOutcome { }` to turn a throwing call into data before it reaches the boundary. Check the currencies match before comparing or adding two `Money` values, and the operand order before subtracting a `Distance`, because there is no recovery once the call is made.
+That covers the parsers (`url`, `uri`, `geoUri`, `urn`), GeoJSON and quantity construction that breaks its rules, `Money` arithmetic across currencies, operators that would go below zero or divide by zero, `BigDecimal` and `BigInteger` parsing and division, `BitSet` indexing, and `Outcome.getOrThrow()`.
+
+**Three things still terminate the process,** because Objective-C gives them nowhere to report an error:
+
+- **`Locale.Companion.shared.current` and `Currency.Companion.shared.current`** are properties, and a property cannot throw. Use `currentOrNull`.
+- **`Money.compareTo`** across two currencies. It implements `Comparable`, and an override cannot add `throws`. Check the currencies match before comparing.
+- **`doCopy`** on a type that validates itself — `Coordinates`, `Distance`, `Speed`, `Altitude`, `Azimuth`, the GeoJSON geometries, `GeoFeature`, `Url`, `Urn`, `GeoUri` — when the copy breaks a rule. Build a new value with the throwing constructor instead.
+
+Nothing that is unannotated is expected to throw. If one does, it terminates the process as before, and it is a bug here.
 
 ## The coordinate-order trap applies here too
 

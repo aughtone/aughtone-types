@@ -13,7 +13,7 @@ The list is published as freely downloadable reference data. This library reprod
 
 ## Unicode CLDR
 
-The localized display names compiled into `io.github.aughtone.types.locale.LocaleDisplayNameSupplement`, and into `LocaleDisplayNameTable` in the Linux artifact, are derived from the Unicode Common Locale Data Repository.
+The localized display names compiled into `io.github.aughtone.types.locale.LocaleDisplayNameSupplement`, and into `LocaleDisplayNameTable` in the Linux and Windows artifacts, the English language, script and region names compiled into `EnglishSubtagNames`, and the dialect names compiled into `LocaleDialectNames`, are derived from the Unicode Common Locale Data Repository.
 
 Source: https://cldr.unicode.org
 Pinned source: `cldr-localenames-full` version 48.2.0, published on the npm registry.

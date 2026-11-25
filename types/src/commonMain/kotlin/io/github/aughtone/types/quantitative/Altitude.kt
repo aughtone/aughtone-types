@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCRefinement::class)
+
 package io.github.aughtone.types.quantitative
 
 import kotlinx.serialization.SerialName
@@ -22,7 +24,7 @@ import kotlin.math.abs
  * @constructor Creates an Altitude instance with the specified meters and optional accuracy.
  */
 @Serializable
-data class Altitude(
+data class Altitude @Throws(IllegalArgumentException::class) constructor(
     @SerialName("meters")
     val meters: Double,
     @SerialName("accuracy")
@@ -68,6 +70,7 @@ data class Altitude(
      * @param other The scalar value to multiply by.
      * @return A new Altitude representing the product.
      */
+    @Throws(IllegalArgumentException::class)
     operator fun times(other: Double): Altitude {
         return Altitude(meters * other, accuracy?.let { it * abs(other.toFloat()) })
     }
@@ -79,6 +82,7 @@ data class Altitude(
      * @return A new Altitude representing the quotient.
      * @throws ArithmeticException if dividing by zero.
      */
+    @Throws(IllegalArgumentException::class, ArithmeticException::class)
     operator fun div(other: Double): Altitude {
         if (other == 0.0) throw ArithmeticException("Division by zero")
         return Altitude(meters / other, accuracy?.let { it / abs(other.toFloat()) })
@@ -86,8 +90,13 @@ data class Altitude(
 }
 
 
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Int.toAltitude(accuracy: Float? = null) =
     Altitude(meters = this.toDouble(), accuracy = accuracy)
+@Throws(IllegalArgumentException::class)
+@kotlin.native.HiddenFromObjC
 fun Long.toAltitude(accuracy: Float? = null) =
     Altitude(meters = this.toDouble(), accuracy = accuracy)
+@Throws(IllegalArgumentException::class)
 fun Double.toAltitude(accuracy: Float? = null) = Altitude(meters = this, accuracy = accuracy)
