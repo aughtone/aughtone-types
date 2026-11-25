@@ -41,7 +41,9 @@ import kotlinx.serialization.Transient
  * @property obsolete A flag indicating if the currency is no longer in active use.
  */
 @Serializable
-class Currency private constructor(
+// @PublishedApi internal rather than private, so code compiled against 4.2's public data-class
+// constructor still links; Kotlin source outside the library builds one through the companion's invoke.
+class Currency @PublishedApi internal constructor(
     // The wire carries the codes as they were written; the public properties below uppercase them,
     // so a payload with "usd" decodes to "USD" without a custom serializer.
     @SerialName("code")

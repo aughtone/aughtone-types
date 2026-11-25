@@ -471,6 +471,16 @@ fun Locale.localizedDisplayNameOrNull(
     return bundled ?: localizedDisplayNameForNative(target, displayIn)
 }
 
+// The signatures before LanguageDisplay existed, kept so code compiled against 4.2 still links. Hidden
+// from source, where the overloads with a languageDisplay argument and its default replace them.
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
+    localizedDisplayName(displayIn, LanguageDisplay.Standard)
+
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): String? =
+    localizedDisplayNameOrNull(displayIn, LanguageDisplay.Standard)
+
 /**
  * This locale's English name: the shipped table's when the library ships it, otherwise the name it
  * was built with, which for a parsed locale is the English name [parseLocale] gave it.

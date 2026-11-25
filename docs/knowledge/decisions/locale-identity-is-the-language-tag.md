@@ -39,3 +39,5 @@ Normalization without a custom serializer works by storing the codes as written 
 **A generated `copy` is no longer a hidden throw.** On types that validate themselves, Objective-C's `doCopy` re-runs validation and cannot carry `@Throws`; for these two types the question no longer arises.
 
 ## Corrections
+
+- 2026-11-24: Consequences said this is "a source and binary break" and that the old constructor is gone. As first shipped it was, and a library compiled against 4.2 failed at run time on `new Locale(...)`. Before release the constructors were made `@PublishedApi internal` instead of private, which keeps their 4.2 JVM signatures public while Kotlin source still goes through `invoke`, and the pre-`LanguageDisplay` `localizedDisplayName` signatures were kept as hidden overloads. Only compiled calls to `copy` and `componentN` break. Verified by running the published `format-readable` 4.3.0, built against 4.2.0, and a Java caller compiled against 4.2.0, against the new jar.

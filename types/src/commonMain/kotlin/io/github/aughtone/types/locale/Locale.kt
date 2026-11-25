@@ -39,7 +39,11 @@ import kotlinx.serialization.Transient
  *
  */
 @Serializable
-class Locale private constructor(
+// @PublishedApi internal rather than private: Kotlin source outside the library builds a Locale
+// through the companion's invoke, but code compiled against 4.2, when this was a data class with a
+// public constructor, still calls this constructor by its JVM signature, which is unchanged. Private,
+// those binaries failed with an access error at run time.
+class Locale @PublishedApi internal constructor(
     // The wire carries the codes as they were written; the public properties below normalize them,
     // so a payload with "EN" decodes to "en" without a custom serializer.
     @SerialName("languageCode")
