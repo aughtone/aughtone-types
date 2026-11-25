@@ -42,8 +42,9 @@ data class Speed @Throws(IllegalArgumentException::class) constructor(
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * mps
             val absoluteError2 = other.accuracy * other.mps
+            // Unknown rather than NaN when a speed is infinite, which the constructor would refuse.
             if (newMps > 0) {
-                ((absoluteError1 + absoluteError2) / newMps).toFloat()
+                ((absoluteError1 + absoluteError2) / newMps).toFloat().takeIf { it.isFinite() }
             } else {
                 null
             }
@@ -79,7 +80,7 @@ data class Speed @Throws(IllegalArgumentException::class) constructor(
             val absoluteError1 = accuracy * mps
             val absoluteError2 = other.accuracy * other.mps
             if (newMps != 0.0) {
-                ((absoluteError1 + absoluteError2) / abs(newMps)).toFloat()
+                ((absoluteError1 + absoluteError2) / abs(newMps)).toFloat().takeIf { it.isFinite() }
             } else {
                 null
             }

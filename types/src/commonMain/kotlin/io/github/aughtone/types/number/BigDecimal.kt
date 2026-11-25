@@ -123,27 +123,56 @@ data class BigDecimal(
         return 31 * unscaledValue.hashCode() + scale
     }
 
+    /**
+     * This value as `java.math.BigDecimal.toString` writes it: plain notation while the scale is
+     * not negative and the adjusted exponent is at least -6, scientific notation otherwise. So
+     * `1.25` is `"1.25"`, `0.0000001` is `"1E-7"`, and `1.23E+4` (unscaled 123, scale -2) is
+     * `"1.23E+4"`. The adjusted exponent is the exponent of the first digit: `-scale` plus the
+     * number of unscaled digits, less one.
+     *
+     * Scientific notation is what keeps this bounded: a value with a huge scale prints in a few
+     * characters rather than one digit per place. Use [toPlainString] for notation without an
+     * exponent, and expect it to be as long as the value has places.
+     */
     override fun toString(): String {
-        if (unscaledValue.signum == 0 && scale == 0) return "0"
-        val signStr = if (unscaledValue.signum < 0) "-" else ""
-        val absStr = unscaledValue.negateIfNegative().toString()
-        
-        if (scale == 0) {
-            return signStr + absStr
-        } else if (scale > 0) {
-            return if (absStr.length > scale) {
-                val dotIdx = absStr.length - scale
-                signStr + absStr.substring(0, dotIdx) + "." + absStr.substring(dotIdx)
-            } else {
-                val zeros = "0".repeat(scale - absStr.length)
-                signStr + "0." + zeros + absStr
-            }
-        } else {
-            // In Long: -Int.MIN_VALUE is Int.MIN_VALUE again, which printed as "E+-2147483648".
-            val exp = -scale.toLong()
-            return signStr + absStr + "E+" + exp
+        val sign = if (unscaledValue.signum < 0) "-" else ""
+        val digits = unscaledValue.negateIfNegative().toString()
+        if (scale == 0) return sign + digits
+        val adjusted = -scale.toLong() + (digits.length - 1)
+        if (scale > 0 && adjusted >= -6) return sign + plainDigits(digits)
+        return buildString {
+            append(sign)
+            append(digits[0])
+            if (digits.length > 1) append('.').append(digits, 1, digits.length)
+            append('E')
+            if (adjusted >= 0) append('+')
+            append(adjusted)
         }
     }
+
+    /**
+     * This value without an exponent, as `java.math.BigDecimal.toPlainString` writes it: `"12300"`
+     * for unscaled 123 at scale -2, and `"0.0000001"` for 1 at scale 7. The string is as long as the
+     * value has places, so a value with a scale in the millions makes a string in the millions.
+     */
+    fun toPlainString(): String {
+        val sign = if (unscaledValue.signum < 0) "-" else ""
+        val digits = unscaledValue.negateIfNegative().toString()
+        return when {
+            scale == 0 -> sign + digits
+            scale < 0 -> sign + (if (unscaledValue.signum == 0) "0" else digits + "0".repeat(-scale))
+            else -> sign + plainDigits(digits)
+        }
+    }
+
+    /** [digits] with the decimal point placed for a positive [scale]. */
+    private fun plainDigits(digits: String): String =
+        if (digits.length > scale) {
+            val point = digits.length - scale
+            digits.substring(0, point) + "." + digits.substring(point)
+        } else {
+            "0." + "0".repeat(scale - digits.length) + digits
+        }
 
     @Throws(ArithmeticException::class)
     fun add(other: BigDecimal): BigDecimal {

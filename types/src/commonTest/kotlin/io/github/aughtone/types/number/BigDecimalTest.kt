@@ -215,12 +215,12 @@ class BigDecimalTest {
     fun `verify scientific notation parsing edge cases`() {
         // Positive exponent
         val bd1 = BigDecimal.parseString("1.23e4")
-        assertEquals("123E+2", bd1.toString())
+        assertEquals("1.23E+4", bd1.toString())
         assertEquals(-2, bd1.scale)
         assertEquals(BigInteger.valueOf(123), bd1.unscaledValue)
 
         val bd2 = BigDecimal.parseString("1.23e+4")
-        assertEquals("123E+2", bd2.toString())
+        assertEquals("1.23E+4", bd2.toString())
 
         // Negative exponent
         val bd3 = BigDecimal.parseString("-1.23e-4")
@@ -245,7 +245,7 @@ class BigDecimalTest {
         assertEquals("12.345", bd1.toString())
 
         val bd2 = BigDecimal(unscaled, -3)
-        assertEquals("12345E+3", bd2.toString())
+        assertEquals("1.2345E+7", bd2.toString())
 
         val bdZero = BigDecimal(BigInteger.ZERO, 5)
         assertEquals("0.00000", bdZero.toString())
@@ -338,11 +338,11 @@ class BigDecimalTest {
 
     @Test
     fun `setScale with negative target scale`() {
-        assertEquals("12E+2", BigDecimal("1234.5").setScale(-2, RoundingMode.HALF_UP).toString())
-        assertEquals("13E+2", BigDecimal("1250").setScale(-2, RoundingMode.HALF_UP).toString())
-        assertEquals("12E+2", BigDecimal("1250").setScale(-2, RoundingMode.HALF_EVEN).toString())
-        assertEquals("-12E+2", BigDecimal("-1234.5").setScale(-2, RoundingMode.CEILING).toString())
-        assertEquals("-13E+2", BigDecimal("-1234.5").setScale(-2, RoundingMode.FLOOR).toString())
+        assertEquals("1.2E+3", BigDecimal("1234.5").setScale(-2, RoundingMode.HALF_UP).toString())
+        assertEquals("1.3E+3", BigDecimal("1250").setScale(-2, RoundingMode.HALF_UP).toString())
+        assertEquals("1.2E+3", BigDecimal("1250").setScale(-2, RoundingMode.HALF_EVEN).toString())
+        assertEquals("-1.2E+3", BigDecimal("-1234.5").setScale(-2, RoundingMode.CEILING).toString())
+        assertEquals("-1.3E+3", BigDecimal("-1234.5").setScale(-2, RoundingMode.FLOOR).toString())
         assertEquals("600", BigDecimal("6E+2").setScale(0).toString())
         assertEquals("0E+2", BigDecimal(BigInteger.ZERO, -2).toString())
     }

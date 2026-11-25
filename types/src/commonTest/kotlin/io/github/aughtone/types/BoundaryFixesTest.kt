@@ -7,6 +7,7 @@ import io.github.aughtone.types.number.BigDecimal
 import io.github.aughtone.types.number.BigInteger
 import io.github.aughtone.types.number.RoundingMode
 import io.github.aughtone.types.quantitative.Distance
+import io.github.aughtone.types.quantitative.Speed
 import io.github.aughtone.types.uri.Uri
 import io.github.aughtone.types.uri.Url
 import io.github.aughtone.types.uri.url
@@ -29,6 +30,22 @@ class BoundaryFixesTest {
     fun `adding an infinite Distance leaves the accuracy unknown rather than failing`() {
         val sum = Distance(Double.POSITIVE_INFINITY, 0.1f) + Distance(1.0, 0.1f)
         assertNull(sum.accuracy)
+    }
+
+    @Test
+    fun `adding an infinite Speed leaves the accuracy unknown rather than failing`() {
+        val sum = Speed(Double.POSITIVE_INFINITY, 0.1f) + Speed(1.0, 0.1f)
+        assertNull(sum.accuracy)
+        assertEquals(0.1f, (Speed(10.0, 0.1f) + Speed(10.0, 0.1f)).accuracy)
+    }
+
+    @Test
+    fun `a BigDecimal with a huge scale prints in scientific notation`() {
+        assertEquals("1E-2147483647", tiny.toString())
+        assertEquals("1E+2147483648", huge.toString())
+        assertEquals("1.23E+4", BigDecimal.valueOf(123, -2).toString())
+        assertEquals("12300", BigDecimal.valueOf(123, -2).toPlainString())
+        assertEquals("1.25", BigDecimal("1.25").toString())
     }
 
     @Test
