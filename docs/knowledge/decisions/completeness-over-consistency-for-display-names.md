@@ -84,3 +84,7 @@ The lesson is narrower than "write tests". A number in prose has no owner and no
 The decision above says a per-platform test "records the measured gap count and fails when it moves". Pinned exactly, it failed the first CI run after the 4.1.0 release: CI's iOS simulator reported 1,205 Apple gaps against a baseline of 1,199 taken on a developer machine, and 912 untranslated pairs against 910. Nothing in the library was wrong. The counts are host data, and two hosts carry two slightly different CLDRs.
 
 The tests now assert that each count stays within 5% of its baseline, and print the actual value on every run. That still fails on what they exist to catch — a bridge that stops working sends the count toward the whole matrix of 17,889, as the JS defect did — and on a move large enough to regenerate the supplement for, while tolerating the drift between machines. The supplement's own size is still pinned exactly, because it is library data rather than host data.
+
+## Amendment — 2026-11-24: the lookup order is superseded by ADR-0006
+
+[ADR-0006](display-names-in-the-readers-language.md) reverses one part of this record. The Decision above keeps delegating to the platform as the primary source and fills gaps from the bundled table; names now come from this library's bundled names first and the platform second, and `displayName` itself follows the reader's language. The conclusion of this record — completeness is pursued, cross-target consistency is not guaranteed — is unchanged, and so is everything it says about measuring and pinning coverage.

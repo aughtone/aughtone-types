@@ -545,6 +545,12 @@ data class BigDecimal(
             powers as Array<BigInteger>
         }
 
+        /** The scale [value], or an [ArithmeticException] when it does not fit in an Int. */
+        private fun checkedScale(value: Long): Int {
+            if (value !in Int.MIN_VALUE..Int.MAX_VALUE) throw ArithmeticException("Scale $value is out of range")
+            return value.toInt()
+        }
+
         /**
          * Returns `10^`[k], from [CACHED_POWERS_OF_TEN] where possible.
          *
@@ -555,13 +561,8 @@ data class BigDecimal(
          *
          * @param k The exponent, which must not be negative.
          * @return Ten raised to [k].
+         * @throws ArithmeticException if [k] is negative.
          */
-        /** The scale [value], or an [ArithmeticException] when it does not fit in an Int. */
-        private fun checkedScale(value: Long): Int {
-            if (value !in Int.MIN_VALUE..Int.MAX_VALUE) throw ArithmeticException("Scale $value is out of range")
-            return value.toInt()
-        }
-
         private fun powerOfTen(k: Int): BigInteger {
             if (k < 0) throw ArithmeticException("Negative power of ten: $k")
             if (k <= MAX_CACHED_POWER_OF_TEN) return CACHED_POWERS_OF_TEN[k]

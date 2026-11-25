@@ -53,12 +53,9 @@ actual fun currentNativeLocale(fallbackTag: String?): Locale? {
     val defaultLocale = JavaLocale.getDefault()
     val tag = buildString {
         append(defaultLocale.language)
-        val script = try {
-            val method = defaultLocale.javaClass.getMethod("getScript")
-            method.invoke(defaultLocale) as? String ?: ""
-        } catch (e: Exception) {
-            ""
-        }
+        // Read directly, not by reflection: this runs on every Locale.displayName read, and the JVM
+        // target is 17, where getScript always exists.
+        val script = defaultLocale.script
         if (script.isNotEmpty()) {
             append("-")
             append(script)

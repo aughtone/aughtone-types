@@ -71,6 +71,15 @@ class DisplayNameOrderTest {
     }
 
     @Test
+    fun `a remembered current locale is replaced when the device tag changes`() {
+        assertEquals(localeFor("fr-CA"), currentLocaleFrom("fr-CA", fallbackTag = null))
+        assertEquals(localeFor("de-DE"), currentLocaleFrom("de-DE", fallbackTag = null))
+        assertEquals(localeFor("en"), currentLocaleFrom(null, fallbackTag = "en"))
+        assertEquals(localeFor("fr"), currentLocaleFrom(null, fallbackTag = "fr"))
+        assertEquals(localeFor("fr-CA"), currentLocaleFrom("fr-CA", fallbackTag = null))
+    }
+
+    @Test
     fun `the fallback is used only when the device reports nothing usable`() {
         assertEquals(localeFor("en"), currentLocaleFrom(null, fallbackTag = "en"))
         assertEquals(localeFor("en"), currentLocaleFrom("", fallbackTag = "en"))

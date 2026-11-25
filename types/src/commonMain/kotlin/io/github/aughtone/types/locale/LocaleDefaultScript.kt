@@ -107,11 +107,15 @@ internal val defaultScriptByLanguage: Map<String, String> = mapOf(
 )
 
 /**
- * The script this locale is written in: its own [Locale.scriptCode] if it names one, otherwise its
- * language's default from [defaultScriptByLanguage], or `null` if neither is known.
+ * The script this locale is written in: its own [Locale.scriptCode] if it names one, otherwise the
+ * script its region implies from [scriptByLanguageRegion] (`zh-MO` is Traditional, `sr-ME` Latin),
+ * otherwise its language's default from [defaultScriptByLanguage], or `null` if none is known. The
+ * same reading [resolveLocale] gives a tag.
  */
 internal val Locale.effectiveScriptCode: String?
-    get() = scriptCode ?: defaultScriptByLanguage[languageCode]
+    get() = scriptCode
+        ?: regionCode?.let { scriptByLanguageRegion["$languageCode-$it"] }
+        ?: defaultScriptByLanguage[languageCode]
 
 /**
  * The display language to look this reader up under in the bundled name tables, or `null` when the
@@ -120,10 +124,14 @@ internal val Locale.effectiveScriptCode: String?
  * The bundled names for a language are written in that language's default script, from CLDR, so
  * the Serbian names are Cyrillic and the Chinese names Simplified. A reader in another script —
  * `sr-Latn`, `zh-Hant` — would get names it did not ask for, so it gets none here and the platform,
- * then English, answers instead. A language whose default script is not recorded is served as is.
+ * then English, answers instead. The reader's script is read as [effectiveScriptCode] reads it, so a
+ * region that implies a script counts: `sr-ME` is a Latin reader. For a language whose locales all
+ * name a script, such as Punjabi, the table's script is the shipped bare-language locale's.
  */
 internal fun bundledNamesLanguage(reader: Locale): String? {
     val language = reader.languageCode
-    val tableScript = defaultScriptByLanguage[language] ?: return language
+    val tableScript = defaultScriptByLanguage[language]
+        ?: localeResourceMap[language]?.scriptCode
+        ?: return language
     return language.takeIf { reader.effectiveScriptCode == tableScript }
 }

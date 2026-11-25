@@ -158,9 +158,21 @@ internal fun resolveShippedLocale(languageTag: String): Locale? {
  * any other well-formed tag keeps its own codes and the English name [parseLocale] gives it, rather
  * than whatever the platform's lookup would have stored. `null` when neither tag is well formed.
  */
-internal fun currentLocaleFrom(deviceTag: String?, fallbackTag: String?): Locale? =
-    deviceTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
+internal fun currentLocaleFrom(deviceTag: String?, fallbackTag: String?): Locale? {
+    // Every Locale.displayName read asks for the current locale, and a sort compares names many
+    // times, so the last answer is kept for as long as the device reports the same tag. A change of
+    // device language is a different tag and is resolved afresh. Benign race: two threads may both
+    // resolve, and either result is correct.
+    lastCurrentLocale?.let { if (it.deviceTag == deviceTag && it.fallbackTag == fallbackTag) return it.locale }
+    val locale = deviceTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
         ?: fallbackTag?.let { resolveShippedLocale(it) ?: libraryNamedLocale(it) }
+    lastCurrentLocale = CurrentLocaleMemo(deviceTag, fallbackTag, locale)
+    return locale
+}
+
+private class CurrentLocaleMemo(val deviceTag: String?, val fallbackTag: String?, val locale: Locale?)
+
+private var lastCurrentLocale: CurrentLocaleMemo? = null
 
 /**
  * [normalized] with the script its region implies written into it, when the tag names no script and
@@ -377,8 +389,8 @@ fun localesByName(name: String, ignoreCase: Boolean = true): List<Locale> =
  *
  * **Warning:** Where a name comes from the platform, the exact wording may vary between platforms
  * and OS versions, and the English fallback is silent — a returned name may be the English one
- * rather than a translation. Use [localizedDisplayNameOrNull] to tell those apart. See ADR 0003 for
- * the rationale and tradeoffs.
+ * rather than a translation. Use [localizedDisplayNameOrNull] to tell those apart. See ADR-0005 and
+ * ADR-0006 for the rationale and tradeoffs.
  *
  * @param displayIn The locale whose language the name should be rendered in.
  * Defaults to [Locale.current].
@@ -408,13 +420,17 @@ fun Locale.localizedDisplayName(displayIn: Locale = Locale.current): String =
  * @see localizedDisplayName
  */
 fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): String? {
+    // Name the shipped locale this one matches, so a zh-TW built without its script is named as the
+    // shipped Traditional zh-TW is, by the bundled tables and the platform alike.
+    val shipped = localeFor(languageTag)
+    val target = shipped ?: this
     val language = displayIn.languageCode
     val bundled = if (language == "en") {
-        localeFor(languageTag)?.fallbackName
+        shipped?.fallbackName
     } else {
-        bundledNamesLanguage(displayIn)?.let { LocaleDisplayNameSupplement.nameFor(it, languageTag) }
+        bundledNamesLanguage(displayIn)?.let { LocaleDisplayNameSupplement.nameFor(it, target.languageTag) }
     }
-    return bundled ?: localizedDisplayNameForNative(this, displayIn)
+    return bundled ?: localizedDisplayNameForNative(target, displayIn)
 }
 
 /**
@@ -422,6 +438,7 @@ fun Locale.localizedDisplayNameOrNull(displayIn: Locale = Locale.current): Strin
  * was built with, which for a parsed locale is the English name [parseLocale] gave it.
  */
 internal fun Locale.englishName(): String = localeFor(languageTag)?.fallbackName ?: fallbackName
+
 
 /**
  * Retrieves the display name of [locale], localized for the language of [displayIn],
