@@ -88,6 +88,8 @@ else if let failure = result as? OutcomeFailure { report(failure.message) }
 
 Adding a case to the sealed class in a future version will not produce a Swift compile error anywhere. That is the reason `Outcome` exists rather than `kotlin.Result` — a `Result` cannot cross into Swift as data at all — but it does not make the check exhaustive.
 
+**Exhaustiveness is decided by the framework Swift sees, not by this library.** This library publishes no Swift framework of its own: Swift reaches it through the consuming project's Kotlin framework, so how a sealed class exports is that build's choice. A framework built with Touchlab's SKIE presents sealed classes, `Outcome` included, as Swift enums through `onEnum(of:)`, and a `switch` over that is exhaustive. This library neither requires nor configures SKIE; without it, the `as?` form above is the one that works.
+
 The whole API arrives on the class, including the parts that are Kotlin extensions — `getOrElse(onFailure:)`, `getOrDefault(defaultValue:)` and `recover(transform:)` export as an Objective-C category, so they read as ordinary methods and need no `OutcomeKt`. Only `runOutcome(block:)` lives on `OutcomeKt`, being a top-level function.
 
 `isSuccess` and `isFailure` are properties; `getOrNull()`, `getOrThrow()` and `exceptionOrNull()` are methods, with the parentheses Kotlin lets you omit. Every failure callback is handed a **`KotlinThrowable`**, not a Swift `Error`: `outcome.onFailure { throwable in … }`, `outcome.fold(onSuccess:onFailure:)`, `getOrElse(onFailure:)` and `recover(transform:)` all take one. Read `throwable.message`, which is optional, or branch to `OutcomeFailure` for the non-optional `message`.
