@@ -406,6 +406,9 @@ data class BigInteger internal constructor(
 
     fun shiftLeft(n: Int): BigInteger {
         if (n == 0 || this.signum == 0) return this
+        // -Int.MIN_VALUE is Int.MIN_VALUE again, so negating it would recurse between the two shifts
+        // forever. A right shift by 2^31 bits leaves nothing but the sign, as in java.math.BigInteger.
+        if (n == Int.MIN_VALUE) return if (this.signum > 0) ZERO else -ONE
         if (n < 0) return shiftRight(-n)
         
         val wordShift = n / 32
@@ -425,8 +428,11 @@ data class BigInteger internal constructor(
         return BigInteger(this.signum, stripLeadingZeros(newMag, newMag.size))
     }
 
+    @Throws(ArithmeticException::class)
     fun shiftRight(n: Int): BigInteger {
         if (n == 0 || this.signum == 0) return this
+        // A left shift by 2^31 bits cannot be represented, and -Int.MIN_VALUE would recurse forever.
+        if (n == Int.MIN_VALUE) throw ArithmeticException("Shift by 2^31 bits is out of range")
         if (n < 0) return shiftLeft(-n)
         
         val wordShift = n / 32
@@ -496,11 +502,15 @@ data class BigInteger internal constructor(
         }
     }
 
+    @Throws(IllegalArgumentException::class)
     fun setBit(n: Int): BigInteger {
+        require(n >= 0) { "Negative bit address" }
         return this.or(ONE.shiftLeft(n))
     }
 
+    @Throws(IllegalArgumentException::class)
     fun clearBit(n: Int): BigInteger {
+        require(n >= 0) { "Negative bit address" }
         return this.and(ONE.shiftLeft(n).not())
     }
 

@@ -26,7 +26,7 @@ class UriParseException(
 private fun fail(input: String, reason: String): Nothing =
     throw UriParseException(input, "Cannot parse \"$input\": $reason")
 
-private val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*$")
+internal val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*$")
 
 /**
  * Splits `scheme:rest`, validating the scheme against the RFC 3986 grammar and lowercasing it.

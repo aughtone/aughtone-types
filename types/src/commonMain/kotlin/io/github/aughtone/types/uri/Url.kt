@@ -15,11 +15,14 @@ import kotlinx.serialization.Serializable
  * @property fragment The fragment identifier, not including the leading '#'.
  * @property authority The authority part of the URL, combining userInfo, host and port (e.g., "user@example.com:8080").
  * @property identity A string representing the resource identity from the path, query and fragment (e.g., "/path?query#fragment")
- * @constructor Creates a [Url] instance with the specified components.
+ * @constructor Creates a [Url] instance with the specified components, holding them to the rules
+ * [url] parses by, so a constructed or decoded URL cannot be one the parser would refuse.
+ * @throws IllegalArgumentException if [scheme] is not a valid RFC 3986 scheme, [host] is empty or
+ *   is an unclosed IPv6 literal, or [port] is outside 0..65535.
  * @see Uri
  */
 @Serializable
-data class Url(
+data class Url @Throws(IllegalArgumentException::class) constructor(
     @SerialName("scheme")
     val scheme: String,
     @SerialName("userInfo")
@@ -35,6 +38,14 @@ data class Url(
     @SerialName("fragment")
     val fragment: String,
 ) {
+    init {
+        require(SCHEME.matches(scheme)) {
+            "\"$scheme\" is not a valid scheme; it must start with a letter and contain only letters, digits, '+', '-' and '.'."
+        }
+        require(host.isNotEmpty()) { "A URL's host cannot be empty." }
+        require(!host.startsWith("[") || host.endsWith("]")) { "An IPv6 host must be closed with ']': $host" }
+        port?.let { require(it in 0..65535) { "Port $it is outside 0..65535." } }
+    }
 
     /**
      * Two URLs are equal when RFC 3986 §6.2.2.1 says they are the same. The scheme and host are

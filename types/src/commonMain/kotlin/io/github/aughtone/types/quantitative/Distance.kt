@@ -13,7 +13,7 @@ import kotlin.math.abs
  * @property accuracy The estimated accuracy of the distance measurement, as a fraction of the measured distance.
  *                   For example, an accuracy of 0.05 means the measurement is accurate to within 5%.
  *                   If null, the accuracy is unknown or not applicable.
- * @throws IllegalArgumentException if [meters] is negative.
+ * @throws IllegalArgumentException if [meters] is negative or NaN, or [accuracy] is negative or NaN.
  */
 @Serializable
 data class Distance @Throws(IllegalArgumentException::class) constructor(
@@ -25,6 +25,7 @@ data class Distance @Throws(IllegalArgumentException::class) constructor(
 
     init {
         require(meters >= 0.0) { "Distance in meters cannot be negative." }
+        accuracy?.let { require(it >= 0.0f) { "Accuracy cannot be negative." } }
     }
 
     /**
@@ -41,8 +42,9 @@ data class Distance @Throws(IllegalArgumentException::class) constructor(
         val newAccuracy = if (accuracy != null && other.accuracy != null) {
             val absoluteError1 = accuracy * meters
             val absoluteError2 = other.accuracy * other.meters
+            // Unknown rather than NaN when a distance is infinite, which the constructor would refuse.
             if (newMeters > 0) {
-                ((absoluteError1 + absoluteError2) / newMeters).toFloat()
+                ((absoluteError1 + absoluteError2) / newMeters).toFloat().takeIf { it.isFinite() }
             } else {
                 null
             }
@@ -78,7 +80,7 @@ data class Distance @Throws(IllegalArgumentException::class) constructor(
             val absoluteError1 = accuracy * meters
             val absoluteError2 = other.accuracy * other.meters
             if (newMeters != 0.0) {
-                ((absoluteError1 + absoluteError2) / abs(newMeters)).toFloat()
+                ((absoluteError1 + absoluteError2) / abs(newMeters)).toFloat().takeIf { it.isFinite() }
             } else {
                 null
             }

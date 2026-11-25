@@ -119,7 +119,7 @@ That covers the parsers (`url`, `uri`, `geoUri`, `urn`), GeoJSON and quantity co
 
 - **`Locale.Companion.shared.current` and `Currency.Companion.shared.current`** are properties, and a property cannot throw. Use `currentOrNull`.
 - **`Money.compareTo`** across two currencies. It implements `Comparable`, and an override cannot add `throws`. Check the currencies match before comparing.
-- **`doCopy`** on a type that validates itself — `Coordinates`, `Distance`, `Speed`, `Altitude`, `Azimuth`, the GeoJSON geometries, `GeoFeature`, `Urn`, `GeoUri` — when the copy breaks a rule. Build a new value with the throwing constructor instead.
+- **`doCopy`** on a type that validates itself — `Coordinates`, `Distance`, `Speed`, `Altitude`, `Azimuth`, the GeoJSON geometries, `GeoFeature`, `Url`, `Urn`, `GeoUri` — when the copy breaks a rule. Build a new value with the throwing constructor instead.
 
 Nothing that is unannotated is expected to throw. If one does, it terminates the process as before, and it is a bug here.
 
